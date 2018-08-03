@@ -1,34 +1,42 @@
-﻿// Copyright (c) 2018 Alachisoft
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//    http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-using Alachisoft.NCache.Runtime.Caching;
+﻿using Alachisoft.NCache.Runtime.Caching;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Alachisoft.NCache.EntityFrameworkCore
 {
     /// <summary>
     /// Provides the user to configure different options that can be set while caching a certain item/result set.
     /// </summary>
-    public class CachingOptions : ICloneable
+    public class CachingOptions : ICloneable//: MemoryCacheEntryOptions
     {
         private TimeSpan _SlidingExpTime;
         private DateTime _absoluteExpTime;
         private ExpirationType _expirationType;
-        private Tag _queryIdentifier;
+        private string _queryIdentifier;
         private StoreAs _storeAs;
         private Alachisoft.NCache.Runtime.CacheItemPriority _priority;
         private bool _createDbDependency;
+        private bool _isResyncExpiredItems;
+        private string _resyncProviderName;
+
+
+        //private bool _createKeyDependency;
+        //private List<string> _queryCriteria;
+
+        /*
+        /// <summary>
+        /// Gets the <see cref="IChangeToken"/> instances which cause the cache entry to expire.
+        /// </summary>
+        //public IList<IChangeToken> ExpirationTokens { get; } = new List<IChangeToken>();
+
+        /// <summary>
+        /// Gets or sets the callbacks will be fired after the cache entry is evicted from the cache.
+        /// </summary>
+        //public IList<PostEvictionCallbackRegistration> PostEvictionCallbacks { get; } = new List<PostEvictionCallbackRegistration>();
+        */
 
         /// <summary>
         /// Returns the absolute time when the item will expire.
@@ -64,7 +72,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// next time the same query is executed, the query string is searched as a tag within cache and 
         /// if it exists, the result set against it will be returned.
         /// </summary>
-        public Tag QueryIdentifier
+        public string QueryIdentifier
         {
             get => _queryIdentifier;
             set => _queryIdentifier = value;
@@ -97,6 +105,18 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             get => _createDbDependency;
             set => _createDbDependency = value;
         }
+
+
+        /// <summary>
+        /// Returns that CacheSync Option is Enabled or Disabled
+        /// </summary>
+        public bool IsSyncEnabled { get { return _isResyncExpiredItems; } }
+
+        /// <summary>
+        /// Returns ReadThru Provider name that is configured for Cache Synchronization 
+        /// </summary>
+        public string ReadThruProvider { get { return _resyncProviderName; } }
+
 
         /// <summary>
         /// Creates an instance of <see cref="CachingOptions"/> with default values.
@@ -135,6 +155,21 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="readThruProviderName"></param>
+        public void SetResyncProviderName(string resyncProviderName)
+        {
+            _resyncProviderName = resyncProviderName;
+            _isResyncExpiredItems = true;
+        }
+        internal void RemoveResync()
+        {
+            _resyncProviderName = "";
+            _isResyncExpiredItems = false;
+        }
+
+        /// <summary>
         /// Creates a shallow copy of this instance.
         /// </summary>
         /// <returns></returns>
@@ -149,7 +184,9 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             cachingOptions._SlidingExpTime = this._SlidingExpTime;
             cachingOptions._storeAs = this._storeAs;
             if (this._queryIdentifier != null)
-                cachingOptions._queryIdentifier = new Tag(this._queryIdentifier.ToString());
+                cachingOptions._queryIdentifier = this._queryIdentifier;
+            if (this.IsSyncEnabled)
+                cachingOptions.SetResyncProviderName(this.ReadThruProvider);
 
             return cachingOptions;
         }

@@ -5,17 +5,19 @@
 // More projects: http://www.zzzprojects.com/
 // Copyright © ZZZ Projects Inc. 2014 - 2016. All rights reserved.
 
-using Alachisoft.NCache.EntityFrameworkCore.Extensions.QueryDeferred;
 using Alachisoft.NCache.EntityFrameworkCore.NCache;
+using System.Collections.Generic;
 using Alachisoft.NCache.EntityFrameworkCore.NCLinq;
+using System.Linq;
+using Alachisoft.NCache.EntityFrameworkCore.Extensions.QueryDeferred;
+using System.Collections;
 using Alachisoft.NCache.Runtime.Caching;
 using Alachisoft.NCache.Runtime.Dependencies;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
-using System.Collections;
-using System.Collections.Generic;
+using System.Data.Common;
+using System.Data.SqlClient;
 using System.Dynamic;
-using System.Linq;
 
 #if EF5 || EF6
 using System.Runtime.Caching;
@@ -240,12 +242,12 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             options.StoreAs = StoreAs.Collection;
 
             bool cacheHit = false;
-            Hashtable cacheResult = default(Hashtable);
+            IDictionary cacheResult = default(Hashtable);
             cacheKey = QueryCacheManager.GetQueryCacheKey(query.Query, options.QueryIdentifier);
 
             // If user has specified tag, leave it as it is
             // Otherwise overwrite it with 'cacheKey'
-            options.QueryIdentifier = options.QueryIdentifier ?? new Tag(cacheKey);
+            options.QueryIdentifier = options.QueryIdentifier ??cacheKey;
 
             /* NOTE: If user stored result with a tag and is trying to query 
              *       it without the tag, it's a different query so don't 
@@ -256,7 +258,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             if (cachingMethod == CachingMethod.FromCache)
             {
                 // Get by the tag (more reliable)
-                cacheHit = QueryCacheManager.Cache.GetByTags(options.QueryIdentifier, out cacheResult);
+                cacheHit = QueryCacheManager.Cache.GetByKey(options.QueryIdentifier, out cacheResult);
             }
             // If result wasn't found OR result was meant to be stored fresh
             if (cachingMethod == CachingMethod.LoadIntoCache || !cacheHit)

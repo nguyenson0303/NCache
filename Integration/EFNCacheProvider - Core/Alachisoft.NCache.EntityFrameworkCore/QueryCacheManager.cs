@@ -8,8 +8,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Security.Principal;
+using Alachisoft.NCache.EntityFrameworkCore.NCache;
 using Alachisoft.NCache.Runtime.Caching;
 #if EF5
 using System.Runtime.Caching;
@@ -21,6 +25,7 @@ using System.Data.Entity.Core.EntityClient;
 using System.Runtime.Caching;
 
 #elif EFCORE
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -239,11 +244,15 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// <param name="query">The query to cache or retrieve from the QueryCacheManager.</param>
         /// <param name="tags">A variable-length parameters list containing tags to create the cache key.</param>
         /// <returns>The cache key used to cache or retrieve a query from the QueryCacheManager.</returns>
-        internal static string GetQueryCacheKey(IQueryable query, Tag tag)
+        internal static string GetQueryCacheKey(IQueryable query,string tag)
         {
+			if(tag!=null)
+            {
+                UseFirstTagAsCacheKey = true;
+            }
             if (CacheKeyFactory != null)
             {
-                var cacheKey = CacheKeyFactory(query, new string[] { tag.ToString() });
+                var cacheKey = CacheKeyFactory(query, new string[] { tag });
 
                 if (!string.IsNullOrEmpty(cacheKey))
                 {
@@ -285,11 +294,11 @@ namespace Alachisoft.NCache.EntityFrameworkCore
 
             var command = query.CreateCommand(out queryContext);
 
-            sb.AppendLine(CachePrefix);
+            sb.Append(CachePrefix);
 
             if (IncludeConnectionInCacheKey)
             {
-                sb.AppendLine(GetConnectionStringForCacheKey(queryContext));
+                sb.Append(GetConnectionStringForCacheKey(queryContext));
             }
 
             if (!IncludeConnectionInCacheKey && IncludeUserNameAndDatabase)
@@ -301,12 +310,12 @@ namespace Alachisoft.NCache.EntityFrameworkCore
 
             if (UseFirstTagAsCacheKey)
             {
-                if (string.IsNullOrEmpty(tag.ToString()))
+                if (string.IsNullOrEmpty(tag))
                 {
                     throw new Exception(ExceptionMessage.QueryCache_FirstTagNullOrEmpty);
                 }
-
-                sb.AppendLine(tag.ToString());
+				UseFirstTagAsCacheKey = false;
+                sb.Append("$QId$"+tag);
                 return sb.ToString();
             }
 
@@ -340,7 +349,9 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             }
 #elif EFCORE
 
-            sb.AppendLine(ExtensionMethods.ToStringWithoutAlias(query.Expression));
+            sb.Append(ExtensionMethods.ToStringWithoutAlias(query.Expression));
+
+
 
             foreach (var parameter in queryContext.ParameterValues)
             {
@@ -350,6 +361,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
                 sb.AppendLine(";");
             }
 #endif
+
             return sb.ToString();
         }
 
@@ -498,7 +510,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// <param name="query">The query to cache or retrieve from the QueryCacheManager.</param>
         /// <param name="tags">A variable-length parameters list containing tags to create the cache key.</param>
         /// <returns>The cache key used to cache or retrieve a query from the QueryCacheManager.</returns>
-        internal static string GetCacheKey<T>(QueryDeferred<T> query, Tag tag)
+        internal static string GetCacheKey<T>(QueryDeferred<T> query, string tag)
         {
             return GetQueryCacheKey(query.Query, tag);
         }

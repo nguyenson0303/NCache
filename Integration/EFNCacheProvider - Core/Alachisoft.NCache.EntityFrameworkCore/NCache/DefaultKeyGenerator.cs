@@ -1,23 +1,10 @@
-﻿// Copyright (c) 2018 Alachisoft
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//    http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using System;
+﻿using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using System.Text;
 
 namespace Alachisoft.NCache.EntityFrameworkCore
 {
@@ -49,6 +36,87 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             _lockObject = new object();
             _registeredGenerators = new Dictionary<Type, KeyGenerator>();
         }
+        #region GenerateKeyFromQuery
+        public static KeyInfo ParseKeyInfo(string key)
+        {
+            return new KeyInfo(GetFqnFromCachekey(key), GetClassNameFromCachekey(key), GetPrimaryKeysFromCacheKey(key));
+        }
+        public static string GenerateQuery(KeyInfo _keyinfo)
+        {
+            string space = " ";
+
+            StringBuilder query = new StringBuilder("select * from" + space);
+            query.Append(_keyinfo.ClassName + space);
+            query.Append("where" + space);
+            foreach (DictionaryEntry property in _keyinfo.PKPairs)
+            {
+                query.Append(property.Key);
+                query.Append("=");
+                query.Append(property.Value);
+                query.Append(space);
+
+            }
+
+            return query.ToString();
+        }
+        private static string GetSeparateEntityKey(string key)
+        {
+            if (key.ToLower().StartsWith("seperateentity"))
+                return key.Substring(15);
+            throw new Exception("is not separate Entity");
+        }
+
+        private static string GetFqnFromCachekey(string key)
+        {
+            key = GetSeparateEntityKey(key);
+            int index = key.IndexOf(":");
+            if (index >= 0)
+                return key.Substring(0, index);
+            else
+                throw new Exception("Key is not valid");
+        }
+        private static string GetClassNameFromCachekey(string key)
+        {
+            key = GetSeparateEntityKey(key);
+            int index = key.IndexOf(":");
+            if (index >= 0)
+            {
+                string nKey = key.Substring(0, index);
+                return nKey.Substring(nKey.LastIndexOf(".") + 1);
+            }
+            else
+                throw new Exception("Key is not valid");
+
+        }
+
+        private static IDictionary GetPrimaryKeysFromCacheKey(string key)
+        {
+            key = GetSeparateEntityKey(key);
+
+            IDictionary pkPairs = new Dictionary<string, string>();
+            string[] parts = key.Split(':');
+
+            int startingPoint = parts[0].Length + 1;
+            bool isFqn = true;
+            foreach (var part in parts)
+            {
+                if (isFqn)
+                {
+                    isFqn = false;
+                    continue;
+                }
+                string pk = key.Substring(startingPoint, part.IndexOf("="));
+                string value = part.Substring(part.IndexOf("=") + 1);
+
+                pkPairs.Add(pk, value);
+                startingPoint = (startingPoint + 1) + (part.Length);
+            }
+            return pkPairs;
+
+
+        }
+
+        #endregion
 
         /// <summary>
         /// Generates the cache key for the entity specified.
@@ -77,7 +145,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             }
 
             // Default Implementation
-            string key = "";
+            string key = "SeperateEntity_";
             IEntityType eType = context.Model.FindEntityType(entity.GetType());
 
             if (eType == null)
@@ -100,6 +168,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
                 }
                 // Add entity to visited list
                 visitedEntities.Add(entity);
+
 
                 IEnumerator<INavigation> navigations = eType.GetNavigations().GetEnumerator();
                 while (navigations.MoveNext())
