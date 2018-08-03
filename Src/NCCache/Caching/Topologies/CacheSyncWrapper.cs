@@ -39,6 +39,7 @@ using Alachisoft.NCache.Common.DataReader;
 using Alachisoft.NCache.Common.Queries;
 
 using Alachisoft.NCache.Caching.Messaging;
+using Alachisoft.NCache.Common.Resources;
 #if !CLIENT
 using Alachisoft.NCache.Caching.Topologies.Clustered.Operations;
 using Alachisoft.NCache.Common.Resources;

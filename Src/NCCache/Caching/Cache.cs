@@ -67,6 +67,7 @@ using Alachisoft.NCache.Runtime.Caching;
 using ClientInfo = Alachisoft.NCache.Runtime.Caching.ClientInfo;
 using Alachisoft.NCache.Caching.Messaging;
 using Alachisoft.NCache.Common.Resources;
+using System.Threading.Tasks;
 
 namespace Alachisoft.NCache.Caching
 {

@@ -52,6 +52,7 @@ using System;
 using Alachisoft.NCache.Common.Monitoring.APILogging;
 using System.Net.Sockets;
 using Alachisoft.NCache.Common.Communication.Exceptions;
+using System.Net.NetworkInformation;
 
 namespace Alachisoft.NCache.Management
 {
