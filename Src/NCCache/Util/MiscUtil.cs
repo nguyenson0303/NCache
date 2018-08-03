@@ -156,7 +156,7 @@ namespace Alachisoft.NCache.Util
             CompactFormatterServices.RegisterCompactType(typeof(RequestStatus), 303);
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Caching.Statistics.BucketStatistics.TopicStats), 383);
 
-	    CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Common.DataStructures.NewHashmap), 346);
+	    CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Common.DataStructures.NewHashmap), 422);
 #if (COMMUNITY ) && (!CLIENT)
             CompactFormatterServices.RegisterCompactType(typeof(ReadFromStreamOperation), 138);
             CompactFormatterServices.RegisterCompactType(typeof(WriteToStreamOperation), 139);
