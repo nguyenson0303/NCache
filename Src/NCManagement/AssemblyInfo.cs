@@ -56,6 +56,13 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 
 [assembly: AssemblyVersion("4.9.0")]
-[assembly: AssemblyFileVersionAttribute("4.9.0.0")]
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyName("")]
+#if DEBUG
+[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
+#else
+[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
+#endif
+[assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyDescriptionAttribute("Management Classes")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

@@ -62,6 +62,6 @@ using System.Runtime.InteropServices;
 //       documentation for more information on this.
 //
 [assembly: AssemblyDelaySign(false)]
-[assembly: AssemblyFileVersionAttribute("4.9.0.0")]
+[assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyDescriptionAttribute("Session State Module")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

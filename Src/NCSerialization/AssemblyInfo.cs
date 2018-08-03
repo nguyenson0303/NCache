@@ -78,6 +78,13 @@ using System.Runtime.InteropServices;
 // Private
 //		Defines the private or developer build numbers. Not to be used for production.
 
-[assembly: AssemblyFileVersionAttribute("4.9.0.0")]
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyName("")]
+#if DEBUG
+[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
+#else
+[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
+#endif
+[assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyDescriptionAttribute("Compact Serialization File")]
 [assembly: AssemblyInformationalVersion("4.9.0")]
