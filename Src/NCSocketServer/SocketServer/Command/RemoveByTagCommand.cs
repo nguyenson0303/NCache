@@ -98,6 +98,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 OperationContext operationContext = new OperationContext(OperationContextFieldName.OperationType, OperationContextOperationType.CacheOperation);
                 operationContext.Add(OperationContextFieldName.RaiseCQNotification, true);
                 operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
 
                 nCache.Cache.RemoveByTag(cmdInfo.Tags, cmdInfo.ComparisonType, operationContext);
                 stopWatch.Stop();
@@ -111,6 +113,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.responseType = Alachisoft.NCache.Common.Protobuf.Response.Type.REMOVE_TAG;
                 response.removeTagResponse = removeTagResponse;
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
 
             }
             catch (Exception exc)

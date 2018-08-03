@@ -36,6 +36,8 @@ using Alachisoft.NGroups.Util;
 
 using Alachisoft.NCache.Common.DataStructures.Clustered;
 using Alachisoft.NCache.Common.Events;
+using Alachisoft.NCache.Common.Resources;
+
 namespace Alachisoft.NCache.Caching.Topologies.Clustered
 {
     /// <summary>
@@ -196,18 +198,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 Priority priority = Priority.Normal;
                 if (operationContext.Contains(OperationContextFieldName.IsClusteredOperation))
                 {
-                    priority = Priority.Critical;                   
+                    priority = Priority.Critical;
                 }
 
                 if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("RepCacheBase.Get", "enter");
                 Function func = new Function((int)OpCodes.Get, new object[] { key, operationContext });
-                object result = Cluster.SendMessage(address, func, GroupRequest.GET_FIRST, false,priority);
+                object result = Cluster.SendMessage(address, func, GroupRequest.GET_FIRST, false, priority);
                 if (result == null)
                 {
                     return retVal;
                 }
                 retVal = (CacheEntry)((OperationResponse)result).SerializablePayload;
-                if (retVal != null && ((OperationResponse)result).UserPayload !=null) retVal.Value = ((OperationResponse)result).UserPayload;
+                if (retVal != null && ((OperationResponse)result).UserPayload != null) retVal.Value = ((OperationResponse)result).UserPayload;
             }
             catch (CacheException e)
             {
@@ -255,7 +257,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <param name="subGroup">sub group of the group</param>
         /// <param name="excludeSelf">Set false to do a complete cluster lookup.</param>
         /// <returns>list of keys</returns>
-        protected ArrayList Clustered_GetKeys(Address address, string group, string subGroup,OperationContext operationContext)
+        protected ArrayList Clustered_GetKeys(Address address, string group, string subGroup, OperationContext operationContext)
         {
             ArrayList retVal = null;
             try
@@ -393,7 +395,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             pEntries = (HashVector)Get(keys, operationContext); //dont remove
 
-            Hashtable existingItems;
+            Hashtable existingItems = null;
             Hashtable jointTable = new Hashtable();
             Hashtable failedTable = new Hashtable();
             Hashtable insertable = new Hashtable();
@@ -508,6 +510,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 try
                 {
                     insertResults = null;
+                    if ((existingItems != null && existingItems.Count > 0) && cacheEntries[0].Flag != null && cacheEntries[0].Flag.IsBitSet(BitSetConstants.WriteBehind))
+                        taskId = Cluster.LocalAddress.ToString() + ":" + NextSequence().ToString();
                     insertResults = Clustered_Insert(Cluster.Servers, validKeys, validEnteries, taskId, operationContext);
                 }
                 catch (Exception e)
@@ -604,10 +608,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     opContext = objs[1] as OperationContext;
                 if (objs.Length > 2)
                     evContext = objs[2] as EventContext;
-                NotifyItemAdded(objs[0], true, opContext, evContext); 
+                NotifyItemAdded(objs[0], true, opContext, evContext);
             }
             else
-                NotifyItemAdded(info, true, null, null); 
+                NotifyItemAdded(info, true, null, null);
             return null;
         }
 
@@ -624,6 +628,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.GetData, new object[] { group, subGroup, operationContext });
+                func.Cancellable = true;
                 object result = Cluster.SendMessage(address, func, GroupRequest.GET_FIRST, _asyncOperation);
                 if (result == null)
                 {
@@ -759,7 +764,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (writeThruEnable && !_context.InMemoryDataFormat.Equals(DataFormat.Object))
                 {
                     entryToBeSent = cacheEntry.CloneWithoutValue();
-                } 
+                }
                 /// Ask every server to add the object, except myself.
                 Function func = new Function((int)OpCodes.Add, new object[] { key, entryToBeSent, taskId, operationContext }, false, key);
                 Array userPayLoad = null;
@@ -772,8 +777,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         if (!writeThruEnable) cbEntry.Value = null;
                     }
                     else
-                         userPayLoad = null;
-                    
+                        userPayLoad = null;
+
                 }
                 else
                 {
@@ -900,6 +905,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("RepCacheBase.AddBlk", "enter");
                 /// Ask every server to add the object, except myself.
                 Function func = new Function((int)OpCodes.Add, new object[] { keys, cacheEntries, taskId, operationContext }, false);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests,
                     func,
                     GroupRequest.GET_ALL);
@@ -942,7 +948,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 bool writeThruEnable = _context.DsMgr != null;
                 CacheEntry entryToBeSent = cacheEntry;
-                if (writeThruEnable && !_context.InMemoryDataFormat.Equals(DataFormat.Object)) 
+                if (writeThruEnable && !_context.InMemoryDataFormat.Equals(DataFormat.Object))
                     entryToBeSent = cacheEntry.CloneWithoutValue();
 
                 Function func = new Function((int)OpCodes.Insert, new object[] { key, entryToBeSent, operationContext }, false, key);
@@ -1005,6 +1011,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.Insert, new object[] { keys, cacheEntries, taskId, operationContext });
+                func.Cancellable = true;
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST);
                 if (result == null)
                 {
@@ -1030,7 +1037,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.DeleteQuery, new object[] { query, values, notify, isUserOperation, ir, operationContext }, false);
-                RspList results = Cluster.Broadcast(func, GroupRequest.GET_ALL, true,Common.Enum.Priority.Normal);
+                func.Cancellable = true;
+                RspList results = Cluster.Broadcast(func, GroupRequest.GET_ALL, true, Common.Enum.Priority.Normal);
                 if (results == null)
                 {
                     return res;
@@ -1065,8 +1073,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("RepCacheBase.Insert", "enter");
                 bool writeThruEnable = _context.DsMgr != null;
                 CacheEntry entryToBeSent = cacheEntry;
-                if (writeThruEnable && !_context.InMemoryDataFormat.Equals(DataFormat.Object)) 
-                        entryToBeSent = cacheEntry.CloneWithoutValue();
+                if (writeThruEnable && !_context.InMemoryDataFormat.Equals(DataFormat.Object))
+                    entryToBeSent = cacheEntry.CloneWithoutValue();
 
                 /// Ask every server to update the object, except myself.
                 Function func = new Function((int)OpCodes.Insert, new object[] { key, entryToBeSent, taskId, _statusLatch.IsAnyBitsSet(NodeStatus.Initializing), lockId, accessType, operationContext }, false, key);
@@ -1105,7 +1113,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 //Bug Fixed, during state transfer (one node up with the existing one) of replicated cache, 
                 //while client doing insert operation continuously, which incrementing the add/sec counter while the client only performing insert
                 //means no need to increment add/sec counter, need only update/sec to be incremented
-            
+
                 CacheInsResultWithEntry retVal = ClusterHelper.FindAtomicInsertStatusReplicated(results);
                 if (retVal != null && retVal.Result == CacheInsResult.Success && results != null)
                 {
@@ -1142,6 +1150,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("RepCacheBase.InsertBlk", "enter");
                 /// Ask every server to update the object, except myself.
                 Function func = new Function((int)OpCodes.Insert, new object[] { keys, cacheEntries, taskId, operationContext }, false);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests,
                     func,
                     GroupRequest.GET_ALL);
@@ -1202,7 +1211,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (opRes != null)
                 {
                     CacheEntry entry = opRes.SerializablePayload as CacheEntry;
-                    if (entry != null && opRes.UserPayload!=null)
+                    if (entry != null && opRes.UserPayload != null)
                         entry.Value = opRes.UserPayload;
                     return entry;
                 }
@@ -1237,6 +1246,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("RepCacheBase.RemoveBlk", "enter");
                 Function func = new Function((int)OpCodes.Remove, new object[] { keys, ir, notify, cbEntry, taskId, providerName, operationContext }, false);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToServers(func, GroupRequest.GET_ALL);
 
                 if (results == null)
@@ -1255,13 +1265,15 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 IEnumerator ia = rspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
+                    if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     Rsp rsp = (Rsp)ia.Current;
                     Hashtable removed = (Hashtable)rsp.Value;
 
                     IDictionaryEnumerator ide = removed.GetEnumerator();
                     while (ide.MoveNext())
                     {
-                        if(!removedEntries.ContainsKey(ide.Key))
+                        if (!removedEntries.ContainsKey(ide.Key))
                             removedEntries.Add(ide.Key, ide.Value);
                     }
                 }
@@ -1294,9 +1306,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.RemoveRange, new object[] { keys, reason, operationContext }, false);
-
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToServers(func, GroupRequest.GET_ALL, true);
-              
+
                 if (results != null)
                 {
                     for (int i = 0; i < results.size(); i++)
@@ -1347,7 +1359,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             public ClusteredEnumerator(ReplicatedCacheBase cache, Address address, object[] keyList, bool isUserOperation)
                 : base(cache, keyList, true)
             {
-                _targetNode = address; 
+                _targetNode = address;
                 _isUserOperation = isUserOperation;
             }
 
@@ -1380,8 +1392,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     }
                     try
                     {
-                        operationContext.Add(OperationContextFieldName.GenerateQueryInfo , true);
-                        obj = cache.Clustered_Get(targetNode, key, operationContext,_isUserOperation);
+                        operationContext.Add(OperationContextFieldName.GenerateQueryInfo, true);
+                        obj = cache.Clustered_Get(targetNode, key, operationContext, _isUserOperation);
                     }
 
                     catch (Runtime.Exceptions.SuspectedException se)
@@ -1419,7 +1431,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     return null;
                 }
 
-                return new ClusteredEnumerator(this, (Address)targetNode.Clone(), result as object[],isUserOperation);
+                return new ClusteredEnumerator(this, (Address)targetNode.Clone(), result as object[], isUserOperation);
             }
             catch (CacheException e)
             {
@@ -1439,6 +1451,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.Search, new object[] { queryText, values, operationContext }, excludeSelf);
+                func.Cancellable = true;
                 Object result = Cluster.SendMessage(dest, func, GroupRequest.GET_ALL, false);
 
                 if (result == null)
@@ -1461,6 +1474,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.SearchEntries, new object[] { queryText, values, operationContext }, excludeSelf);
+                func.Cancellable = true;
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST, false);
 
                 if (result == null)
@@ -1501,6 +1515,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.RegisterCQ, new object[] { query, clientId, clientUniqueId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
                 ClusterHelper.ValidateResponses(results, null, Name);
             }

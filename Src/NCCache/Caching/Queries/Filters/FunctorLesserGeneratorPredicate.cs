@@ -51,11 +51,11 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
                 if (Inverse)
                     store.GetData(
                         generator.Evaluate(((MemberFunction) functor).MemberName, queryContext.AttributeValues),
-                        ComparisonType.GREATER_THAN_EQUALS, queryContext.InternalQueryResult, mergeType);
+                        ComparisonType.GREATER_THAN_EQUALS, queryContext.InternalQueryResult, mergeType, queryContext.CancellationToken);
                 else
                     store.GetData(
                         generator.Evaluate(((MemberFunction) functor).MemberName, queryContext.AttributeValues),
-                        ComparisonType.LESS_THAN, queryContext.InternalQueryResult, mergeType);
+                        ComparisonType.LESS_THAN, queryContext.InternalQueryResult, mergeType, queryContext.CancellationToken);
             }
             else
             {
@@ -76,11 +76,11 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
                 if (Inverse)
                     store.GetData(
                         generator.Evaluate(((MemberFunction) functor).MemberName, queryContext.AttributeValues),
-                        ComparisonType.GREATER_THAN_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union);
+                        ComparisonType.GREATER_THAN_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
                 else
                     store.GetData(
                         generator.Evaluate(((MemberFunction) functor).MemberName, queryContext.AttributeValues),
-                        ComparisonType.LESS_THAN, queryContext.InternalQueryResult, CollectionOperation.Union);
+                        ComparisonType.LESS_THAN, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
             }
             else
             {

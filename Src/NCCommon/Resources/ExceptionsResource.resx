@@ -729,4 +729,8 @@
   <data name="EM205" xml:space="preserve">
     <value>Server can not accept remote clients in this edition of NCache</value>
   </data>
+   <data name="EM206" xml:space="preserve">
+    <value>Operation could not be completed due to a timeout.</value>
+  </data>
+
 </root>

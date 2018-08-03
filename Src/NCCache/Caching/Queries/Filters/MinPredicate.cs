@@ -15,6 +15,7 @@
 using System;
 using System.Collections;
 using Alachisoft.NCache.Common.Enum;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Queries.Filters
 {
@@ -37,6 +38,8 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
             Type type = null;
             foreach (string key in queryContext.InternalQueryResult)
             {
+                if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                     throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 CacheEntry cacheentry = queryContext.Cache.GetEntryInternal(key, false);
                 IComparable current = (IComparable)queryContext.Index.GetAttributeValue(key, AttributeName,cacheentry.IndexInfo);
                 if (current != null)

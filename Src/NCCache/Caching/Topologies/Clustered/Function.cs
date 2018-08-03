@@ -16,6 +16,9 @@ using System;
 using Alachisoft.NCache.Common;
 using Alachisoft.NCache.Runtime.Serialization;
 using Alachisoft.NCache.Runtime.Serialization.IO;
+using System.Diagnostics;
+using System.Threading;
+using Alachisoft.NCache.Common.Monitoring;
 
 namespace Alachisoft.NCache.Caching.Topologies.Clustered
 {
@@ -24,7 +27,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
     /// defined by the clients/derivations of clustered cache.
     /// </summary>
     [Serializable]
-    internal class Function : ICompactSerializable, IRentableObject
+    internal class Function : ICompactSerializable, IRentableObject,ICancellableRequest
     {
         /// <summary> The function code. </summary>
         private byte _opcode;
@@ -42,7 +45,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         private Array _userDataPayload;
 
         private bool _responseEpected = false;
-        /// <summary>
+
+        private TimeSpan _clientRequestTimeout = TimeSpan.FromSeconds(90);
+
+        [NonSerialized]
+        private CancellationTokenSource _cancellationSource;
+
+        [NonSerialized]
+        private Stopwatch _executionWatch;
+
+        private bool _cancellable;
+        //Usefull for debugging (dump analysis)
+        private TimeSpan _elapsedTime;        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="opcode">The operation code</param>
@@ -122,7 +136,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             _operand = reader.ReadObject();
             _syncKey = reader.ReadObject();
             _responseEpected = reader.ReadBoolean();
-        }
+	    _cancellable = reader.ReadBoolean();
+            _clientRequestTimeout = (TimeSpan)reader.ReadObject();        }
 
         void ICompactSerializable.Serialize(CompactWriter writer)
         {
@@ -131,7 +146,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             writer.WriteObject(_operand);
             writer.WriteObject(_syncKey);
             writer.Write(_responseEpected);
-        }
+            writer.Write(_cancellable);
+            writer.WriteObject(_clientRequestTimeout);        
+}
 
         #endregion
 
@@ -163,9 +180,92 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             set { _responseEpected = value; }
         }
 
+        public TimeSpan ClientRequestTimeout
+        {
+            get { return _clientRequestTimeout; }
+            set { _clientRequestTimeout = value; }
+        }
+
+        public bool Cancellable
+        {
+            get { return _cancellable; }
+            set { _cancellable = value; }
+        }
+
+        public CancellationToken CancellationToken
+        {
+            get
+            {
+                if (_cancellationSource == null)
+                    _cancellationSource = new CancellationTokenSource();
+
+                return _cancellationSource.Token;
+            }
+        }
+
+        public void InitializeCanellationToken()
+        {
+            CancellationToken token = CancellationToken;
+
+            if(_operand is object[])
+            {
+                object[] args = _operand as object[];
+
+                for(int i=0; i<args.Length; i++)
+                {
+                    object argument = args[i];
+                    if (argument is OperationContext)
+                    {
+                        ((OperationContext)argument).CancellationToken = token;
+                        _clientRequestTimeout = TimeSpan.FromMilliseconds(((OperationContext)argument).ClientOperationTimeout);
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void StartExecution()
+        {
+            if (_executionWatch == null)
+                _executionWatch = new Stopwatch();
+
+            _executionWatch.Start();
+        }
+
+        public void StopExecution()
+        {
+            if (_executionWatch != null)
+                _executionWatch.Stop();
+        }
+
+        public bool IsCancelled
+        {
+            get
+            {
+                return _cancellationSource != null ? _cancellationSource.IsCancellationRequested : false;
+            }
+        }
+
+        public bool HasTimedout
+        {
+            get
+            {
+                _elapsedTime = _executionWatch != null ? _executionWatch.Elapsed : TimeSpan.Zero;
+                return _elapsedTime > _clientRequestTimeout ? true : false;
+                
+            }
+        }
         public override string ToString()
         {
             return (Enum.Parse(typeof(Alachisoft.NCache.Caching.Topologies.Clustered.ClusterCacheBase.OpCodes), this.Opcode.ToString())).ToString();
         }
-    }
+	public bool Cancel()
+        {
+            if (_cancellationSource != null && !_cancellationSource.IsCancellationRequested)
+            {
+                _cancellationSource.Cancel();
+                return true;
+            }
+            return false;
+        }    }
 }

@@ -317,6 +317,7 @@ namespace Alachisoft.NCache.Management
 
         Dictionary<string, TopicStats> GetTopicStats(string cacheId);
 
+        void LogBackingSourceStatus(string cacheId);
 
     }
 }

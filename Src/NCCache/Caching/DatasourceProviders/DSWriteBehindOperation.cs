@@ -33,7 +33,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         private OperationResult.Status _dsOpState=new OperationResult.Status();
 
         private Exception _exception;
-
+	 private string _cacheKey; 
         public DSWriteBehindOperation(CacheRuntimeContext context, Object key,  CacheEntry entry, OpCode opcode, string providerName, long operationDelay, string taskId, string source, WriteBehindAsyncProcessor.TaskState taskState) :
             base(context, key, entry, opcode, providerName)
         {
@@ -108,7 +108,11 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             }
         }
 
-
+ 	internal string CacheKey
+        {
+            get { return _cacheKey; }
+            set { _cacheKey = value; }
+        }
         #region IComparable Members
 
         public int CompareTo(object obj)
@@ -128,7 +132,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             _source = reader.ReadObject() as string;
             _delayInterval = reader.ReadInt64();
             _state = (WriteBehindAsyncProcessor.TaskState)reader.ReadByte();
-        }
+            _cacheKey = reader.ReadObject() as string;        }
 
         public void Serialize(CompactWriter writer)
         {
@@ -139,7 +143,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             writer.WriteObject(_source);
             writer.Write(_delayInterval);
             writer.Write((byte)_state);
-        }
+	    writer.WriteObject(_cacheKey);        
+	}
 
         
     }

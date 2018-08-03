@@ -13,11 +13,13 @@
 // limitations under the License.
 
 using System;
+
 using System.Collections.Generic;
 using Alachisoft.NCache.Common.DataReader;
 using Alachisoft.NCache.Common.DataStructures;
 using Alachisoft.NCache.Common.Enum;
 using Alachisoft.NCache.Common.Queries;
+using Alachisoft.NCache.Common.Resources;
 using RecordColumn = Alachisoft.NCache.Common.DataReader.RecordColumn;
 
 namespace Alachisoft.NCache.Caching.Queries.Filters
@@ -105,11 +107,15 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
             {
                 foreach (string key in queryContext.InternalQueryResult)
                 {
+ 		   if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     KeyValuesContainer keyValues = new KeyValuesContainer();
                     keyValues.Key = key;
                     bool invalidGroupKey = false;
                     for (int i = 0; i < _orderingAttributes.Count; i++)
                     {
+ 			if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                           throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                         string attribute = _orderingAttributes[i].AttributeName;
                         CacheEntry cacheentry = queryContext.Cache.GetEntryInternal(key, false);
                         object attribValue = queryContext.Index.GetAttributeValue(key, attribute, cacheentry.IndexInfo);
@@ -144,12 +150,16 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
 
             for (int rowID = 0; rowID < resultRecordSet.Rows.Count; rowID++)
             {
+               if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 List<string> keysList = resultRecordSet.Rows[rowID].Tag as List<string>;
                 int j = 0;
                 queryContext.InternalQueryResult = new Common.Queries.ListQueryResult(queryContext.KeyFilter,queryContext.CompoundFilter, keysList);//Union(keysList as IEnumerable<string>);
               
                 foreach (AggregateFunctionPredicate afp in this._groupByValueList.AggregateFunctions)
                 {
+ 		if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                     throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     afp.Execute(queryContext, null);
                     int columnId = _groupByValueList.ObjectAttributes.Count + j++;
                     if (resultRecordSet.Columns[columnId].DataType == ColumnDataType.Object)

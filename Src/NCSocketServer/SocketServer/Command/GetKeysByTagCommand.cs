@@ -100,6 +100,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 ICollection result = null;
                 OperationContext operationContext = new OperationContext(OperationContextFieldName.OperationType, OperationContextOperationType.CacheOperation);
                 operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
 
                 result = nCache.Cache.GetKeysByTag(cmdInfo.Tags, cmdInfo.ComparisonType, operationContext);
                 stopWatch.Stop();
@@ -117,6 +119,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                     Alachisoft.NCache.SocketServer.Util.KeyPackageBuilder.PackageKeys(result.GetEnumerator(), getTagResponse.keys);
                 }
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

@@ -78,14 +78,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         
         public DSAsyncUpdatesProcessor _dsUpdateProcessor;
 		/// <summary> The external datasource reader </summary>
-		private Hashtable				_queue;
-        public Hashtable Queue
-        {
-            get
-            {
-                return _queue;
-            }
-        }
+		internal Hashtable				_queue;
+
         private string _defaultReadThruProvider;
 
         private string _defaultWriteThruProvider;
@@ -123,6 +117,14 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         public string CacheName
         {
             get { return _cacheName; }
+        }
+
+        public Hashtable Queue
+        {
+            get
+            {
+                return _queue;
+            }
         }
 
         internal CacheBase CacheImpl
@@ -845,7 +847,12 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             if (_writerProivder == null) return;
             WriteThruProviderMgr writeThruManager = GetProvider(operation.ProviderName);
             if (writeThruManager != null)
+            {
+                if (operation != null && operation.Context == null)
+                    operation.Context = _context;
+
                 writeThruManager.WriteBehind(operation);
+            }
         }
 
         internal void WriteBehind(ArrayList operations)
@@ -854,7 +861,12 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             DSWriteBehindOperation operation = operations[0] as DSWriteBehindOperation;
             WriteThruProviderMgr writeThruManager = (operation != null) ? GetProvider(operation.ProviderName) : null;//bulk write thru call have same provider
             if (writeThruManager != null)
+            {
+                if (operation != null && operation.Context == null)
+                    operation.Context = _context;
+
                 writeThruManager.WriteBehind(operations);
+            }
         }
         public void SetState(string taskId, string providerName, OpCode opCode, WriteBehindAsyncProcessor.TaskState state)
         {

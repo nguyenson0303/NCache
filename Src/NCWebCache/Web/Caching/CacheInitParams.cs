@@ -65,6 +65,8 @@ namespace Alachisoft.NCache.Web.Caching
         internal const string APPNAME = "applicationName";
         internal const string ENABLEKEEPALIVE = "enableKeepAlive";
         internal const string KEEPALIVEINTERVAL = "keepAliveInterval";
+        internal const string ENABLECLIENTLOGS = "enableClientLogs";
+        internal const string LOGLEVEL = "logLevel";
 
         private string _defaultReadThruProvider = string.Empty;
         private string _defaultWriteThruProvider = string.Empty;
@@ -75,6 +77,8 @@ namespace Alachisoft.NCache.Web.Caching
 
 
         private string _appName;
+        private bool _enableClientLogs = false;
+        private LogLevel _logLevel = LogLevel.Error;
 
         /// <summary>
         /// Gets/Sets List of servers provided by the user
@@ -105,7 +109,7 @@ namespace Alachisoft.NCache.Web.Caching
 
                 foreach (CacheServerInfo temp in value)
                 {
-                    if (!_serverList.Contains(temp))
+                    if (!_serverList.Contains(temp) && temp!=null)
                     {
                         _serverList.Add(temp.ServerInfo);
                     }
@@ -379,6 +383,27 @@ namespace Alachisoft.NCache.Web.Caching
             set { _cachePort = value; }
         }
 
+        public LogLevel LogLevel
+        {
+            get
+            { return _logLevel; }
+            set
+            {
+                _logLevel = value;
+                _dirtyFlags[LOGLEVEL] = true;
+
+            }
+        }
+
+        public bool EnableClientLogs
+        {
+            get { return _enableClientLogs; }
+            set
+            {
+                _enableClientLogs = value;
+                _dirtyFlags[ENABLECLIENTLOGS] = true;
+            }
+        }
         /// <summary>
         /// Creates Clone for deep copy of the initParam
         /// </summary>
@@ -403,8 +428,10 @@ namespace Alachisoft.NCache.Web.Caching
                 _cloneParam.BindIP = this.BindIP;
                 _cloneParam._enabeKeepAlive = this.EnableKeepAlive;
                 _cloneParam._keepAliveInterval = this.KeepAliveInterval;
-                _cloneParam.ServerList =
-                    (CacheServerInfo[])this.ServerList.Clone(); // creating shallow copy of serverlist
+                _cloneParam.ServerList = (CacheServerInfo[])this.ServerList.Clone(); // creating shallow copy of serverlist
+                _cloneParam.EnableClientLogs = this.EnableClientLogs;
+                _cloneParam.LogLevel = this._logLevel;
+
             }
 
             return _cloneParam;
@@ -458,6 +485,9 @@ namespace Alachisoft.NCache.Web.Caching
 
 
                 if (!IsSet(PORT)) this._port = config.ServerPort;
+                if (!IsSet(ENABLECLIENTLOGS)) this._enableClientLogs = config.EnableClientLogs;
+
+                if (!IsSet(LOGLEVEL)) this._logLevel = config.LogLevels;
             }
         }
     }

@@ -49,9 +49,9 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
                 ClusteredArrayList keyList = null;
 
                 if (Inverse)
-                    store.GetData(generator.Evaluate(((MemberFunction)functor).MemberName, queryContext.AttributeValues), ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, mergeType);
+                    store.GetData(generator.Evaluate(((MemberFunction)functor).MemberName, queryContext.AttributeValues), ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, mergeType, queryContext.CancellationToken);
                 else
-                    store.GetData(generator.Evaluate(((MemberFunction)functor).MemberName, queryContext.AttributeValues), ComparisonType.EQUALS, queryContext.InternalQueryResult, mergeType);
+                    store.GetData(generator.Evaluate(((MemberFunction)functor).MemberName, queryContext.AttributeValues), ComparisonType.EQUALS, queryContext.InternalQueryResult, mergeType, queryContext.CancellationToken);
             }
             else
             {
@@ -71,11 +71,11 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
                 if (Inverse)
                     store.GetData(
                         generator.Evaluate(((MemberFunction) functor).MemberName, queryContext.AttributeValues),
-                        ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union);
+                        ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
                 else
                     store.GetData(
                         generator.Evaluate(((MemberFunction) functor).MemberName, queryContext.AttributeValues),
-                        ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union);
+                        ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
             }
             else 
             {

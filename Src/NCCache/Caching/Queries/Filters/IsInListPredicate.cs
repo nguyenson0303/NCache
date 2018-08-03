@@ -17,19 +17,21 @@ using System.Collections;
 using Alachisoft.NCache.Common.Queries;
 using Alachisoft.NCache.Parser;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
+using System.Collections.Generic;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Queries.Filters
 {
     public class IsInListPredicate : Predicate, IComparable
     {
         private IFunctor functor;
-        private ArrayList members;
+        private ClusteredArrayList members;
         private const string RUNTIME_VALUE = "_$Runtime#Value$5%_";
         private bool _orderRectified;
 
         public IsInListPredicate()
         {
-            members = new ArrayList();
+            members = new ClusteredArrayList();
         }
 
         public IFunctor Functor
@@ -48,7 +50,6 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
 
             //if (members.Contains(obj)) return;
             members.Add(obj);
-            members.Sort();
         }
 
         public override bool ApplyPredicate(object o)
@@ -76,19 +77,24 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
                 {
                     for (int i = 0; i < values.Count; i++)
                     {
-                        store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union);
+                        if (queryContext.CancellationToken != null && queryContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
+                        store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
                     }
                 }
                 else
                 {
-                    store.GetData(values[0], ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union);
+                    store.GetData(values[0], ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
                     if (queryContext.InternalQueryResult != null)
                     {
                         if (queryContext.InternalQueryResult.Count > 0)
                         {
                             for (int i = 1; i < values.Count; i++)
                             {
-                                store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Subtract);
+                                if (queryContext.CancellationToken != null && queryContext.CancellationToken.IsCancellationRequested)
+                                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                                store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Subtract, queryContext.CancellationToken);
                             }
                         }
                     }
@@ -114,33 +120,29 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
                 ClusteredArrayList keyList = new ClusteredArrayList();
                 if (!Inverse)
                 {
-                    ClusteredArrayList distinctMembers = new ClusteredArrayList();
 
                     for (int i = 0; i < values.Count; i++)
                     {
-                        if (!distinctMembers.Contains(values[i]))
-                        {
-                            distinctMembers.Add(values[i]);
-                            store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union);
-                        }
+                        if (queryContext.CancellationToken != null && queryContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                        store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
+
                     }
                 }
                 else
                 {
-                    ArrayList distinctMembers = new ArrayList();
                     queryContext.InternalQueryResult = new HashedQueryResult(queryContext.KeyFilter, queryContext.CompoundFilter);
-                    store.GetData(values[0], ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union);
+                    store.GetData(values[0], ComparisonType.NOT_EQUALS, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
                     if (queryContext.InternalQueryResult != null)
                     {
                         if (queryContext.InternalQueryResult.Count > 0)
                         {
                             for (int i = 1; i < values.Count; i++)
                             {
-                                if (!distinctMembers.Contains(values[i]))
-                                {
-                                    distinctMembers.Add(values[i]);
-                                    store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Subtract);
-                                }
+                                if (queryContext.CancellationToken != null && queryContext.CancellationToken.IsCancellationRequested)
+                                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                                store.GetData(values[i], ComparisonType.EQUALS, queryContext.InternalQueryResult, CollectionOperation.Subtract, queryContext.CancellationToken);
+
                             }
                         }
                     }
@@ -154,8 +156,10 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
 
         private ArrayList GetComparibleValues(QueryContext queryContext)
         {
+            // arraylist contaons take too much time to check for duplicate members, wheras hashset has better effeciency 
+            // so mainting two data structures 
             ArrayList values = new ArrayList();
-
+            HashSet<object> duplicateValues = new HashSet<object>();
             var providedValues = queryContext.AttributeValues[((MemberFunction)functor).MemberName] as ArrayList;
 
             if (providedValues == null)
@@ -202,7 +206,11 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
                         throw new Exception("Less value(s) are specified for indexed attribute " + ((MemberFunction)functor).MemberName + ".");
 
                     //avoid duplicate values
-                    if (!values.Contains(value)) values.Add(value);
+                    if (!duplicateValues.Contains(value))
+                    {
+                        values.Add(value);
+                        duplicateValues.Add(value);
+                    }
                 }
             }
 

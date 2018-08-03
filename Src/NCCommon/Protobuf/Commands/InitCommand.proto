@@ -16,4 +16,6 @@ message InitCommand {
 	optional bool isAzureClient = 15;
 	optional ProductVersion productVersion = 16;
 	optional ClientInfo clientInfo = 17;
+	optional int32 operationTimeout =18 [default = 90000];
+
 }

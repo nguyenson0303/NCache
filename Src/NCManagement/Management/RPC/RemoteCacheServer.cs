@@ -825,6 +825,13 @@ namespace Alachisoft.NCache.Management.RPC
             return (int)ExecuteCommandOnCacehServer(command);
         }
 
+        public void LogBackingSourceStatus(string cacheId)
+        {
+            ManagementCommand command = GetManagementCommand(ManagementUtil.MethodName.LogBackingSourceStatus);
+            command.Parameters.AddParameter(cacheId);
+            ExecuteCommandOnCacehServer(command);
+        }
+
         #endregion
 
         /// <summary>

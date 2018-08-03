@@ -17,6 +17,8 @@ using System.Collections;
 using Alachisoft.NCache.Common.Queries;
 using Alachisoft.NCache.Common.Util;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
+using System.Threading;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Queries
 {
@@ -68,7 +70,7 @@ namespace Alachisoft.NCache.Caching.Queries
             get { return _store != null ? _store.Count : 0; }
         }
         
-        public void GetData(object key, ComparisonType comparisonType, IQueryResult result, CollectionOperation op)
+        public void GetData(object key, ComparisonType comparisonType, IQueryResult result, CollectionOperation op, CancellationToken token)
         {
             IComparable keyToCompare = key as IComparable;
 
@@ -84,6 +86,8 @@ namespace Alachisoft.NCache.Caching.Queries
                     case ComparisonType.NOT_EQUALS:
                         foreach (object storedKey in _store.Keys)
                         {
+			    if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                             if (((IComparable)storedKey).CompareTo(keyToCompare) != 0)
                                 result.AddObject(_store[storedKey], op);
                         }
@@ -92,6 +96,8 @@ namespace Alachisoft.NCache.Caching.Queries
                     case ComparisonType.LESS_THAN:
                         foreach (object storedKey in _store.Keys)
                         {
+			                if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                             if (((IComparable)storedKey).CompareTo(keyToCompare) < 0)
                                 result.AddObject(_store[storedKey], op);
                         }
@@ -100,6 +106,8 @@ namespace Alachisoft.NCache.Caching.Queries
                     case ComparisonType.GREATER_THAN:
                         foreach (object storedKey in _store.Keys)
                         {
+			                if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                             if (((IComparable)storedKey).CompareTo(keyToCompare) > 0)
                                 result.AddObject(_store[storedKey], op);
                         }
@@ -108,6 +116,8 @@ namespace Alachisoft.NCache.Caching.Queries
                     case ComparisonType.LESS_THAN_EQUALS:
                         foreach (object storedKey in _store.Keys)
                         {
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                             if (((IComparable)storedKey).CompareTo(keyToCompare) <= 0)
                                 result.AddObject(_store[storedKey], op);
                         }
@@ -116,6 +126,8 @@ namespace Alachisoft.NCache.Caching.Queries
                     case ComparisonType.GREATER_THAN_EQUALS:
                         foreach (object storedKey in _store.Keys)
                         {
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                             if (((IComparable)storedKey).CompareTo(keyToCompare) >= 0)
                                 result.AddObject(_store[storedKey], op);
                         }
@@ -124,6 +136,8 @@ namespace Alachisoft.NCache.Caching.Queries
                     case ComparisonType.LIKE:
                         foreach (object storedKey in _store.Keys)
                         {
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                             string pattern = key as string;
                             WildcardEnabledRegex regex = new WildcardEnabledRegex(pattern);
 
@@ -139,6 +153,8 @@ namespace Alachisoft.NCache.Caching.Queries
                     case ComparisonType.NOT_LIKE:
                         foreach (object storedKey in _store.Keys)
                         {
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                             string pattern = key as string;
                             WildcardEnabledRegex regex = new WildcardEnabledRegex(pattern);
 

@@ -100,10 +100,18 @@ namespace Alachisoft.NCache.SocketServer.Command
                 operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
 
                 operationContext.Add(OperationContextFieldName.ClientId, clientManager.ClientID);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
 
                 Hashtable removeResult = (Hashtable)nCache.Cache.Remove(cmdInfo.Keys, cmdInfo.FlagMap, cbEnrty, cmdInfo.ProviderName, operationContext);
                 stopWatch.Stop();
                 BulkRemoveResponseBuilder.BuildResponse(removeResult, cmdInfo.CommandVersion, cmdInfo.RequestId, _serializedResponsePackets,command.commandID,nCache.Cache);
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

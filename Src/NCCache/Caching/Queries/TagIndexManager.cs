@@ -18,6 +18,9 @@ using Alachisoft.NCache.Common.Queries;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
 using Alachisoft.NCache.Caching.Queries.Filters;
 using Alachisoft.NCache.Common.Queries.Filters;
+using System.Threading;
+using Alachisoft.NCache.Common.Resources;
+using System;
 
 namespace Alachisoft.NCache.Caching.Queries
 {
@@ -91,7 +94,7 @@ namespace Alachisoft.NCache.Caching.Queries
             }
         }
 
-        private void GetCombinedKeysFromEveryType(string tag, HashVector finalResult)
+        private void GetCombinedKeysFromEveryType(string tag, HashVector finalResult, CancellationToken token, bool wildCardSupport = false)
         {
             if (_indexMap == null)
                 return;
@@ -103,6 +106,10 @@ namespace Alachisoft.NCache.Caching.Queries
 
             while (typeEnumerator.MoveNext())
             {
+
+                if (token != null && token.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                 AttributeIndex index = typeEnumerator.Value as AttributeIndex;
                 IIndexStore store = index.GetStore("$Tag$");
 
@@ -111,23 +118,29 @@ namespace Alachisoft.NCache.Caching.Queries
                     IKeyFilter keyFilter = _cache != null ? _cache.GetBucketFilter() : null;
                     IKeyFilter compoundFilter = _cache != null ? _cache.GetCompoundFilter() : null;
                     IQueryResult result = new ListQueryResult(keyFilter,compoundFilter);
-                    store.GetData(tag.ToLower(), ComparisonType.EQUALS, result, CollectionOperation.Union);
+
+                    if (wildCardSupport)
+                        store.GetData(tag.ToLower(), ComparisonType.LIKE, result, CollectionOperation.Union, token);
+                    else
+                        store.GetData(tag.ToLower(), ComparisonType.EQUALS, result, CollectionOperation.Union, token);
+
+
                     foreach (string key in result)
                         finalResult[key] = null;
                 }
             }            
         }
 
-        public ICollection GetAllMatchingTags(string[] tags)
+        public ICollection GetAllMatchingTags(string[] tags, CancellationToken token)
         {
             HashVector finalResult = new HashVector();
-            GetCombinedKeysFromEveryType(tags[0],finalResult);
+            GetCombinedKeysFromEveryType(tags[0],finalResult,token);
 
             for (int i = 1; i < tags.Length; i++)
             {
                 HashVector shiftTable = new HashVector();
                 HashVector temp = new HashVector();
-                GetCombinedKeysFromEveryType(tags[i],temp);
+                GetCombinedKeysFromEveryType(tags[i],temp,token);
 
                 HashVector smaller, larger;
                 if (temp.Count > finalResult.Count)
@@ -153,23 +166,33 @@ namespace Alachisoft.NCache.Caching.Queries
             return new ClusteredArrayList(finalResult.Keys);
         }
 
-        public ICollection GetByTag(string tag)
+        public ICollection GetByTag(string tag,CancellationToken token)
         {
             HashVector finalResult = new HashVector();
-            GetCombinedKeysFromEveryType(tag,finalResult);
+            GetCombinedKeysFromEveryType(tag,finalResult,token);
             return new ClusteredArrayList(finalResult.Keys);
         }
 
-        public ICollection GetAnyMatchingTag(string[] tags)
+        public ICollection GetAnyMatchingTag(string[] tags,CancellationToken token)
         {
             HashVector finalResult = new HashVector();
-            GetCombinedKeysFromEveryType(tags[0],finalResult);           
+            GetCombinedKeysFromEveryType(tags[0],finalResult,token);           
 
             for (int i = 1; i < tags.Length; i++)
             {
-                GetCombinedKeysFromEveryType(tags[i],finalResult);
+                GetCombinedKeysFromEveryType(tags[i],finalResult,token);
             }
             return new ClusteredArrayList(finalResult.Keys);
         }
+
+        public ICollection GetByWildCardTag(string tag, CancellationToken token)
+        {
+            HashVector finalResult = new HashVector();
+
+            GetCombinedKeysFromEveryType(tag, finalResult, token, true);
+
+            return finalResult.Keys;
+        }
+
     }
 }

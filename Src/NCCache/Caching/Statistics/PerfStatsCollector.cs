@@ -721,7 +721,7 @@ namespace Alachisoft.NCache.Caching.Statistics
                         _pcMsecPerDSUpdateBase = new PerformanceCounter(PC_CATEGORY, "Average us/datasource update base", _instanceName, false);
                         _usMsecPerDSUp = new UsageStats();
                         _pcDSFailedOpsPerSec = new PerformanceCounter(PC_CATEGORY, "Datasource failed operations/sec", _instanceName, false);
-                        _pcWBCurrenBatchOpCount = new PerformanceCounter(PC_CATEGORY, "Current batch operations count", _instanceName, false);
+                        _pcWBCurrenBatchOpCount = new PerformanceCounter(PC_CATEGORY, "Write-behind batch count", _instanceName, false);
                         
                     }
 

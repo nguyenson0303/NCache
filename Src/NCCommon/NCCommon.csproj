@@ -278,6 +278,9 @@
     <Compile Include="Messaging\SubscriptionInfo.cs" />
     <Compile Include="Messaging\SubscriptionOperation.cs" />
     <Compile Include="Monitoring\CacheNodeStatus.cs" />
+    <Compile Include="Monitoring\RequestMonitoring\ICancellableRequest.cs" />
+    <Compile Include="Monitoring\RequestMonitoring\RequestLedger.cs" />
+    <Compile Include="Monitoring\RequestMonitoring\RequestMonitor.cs" />
     <Compile Include="OSInfo.cs" />
     <Compile Include="Protobuf\Commands\Command.cs" />
     <Compile Include="Protobuf\Commands\ExtensibleDependency.cs" />
@@ -310,6 +313,7 @@
     <Compile Include="Queries\IQueryResult.cs" />
     <Compile Include="Queries\ListQueryResult.cs" />
     <Compile Include="Queries\Order.cs" />
+    <Compile Include="Resources\ExceptionsResource.Designer.cs" />
     <Compile Include="RtContextValue.cs" />
     <Compile Include="Threading\QueueOperationHandler.cs" />
     <Compile Include="Threading\QueueState.cs" />
@@ -1319,11 +1323,6 @@
     <Compile Include="Protobuf\WriteToStreamResponse.cs" />
     <Compile Include="Queries\AverageResult.cs" />
     <Compile Include="Remoting\RemotingChannels.cs" />
-    <Compile Include="Resources\Resource1.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resource1.resx</DependentUpon>
-    </Compile>
     <Compile Include="RPCFramework\DotNetRPC\TargetMethod.cs" />
     <Compile Include="RPCFramework\DotNetRPC\TargetObject.cs" />
     <Compile Include="RPCFramework\IRPCTargetObject.cs" />
@@ -1447,16 +1446,8 @@
     <Compile Include="Util\ResourcePool.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="VersionType.cs" />
     <Compile Include="XmlSerialization\SerializedFormat.cs" />
     <Compile Include="XmlSerialization\XMLDocSerializer.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Resource1.resx">
-      <SubType>Designer</SubType>
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource1.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Protobuf\AddAttributeResponse.proto">
@@ -2129,6 +2120,7 @@
     <EmbeddedResource Include="Monitoring\APILogging\api-reflection.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\ExceptionsResource.resx" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

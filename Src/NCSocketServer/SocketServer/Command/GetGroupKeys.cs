@@ -70,6 +70,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 }
 
                 operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
 
                 ArrayList keysList = nCache.Cache.GetGroupKeys(cmdInfo.Group, cmdInfo.SubGroup, operationContext);
                 stopWatch.Stop();
@@ -86,6 +88,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.getGroupKeys = getGroupKeysResponse;
                 response.commandID = command.commandID;
 				_serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

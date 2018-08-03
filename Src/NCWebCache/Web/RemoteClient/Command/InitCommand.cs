@@ -23,10 +23,6 @@ namespace Alachisoft.NCache.Web.Command
     internal sealed class InitCommand : CommandBase
     {
         private Alachisoft.NCache.Common.Protobuf.InitCommand _initCommand;
-        private byte[] _userName;
-        private byte[] _password;
-        private string _clientID;
-        private string _clientIp;
         
         private Alachisoft.NCache.Common.ProductVersion _currentVersion;
 
@@ -41,7 +37,7 @@ namespace Alachisoft.NCache.Web.Command
 
         #endregion
         
-        public InitCommand(string clientid, string id, string clientLocalIP, IPAddress requestedServerAddress, Runtime.Caching.ClientInfo clientInfo)
+        public InitCommand(string clientid, string id, string clientLocalIP, IPAddress requestedServerAddress, Runtime.Caching.ClientInfo clientInfo,int operationTimeout)
         {
             _initCommand = new Alachisoft.NCache.Common.Protobuf.InitCommand();
             base.name = "InitCommand";
@@ -69,6 +65,7 @@ namespace Alachisoft.NCache.Web.Command
 
 
             _initCommand.clientVersion = 4620;
+            _initCommand.operationTimeout = operationTimeout;
         }
 
         internal override CommandType CommandType

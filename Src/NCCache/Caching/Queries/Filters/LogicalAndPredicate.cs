@@ -16,6 +16,7 @@ using System;
 using Alachisoft.NCache.Common.Queries;
 using System.Collections;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Queries.Filters
 {
@@ -70,7 +71,11 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
         internal override void Execute(QueryContext queryContext, Predicate nextPredicate)
         {
             for (int i = 0; i < members.Count; i++)
-            {
+            { 
+
+	       if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                 Predicate predicate = (Predicate)members[i];
                 bool isOfTypePredicate = predicate is IsOfTypePredicate;
 

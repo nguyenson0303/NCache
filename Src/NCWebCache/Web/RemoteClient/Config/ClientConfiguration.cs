@@ -58,6 +58,7 @@ namespace Alachisoft.NCache.Web.RemoteClient.Config
         private bool _loadServersFromConfigFile = true;
         RtContextValue serverRuntimeContext;
         bool _enableClientLogs = false;
+        LogLevel _logLevel = LogLevel.Error;
         private bool _enableDetailedClientLogs = false;
         private Search _search = Search.LocalSearch;
         private Search _result = Search.LocalSearch;
@@ -75,7 +76,8 @@ namespace Alachisoft.NCache.Web.RemoteClient.Config
         internal const string SERVERLIST = "serverlist";
         internal const string BINDIP = "bindIP";
         internal const string JVCPORT = "jvc-port";
-
+        internal const string ENABLECLIENTLOGS = "enableClientLogs";
+        internal const string LOGLEVEL = "logLevel";
         private bool _isAzureRemoteClient = false;
 
 
@@ -84,7 +86,11 @@ namespace Alachisoft.NCache.Web.RemoteClient.Config
             get { return _enableClientLogs; }
         }
 
-        public bool EnableDetailedClientLogs
+	public LogLevel LogLevels
+        {
+            get { return _logLevel; }
+        }        
+	public bool EnableDetailedClientLogs
         {
             get { return _enableDetailedClientLogs; }
         }
@@ -508,31 +514,64 @@ namespace Alachisoft.NCache.Web.RemoteClient.Config
                             }
 
                             if (cache.Attributes["default-writethru-provider"] != null)
-                                this._defaultWriteThruProvider =
+                                _defaultWriteThruProvider =
                                     cache.Attributes["default-writethru-provider"].Value.ToString();
 
                             if (initParam != null && initParam.IsSet(DEFAULTWRITETHRUPROVIDER))
                             {
-                                this._defaultWriteThruProvider = initParam.DefaultWriteThruProvider;
+                                _defaultWriteThruProvider = initParam.DefaultWriteThruProvider;
                             }
 
-
-                            try
+                            
+                            
+			    if (initParam != null && initParam.IsSet(ENABLECLIENTLOGS))
+                            {
+                                _enableClientLogs = initParam.EnableClientLogs;
+                            }
+                            else
                             {
                                 if (cache.Attributes["enable-client-logs"] != null)
-                                    this._enableClientLogs =
-                                        Convert.ToBoolean(cache.Attributes["enable-client-logs"].Value.ToString());
-                            }
-                            catch (Exception)
+                                {
+                                    _enableClientLogs = Convert.ToBoolean(cache.Attributes["enable-client-logs"].Value.ToString());
+                                }
+                            } 
+                                                      
+
+                            if (initParam != null && initParam.IsSet(LOGLEVEL))
                             {
+                                _logLevel = initParam.LogLevel;
+
+                                if (_logLevel == LogLevel.Info || _logLevel == LogLevel.Debug)
+                                {
+                                    _enableDetailedClientLogs = true;
+                                }
+                            }
+                            else
+                            {
+                                if (cache.Attributes["log-level"] != null)
+                                {
+                                    var loglevel = cache.Attributes["log-level"].Value.ToString().ToLower();
+                                    switch (loglevel)
+                                    {
+                                        case "info":
+                                            _logLevel = LogLevel.Info;
+                                            _enableDetailedClientLogs = true;
+                                            break;
+                                        case "debug":
+                                            _logLevel = LogLevel.Debug;
+                                            _enableDetailedClientLogs = true;
+                                            break;
+                                        case "error":
+                                            _logLevel = LogLevel.Error;
+                                            _enableDetailedClientLogs = false;
+                                            break;
+                                    }
+                                }
                             }
 
-                            if (cache.Attributes["log-level"] != null)
-                                this._enableDetailedClientLogs =
-                                    cache.Attributes["log-level"].Value.ToString().ToLower() == "info" ? true : false;
 
 
-                            this.serverRuntimeContext = RtContextValue.NCACHE;
+                            serverRuntimeContext = RtContextValue.NCACHE;
 
                             _importHashmap = true;
 

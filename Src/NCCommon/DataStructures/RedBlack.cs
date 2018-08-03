@@ -25,6 +25,7 @@ using Alachisoft.NCache.Common.Util;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
 using Alachisoft.NCache.Common.Queries.Filters;
 using System.Threading;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Common.DataStructures
 {
@@ -358,7 +359,7 @@ namespace Alachisoft.NCache.Common.DataStructures
         /// GetData
         /// Gets the data object associated with the specified key
         ///<summary>
-        public void GetData(T key, COMPARE compareType, IQueryResult resultKeys, CollectionOperation mergeType)
+        public void GetData(T key, COMPARE compareType, IQueryResult resultKeys, CollectionOperation mergeType, CancellationToken token)
         {
             int result;
 
@@ -382,6 +383,10 @@ namespace Alachisoft.NCache.Common.DataStructures
                         // traverse tree until node is found
                         while (treeNode != _sentinelNode)
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (isStringValue && treeNode.Key is string)
                                 //result = string.Compare(treeNode.Key , key , true);
                                 result = treeNode.Key.ToString().ToLower().CompareTo(key.ToString().ToLower());
@@ -409,6 +414,10 @@ namespace Alachisoft.NCache.Common.DataStructures
 
                         while (en.MoveNext())
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (isStringValue && en.Key is string)
                                 result = en.Key.ToString().ToLower().CompareTo(key.ToString().ToLower());
                             else
@@ -429,6 +438,10 @@ namespace Alachisoft.NCache.Common.DataStructures
                         en = GetEnumerator(false);
                         while (en.MoveNext())
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (isStringValue && en.Key is string)
                                 result = en.Key.ToString().ToLower().CompareTo(key.ToString().ToLower());
                             else
@@ -450,6 +463,10 @@ namespace Alachisoft.NCache.Common.DataStructures
                         en = GetEnumerator(true);
                         while (en.MoveNext())
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (isStringValue && en.Key is string)
                                 result = en.Key.ToString().ToLower().CompareTo(key.ToString().ToLower());
                             else
@@ -469,6 +486,10 @@ namespace Alachisoft.NCache.Common.DataStructures
                         en = this.GetEnumerator(false);
                         while (en.MoveNext())
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (isStringValue && en.Key is string)
                                 result = en.Key.ToString().ToLower().CompareTo(key.ToString().ToLower());
                             else
@@ -488,6 +509,10 @@ namespace Alachisoft.NCache.Common.DataStructures
                         en = this.GetEnumerator();
                         while (en.MoveNext())
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (isStringValue && en.Key is string)
                                 result = en.Key.ToString().ToLower().CompareTo(key.ToString().ToLower());
                             else
@@ -509,6 +534,10 @@ namespace Alachisoft.NCache.Common.DataStructures
                         regex = new WildcardEnabledRegex(pattern);
                         while (en.MoveNext())
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (en.Key is string)
                             {
                                 if (regex.IsMatch(en.Key.ToString().ToLower()))
@@ -528,6 +557,10 @@ namespace Alachisoft.NCache.Common.DataStructures
                         regex = new WildcardEnabledRegex(pattern);
                         while (en.MoveNext())
                         {
+
+                            if (token != null && token.IsCancellationRequested)
+                                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                             if (en.Key is string)
                             {
                                 if (!regex.IsMatch(en.Key.ToString().ToLower()))

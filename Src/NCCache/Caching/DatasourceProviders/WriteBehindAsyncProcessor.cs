@@ -19,6 +19,8 @@ using Alachisoft.NCache.Caching.Topologies;
 using Alachisoft.NCache.Common.Logger;
 using Alachisoft.NCache.Common.Threading;
 using Alachisoft.NCache.Runtime.DatasourceProviders;
+using System.Text;
+using System.Linq;
 
 namespace Alachisoft.NCache.Caching.DatasourceProviders
 {
@@ -56,24 +58,32 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         /// <summary>
         /// Queue using ArrayList as internal structure.
         /// </summary>
-        internal class WaitQueue : ICloneable
+        internal class WaitQueue
         {
-            private ArrayList _queue;
+            private IDictionary<string, DSWriteBehindOperation> _queue;
+            private IDictionary<string, ArrayList> _cacheKyes;
+            private object _sync_mutex = new object();
+            //private Hashtable _temp = new Hashtable();
+            ILogger NcacheLog;
             /// <summary>
             /// Initializes new instance of WriteBehindQueue
             /// </summary>
-            public WaitQueue()
+            public WaitQueue(ILogger logger)
             {
-                this._queue = new ArrayList();
+                this._queue = new Dictionary<string, DSWriteBehindOperation>();
+                _cacheKyes = new Dictionary<string, ArrayList>();
+                NcacheLog = logger;
             }
 
             /// <summary>
             /// Initializes new instance of WriteBehindQueue
             /// </summary>
             /// <param name="capacity">capacity</param>
-            public WaitQueue(int capacity)
+            public WaitQueue(int capacity, ILogger logger)
             {
-                this._queue = new ArrayList(capacity);
+                _queue = new Dictionary<string, DSWriteBehindOperation>(capacity);
+                _cacheKyes = new Dictionary<string, ArrayList>(capacity);
+                NcacheLog = logger;
             }
 
 
@@ -82,94 +92,162 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             /// Queue a write behind task
             /// </summary>
             /// <param name="task">write behind task</param>
-            public void Enqueue(DSWriteBehindOperation writeOperations)
+            private void Enqueue(DSWriteBehindOperation writeOperations)
             {
-                lock (this._queue)
-                {
-                    this._queue.Add(writeOperations);
-                }
+
+                if (_queue.ContainsKey(writeOperations.TaskId))
+                    _queue[writeOperations.TaskId] = writeOperations;
+                else
+                    _queue.Add(writeOperations.TaskId, writeOperations);
             }
 
-            /// <summary>
-            /// Dequeue a write behind task
-            /// </summary>
-            /// <returns>write behind task</returns>
-            public DSWriteOperation Dequeue()
+            private bool ContainsTaskID(string taskId)
             {
-                lock (this._queue)
+                if (!string.IsNullOrEmpty(taskId))
                 {
-                    if (this._queue.Count == 0) return null;
-
-                    DSWriteOperation value = this._queue[0] as DSWriteOperation;
-                    this._queue.RemoveAt(0);
-                    return value;
+                    return _queue.ContainsKey(taskId);
                 }
+                return false;
             }
 
-            /// <summary>
-            /// Get the write behind task at top of queue
-            /// </summary>
-            /// <returns>write behind task</returns>
-            public DSWriteOperation Peek()
+            private bool RemoveTaskID(string taskId)
             {
-                lock (this._queue)
+                lock (_sync_mutex)
                 {
-                    if (this._queue.Count == 0) return null;
-                    return this._queue[0] as DSWriteOperation;
-                }
-            }
-
-            public DSWriteBehindOperation this[int index]
-            {
-                get
-                {
-                    lock (this._queue)
+                    if (ContainsTaskID(taskId))
                     {
-                        if (index >= _queue.Count || index < 0) throw new IndexOutOfRangeException();
-                        return _queue[index] as DSWriteBehindOperation;
+                        _queue.Remove(taskId);
+                        return true;
                     }
+                    return false;
                 }
-                set
-                {
-                }
-            }
 
-            public void RemoveAt(int index)
-            {
-                lock (this._queue)
-                {
-                    if (index >= _queue.Count || index < 0) throw new IndexOutOfRangeException();
-                    _queue.RemoveAt(index);
-                }
             }
-            /// <summary>
-            /// Removes write behind, by searching the task with same taskId in queue
-            /// </summary>
-            ///<param name="taskId">taskId</param>
-            public void Remove(string taskId)
+            public bool Remove(string taskID)
             {
-                lock (this._queue)
+                try
                 {
-                    for (int i = this._queue.Count - 1; i >= 0; i--)
+                    ArrayList taskIDs = new ArrayList();
+                    IEnumerator enm = null;
+                    string cacheKey = GetCacheKeyFromTask(taskID);
+
+                    if (!string.IsNullOrEmpty(taskID))
                     {
-                        DSWriteBehindOperation qTask = this._queue[i] as DSWriteBehindOperation;
-                        if (qTask.TaskId.Contains(taskId))
+                        if (!string.IsNullOrEmpty(cacheKey))
                         {
-                            this._queue.RemoveAt(i);
-                            break;
+
+                            if (Contains(cacheKey))
+                            {
+                                lock (_sync_mutex)
+                                {
+                                    _cacheKyes.TryGetValue(cacheKey, out taskIDs);
+                                    _cacheKyes.Remove(cacheKey);
+
+                                    if (taskIDs != null && taskIDs.Count > 0)
+                                    {
+                                        enm = taskIDs.GetEnumerator();
+                                    }
+                                }
+                                if (enm != null)
+                                {
+                                    while (enm.MoveNext())
+                                    {
+                                        RemoveTaskID(enm.Current.ToString());
+                                    }
+                                }
+                                return true;
+                            }
+                            else
+                            {
+                                return RemoveTaskID(taskID);
+                            }
+
                         }
+                        else
+                        {
+                            return RemoveTaskID(taskID);
+                        }
+
                     }
+                    else
+                        return false;
+
+                }
+                catch (Exception ex)
+                {
+                    return false;
                 }
             }
 
+            public bool Contains(string cacheKey)
+            {
+                lock (_sync_mutex)
+                {
+                    if (!string.IsNullOrEmpty(cacheKey))
+                    {
+                        return _cacheKyes.ContainsKey(cacheKey);
+                    }
+                    return false;
+                }
+
+            }
+
+            public string GetCacheKeyFromTask(string taskID)
+            {
+                if (ContainsTaskID(taskID))
+                    return (string)_queue[taskID].CacheKey;
+                return string.Empty;
+            }
+
+            public void EnqueueKeys(string cacheKey, string taskID, DSWriteBehindOperation writeOperations)
+            {
+                lock (_sync_mutex)
+                {
+
+                    if (_cacheKyes.ContainsKey(cacheKey))
+                    {
+                        ArrayList value = (ArrayList)_cacheKyes[cacheKey];
+
+                        if (!value.Contains(taskID))
+                        {
+                            value.Add(taskID);
+                            _cacheKyes[cacheKey] = value;
+                        }
+
+                    }
+
+                    else
+                    {
+                        ArrayList value = new ArrayList();
+                        value.Add(taskID);
+                        _cacheKyes.Add(cacheKey, value);
+                    }
+                    writeOperations.CacheKey = cacheKey;
+                    Enqueue(writeOperations);
+                }
+            }
+
+            public DSWriteBehindOperation GetWriteBehindTaskValue(string taskId)
+            {
+                if (!string.IsNullOrEmpty(taskId))
+                {
+                    if (ContainsTaskID(taskId))
+                    {
+                        return _queue[taskId] as DSWriteBehindOperation;
+                    }
+                }
+                return null;
+            }
             /// <summary>
             /// Clears the write behind queue
             /// </summary>
             public void Clear()
             {
-                lock (this._queue)
+                lock (this._sync_mutex)
                 {
-                    this._queue.Clear();
+                    _cacheKyes.Clear();
+                    _queue.Clear();
+
                 }
             }
             /// <summary>
@@ -177,7 +255,17 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             /// </summary>
             public int Count
             {
-                get { lock (this._queue) { return _queue.Count; } }
+                get { lock (_sync_mutex) { return _queue.Count; } }
+            }
+
+            public int CacheKeyCount
+            {
+                get { lock (_sync_mutex) { return _cacheKyes.Count; } }
+            }
+
+            public void DumpKeys()
+            {
+
             }
 
             #region IEnumerable Members
@@ -186,9 +274,9 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             /// 
             /// </summary>
             /// <returns></returns>
-            public IEnumerator GetEnumerator()
+            public IEnumerator<KeyValuePair<string, DSWriteBehindOperation>> GetEnumerator()
             {
-                lock (this._queue)
+                lock (this._sync_mutex)
                 {
                     return _queue.GetEnumerator();
                 }
@@ -196,21 +284,14 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
 
             #endregion
 
-            #region ICloneable Members
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
-            public object Clone()
+            public IDictionary<string, DSWriteBehindOperation> GetMatchingKeys(string taskID)
             {
-                lock (this._queue)
+                lock (_sync_mutex)
                 {
-                    return _queue.Clone();
+                    return _queue.Where(val => val.Key.Contains(taskID)).ToDictionary(val => val.Key, val => val.Value);
                 }
             }
 
-            #endregion
         }
 
         /// <summary>
@@ -220,10 +301,10 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         internal class WriteBehindQueue : ICloneable
         {
             private Hashtable _queue = new Hashtable(1000);
-            private Dictionary<string, int> _keyToIndexMap = new Dictionary<string, int>(1000);
-            private Dictionary<int, string> _indexToKeyMap = new Dictionary<int, string>(1000);
-            private Dictionary<string, int> _taskIDMap = new Dictionary<string, int>(1000);
-            private WaitQueue _waitQueue = new WaitQueue();
+            internal Dictionary<string, int> _keyToIndexMap = new Dictionary<string, int>(1000);
+            internal Dictionary<int, string> _indexToKeyMap = new Dictionary<int, string>(1000);
+            internal Dictionary<string, int> _taskIDMap = new Dictionary<string, int>(1000);
+            private WaitQueue _waitQueue;
 
             private int _tail = -1;
             private int _head = -1;
@@ -233,22 +314,22 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             private int _requeueLimit = 0;
             private int _evictionRatio = 0;//requeue operations evictions ratio
             private float _ratio = 0.25F;
-           
-            private ArrayList _requeuedOps = new ArrayList();
+
+            internal Hashtable _requeuedOps = new Hashtable();
             private CacheRuntimeContext _context;
-         
+
             private Latch _shutdownStatusLatch = new Latch(ShutDownStatus.NONE);
 
             internal WaitQueue WaitQueue
             {
                 get { return _waitQueue; }
             }
-            
+
             public WriteBehindQueue(CacheRuntimeContext context)
             {
                 _context = context;
-                _waitQueue = new WaitQueue();
-                _requeuedOps = new ArrayList();
+                _waitQueue = new WaitQueue(context.NCacheLog);
+                _requeuedOps = new Hashtable();
             }
 
             public void WindUpTask()
@@ -296,7 +377,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                     {
                         if (operation.State == TaskState.Waite)
                         {
-                            _waitQueue.Enqueue(operation);
+                            _waitQueue.EnqueueKeys((string)cacheKey, operation.TaskId, operation);
                             return;
                         }
                         if (_tail == int.MaxValue)
@@ -322,25 +403,13 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                                     //if existing is requeued and incoming operation is new,than we will keep new
                                     if (operation.OperationState == OperationState.New)
                                     {
-                                        operation.EnqueueTime = DateTime.Now;
-                                        _taskIDMap.Remove(oldOperation.TaskId);
-                                        _queue[queueIndex] = operation;//update operation
-                                        _taskIDMap[operation.TaskId] = queueIndex;
+                                        UpdateExistingOperation(queueIndex, oldOperation, operation);
                                     }
                                 }
                                 else
                                 {
-                                    if (operation.OperationState == OperationState.Requeue)
-                                    {
-                                        operation.EnqueueTime = DateTime.Now;//reset operation delay
-                                    }
-                                    else
-                                        operation.EnqueueTime = oldOperation.EnqueueTime;   //maintaining previous operation delay
+                                    UpdateExistingOperation(queueIndex, oldOperation, operation, operation.OperationState == OperationState.Requeue ? false : true);
 
-                                    _requeuedOps.Add(operation);
-                                    _taskIDMap.Remove(oldOperation.TaskId);
-                                    _queue[queueIndex] = operation;//update operation
-                                    _taskIDMap[operation.TaskId] = queueIndex;
                                 }
                                 isNewItem = false;
                             }
@@ -355,7 +424,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                             _taskIDMap[(string)operation.TaskId] = index;
                             Monitor.PulseAll(_sync_mutex);
                             if (operation.OperationState == OperationState.Requeue)
-                                _requeuedOps.Add(operation);
+                                _requeuedOps.Add(operation.TaskId, operation);
                         }
                         //write behind queue counter
                         _context.PerfStatsColl.SetWBQueueCounter(this._queue.Count);
@@ -369,6 +438,34 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                 finally
                 {
                 }
+            }
+
+
+            public void UpdateExistingOperation(int queueIndex, DSWriteBehindOperation oldOperation, DSWriteBehindOperation operation, bool setOldtime = false)
+            {
+                if (oldOperation.OperationState == OperationState.Requeue)
+                {
+                    if (_requeuedOps.ContainsKey(oldOperation.TaskId))
+                    {
+                        _requeuedOps.Remove(oldOperation.TaskId);
+                    }
+                }
+
+                if (!setOldtime)
+                    operation.EnqueueTime = DateTime.Now;
+                else
+                    operation.EnqueueTime = oldOperation.EnqueueTime;
+
+                _taskIDMap.Remove(oldOperation.TaskId);
+                _queue[queueIndex] = operation;//update operation
+                _taskIDMap[operation.TaskId] = queueIndex;
+
+                if (operation.OperationState == OperationState.Requeue && !setOldtime)
+                {
+                    if (!_requeuedOps.Contains(operation.TaskId))
+                        _requeuedOps.Add(operation.TaskId, operation);
+                }
+
             }
 
             public DSWriteBehindOperation Dequeue(bool batchOperations, DateTime selectionTime)
@@ -431,7 +528,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                                     _indexToKeyMap.Remove(index);
                                     _queue.Remove(index);
                                     if (operation.OperationState == OperationState.Requeue)
-                                        _requeuedOps.Remove(operation);
+                                        _requeuedOps.Remove(operation.TaskId);
                                 }
                             }
                             else
@@ -479,33 +576,55 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             /// </summary>
             public void EvictRequeuedOps()
             {
+                ArrayList reQueueOpList = null;
+                int opsCountTobeRemoved = 0;
+
                 lock (_sync_mutex)
                 {
                     if (_requeuedOps.Count > 0)
                     {
-                        int opsCountTobeRemoved = (int)Math.Ceiling((float)_requeuedOps.Count * _ratio);
-                        ArrayList removableIndexes = new ArrayList();
-                        _requeuedOps.Sort();
-                        for (int i = opsCountTobeRemoved; i > 0; i--)
-                        {
-                            DSWriteBehindOperation operation = _requeuedOps[i] as DSWriteBehindOperation;
-                            string cacheKey = operation.Key as string;
-                            int index = _keyToIndexMap[cacheKey];
-                            _keyToIndexMap.Remove(cacheKey);
-                            _indexToKeyMap.Remove(index);
-                            _taskIDMap.Remove(operation.TaskId);
-                            _queue.Remove(index);
-                            removableIndexes.Add(i);
-                            _context.PerfStatsColl.IncrementWBEvictionRate();
-                        }
-                        for (int i = removableIndexes.Count; i > 0; i--)
-                        {
-                            _requeuedOps.RemoveAt(i);
-                        }
+                        opsCountTobeRemoved = (int)Math.Ceiling((float)_requeuedOps.Count * _ratio);
+
+                        reQueueOpList = new ArrayList(_requeuedOps.Values);
                     }
-                    _context.PerfStatsColl.SetWBQueueCounter(this._queue.Count);
-                    _context.PerfStatsColl.SetWBFailureRetryCounter(_requeuedOps.Count);
                 }
+
+                reQueueOpList.Sort();
+
+                for (int i = 0; i < opsCountTobeRemoved; i++)
+                {
+                    DSWriteBehindOperation operation = reQueueOpList[i] as DSWriteBehindOperation;
+                    string cacheKey = operation.Key as string;
+                    int index = 0;
+
+                    if (_keyToIndexMap.ContainsKey(cacheKey))
+                        index = _keyToIndexMap[cacheKey];
+
+                    lock (_sync_mutex)
+                    {
+                        if (_keyToIndexMap.ContainsKey(cacheKey))
+                            _keyToIndexMap.Remove(cacheKey);
+
+                        if (_indexToKeyMap.ContainsKey(index))
+                            _indexToKeyMap.Remove(index);
+
+                        if (_taskIDMap.ContainsKey(operation.TaskId))
+                            _taskIDMap.Remove(operation.TaskId);
+
+                        if (_queue.ContainsKey(index))
+                            _queue.Remove(index);
+
+                        if (_requeuedOps.ContainsKey(operation.TaskId))
+                            _requeuedOps.Remove(operation.TaskId);
+                    }
+
+                    _context.PerfStatsColl.IncrementWBEvictionRate();
+                }
+
+
+                _context.PerfStatsColl.SetWBQueueCounter(this._queue.Count);
+                _context.PerfStatsColl.SetWBFailureRetryCounter(_requeuedOps.Count);
+
             }
             /// <summary>
             /// Updates write behind task state, by searching the task with same taskId in queue
@@ -516,38 +635,48 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             {
                 lock (this._sync_mutex)
                 {
-                    bool found = false;
-                    int index = -1;
-                    for (int i = this._waitQueue.Count - 1; i >= 0; i--)
+                    DSWriteBehindOperation waitOperation = _waitQueue.GetWriteBehindTaskValue(taskId);
+                    if (waitOperation != null)
                     {
-                        DSWriteBehindOperation operation = this._waitQueue[i] as DSWriteBehindOperation;
-                        if (operation.TaskId.Contains(taskId))
+                        if (state == TaskState.Execute)
                         {
-                            if (state == TaskState.Execute)
-                            {
-                                operation.State = state;            //move to write behind queue only if state is execute
-                                this.Enqueue(operation.Key, false, operation);
-                            }
-                            found = true;
-                            index = i;
-                            break;
+                            waitOperation.State = state;            //move to write behind queue only if state is execute
+                            this.Enqueue(waitOperation.Key, false, waitOperation);
                         }
                     }
-                    if (index >= 0)
-                        _waitQueue.RemoveAt(index);
-                    if (!found)//for remove operation in main queue
+                    _waitQueue.Remove(taskId);
+
+                    if (state == TaskState.Remove && waitOperation != null)
                     {
                         if (_taskIDMap.ContainsKey(taskId))
                         {
-                            int queueIndex = _taskIDMap[taskId];
-                            string cachekey = _indexToKeyMap[queueIndex];
-                            DSWriteBehindOperation operation = _queue[queueIndex] as DSWriteBehindOperation;
-                            _queue.Remove(queueIndex);
-                            _keyToIndexMap.Remove(cachekey);
-                            _indexToKeyMap.Remove(queueIndex);
-                            _taskIDMap.Remove(taskId);
-                            if (operation.OperationState == OperationState.Requeue)
-                                _requeuedOps.Remove(operation);
+                            int queueIndex = 0;
+                            string cachekey = null;
+                            DSWriteBehindOperation operation = null;
+
+                            if (_taskIDMap.ContainsKey(taskId))
+                            {
+                                queueIndex = _taskIDMap[taskId];
+                                _taskIDMap.Remove(taskId);
+                            }
+
+                            if (_indexToKeyMap.ContainsKey(queueIndex))
+                            {
+                                cachekey = _indexToKeyMap[queueIndex];
+                                operation = _queue[queueIndex] as DSWriteBehindOperation;
+                                _queue.Remove(queueIndex);
+                                _indexToKeyMap.Remove(queueIndex);
+                            }
+
+                            if (_keyToIndexMap.ContainsKey(cachekey))
+                                _keyToIndexMap.Remove(cachekey);
+
+                            if (operation != null && operation.OperationState == OperationState.Requeue)
+                            {
+
+                                if (_requeuedOps.ContainsKey(operation.TaskId))
+                                    _requeuedOps.Remove(operation.TaskId);
+                            }
                         }
                     }
                     _context.PerfStatsColl.SetWBQueueCounter(this._queue.Count);
@@ -563,114 +692,114 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             /// <param name="newBulkTable">table that contains keys and value that succeded bulk operation</param>
             public void UpdateState(string taskId, TaskState state, Hashtable newBulkTable)
             {
+                IDictionary<string, DSWriteBehindOperation> waitQueue = null;
+                ArrayList removablekeys = new ArrayList();
+                IEnumerator<KeyValuePair<string, DSWriteBehindOperation>> enumerator = null;
+                bool removeOps = false;
+                int j = 0;
+
                 lock (this._sync_mutex)
                 {
-                    bool removeOps = false;
-                    int count = this._waitQueue.Count;
-                    ArrayList removableIndexes = new ArrayList();
                     //for waite status
-                    for (int i = 0, j = 0; i < count; i++)
+                    waitQueue = _waitQueue.GetMatchingKeys(taskId);
+                }
+
+                if (waitQueue != null && waitQueue.Count > 0)
+                {
+                    enumerator = WaitQueue.GetEnumerator();
+
+                    if (enumerator != null)
                     {
-                        DSWriteBehindOperation queueOp = this._waitQueue[i] as DSWriteBehindOperation;
-                        if (newBulkTable.ContainsKey(queueOp.Key) && queueOp.TaskId.Contains(taskId))
+                        while (enumerator.MoveNext())
                         {
-                            if (state == TaskState.Execute)
+                            if (newBulkTable.ContainsKey(enumerator.Current.Value.Key))
                             {
-                                queueOp.State = state;
-                                this.Enqueue(queueOp.Key, false, queueOp);
-                            }
-                            removableIndexes.Add(i);
-                            if (newBulkTable.Count == ++j)
-                            {
-                                removeOps = true;
-                                break;
+                                lock (this._sync_mutex)
+                                {
+                                    if (state == TaskState.Execute)
+                                    {
+                                        DSWriteBehindOperation queueOp = enumerator.Current.Value as DSWriteBehindOperation;
+                                        queueOp.State = state;
+                                        this.Enqueue(queueOp.Key, false, queueOp);
+                                        removablekeys.Add(queueOp.TaskId);
+                                    }
+
+                                    if (newBulkTable.Count == ++j)
+                                    {
+                                        removeOps = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
-                    for (int i = removableIndexes.Count - 1; i >= 0; i--)
-                    {
-                        _waitQueue.RemoveAt((int)removableIndexes[i]);
-                    }
-                    //for remove status
-                    if (state == TaskState.Remove && !removeOps)
+                }
+                foreach (string taskid in removablekeys)
+                {
+                    lock (_sync_mutex)
+                        _waitQueue.Remove(taskid);
+                }
+
+
+                //for remove status
+                if (state == TaskState.Remove && !removeOps)
+                {
+                    lock (_sync_mutex)
                     {
                         IDictionaryEnumerator bulkTable = newBulkTable.GetEnumerator();
                         while (bulkTable.MoveNext())
                         {
                             string key = (string)bulkTable.Key;
+
                             if (_keyToIndexMap.ContainsKey(key))
                             {
-                                int queueIndex = _keyToIndexMap[key];
-                                string cachekey = _indexToKeyMap[queueIndex];
-                                DSWriteBehindOperation operation = _queue[queueIndex] as DSWriteBehindOperation;
-                                _queue.Remove(queueIndex);
-                                _keyToIndexMap.Remove(cachekey);
-                                _indexToKeyMap.Remove(queueIndex);
-                                _taskIDMap.Remove(operation.TaskId);
-                                if (operation.OperationState == OperationState.Requeue)
-                                    _requeuedOps.Remove(operation);
+                                string cachekey = null;
+                                DSWriteBehindOperation operation = null;
+
+                                int queueIndex = 0;
+
+                                if (_keyToIndexMap.ContainsKey(key))
+                                {
+                                    queueIndex = _keyToIndexMap[key];
+                                }
+
+                                if (_indexToKeyMap.ContainsKey(queueIndex))
+                                {
+                                    cachekey = _indexToKeyMap[queueIndex];
+                                    operation = _queue[queueIndex] as DSWriteBehindOperation;
+                                }
+
+                                if (_queue.ContainsKey(queueIndex))
+                                {
+                                    _queue.Remove(queueIndex);
+                                }
+
+                                if (_keyToIndexMap.ContainsKey(cachekey))
+                                    _keyToIndexMap.Remove(cachekey);
+
+                                if (_indexToKeyMap.ContainsKey(queueIndex))
+                                    _indexToKeyMap.Remove(queueIndex);
+
+                                if (operation != null)
+                                {
+                                    if (_taskIDMap.ContainsKey(operation.TaskId))
+                                        _taskIDMap.Remove(operation.TaskId);
+
+                                    if (operation.OperationState == OperationState.Requeue)
+                                        if (_requeuedOps.ContainsKey(operation.TaskId))
+                                            _requeuedOps.Remove(operation.TaskId);
+                                }
                             }
                         }
                     }
-                    _context.PerfStatsColl.SetWBQueueCounter(this._queue.Count);
-                    _context.PerfStatsColl.SetWBFailureRetryCounter(_requeuedOps.Count);
                 }
+                _context.PerfStatsColl.SetWBQueueCounter(this._queue.Count);
+                _context.PerfStatsColl.SetWBFailureRetryCounter(_requeuedOps.Count);
             }
 
 
-            /// <summary>
-            /// Search write behind tasks states, by searching the task with the same taskId in the table.
-            /// </summary>
-            /// <param name="states">key value pair of taskIds and there states</param>
-            public void UpdateState(Hashtable states)
-            {
-                lock (this._sync_mutex)
-                {
-                    bool removeOps = false;
-                    //for waite status
-                    for (int i = 0, j = 0; i < this._waitQueue.Count; i++)
-                    {
-                        DSWriteBehindOperation queueOp = this._waitQueue[i] as DSWriteBehindOperation;
-                        if (states.ContainsKey(queueOp.TaskId))
-                        {
-                            TaskState state = (TaskState)states[queueOp.TaskId];
-                            if (state == TaskState.Execute)
-                            {
-                                queueOp.State = state;
-                                this.Enqueue(queueOp.Key, false, queueOp);
-                            }
-                            _waitQueue.Remove(queueOp.TaskId);
-                            if (states.Count == ++j)
-                            {
-                                removeOps = true;
-                                break;
-                            }
-                        }
-                    }
-                    //for remove status
-                    if (!removeOps)
-                    {
-                        IDictionaryEnumerator taskStaes = states.GetEnumerator();
-                        while (taskStaes.MoveNext())
-                        {
-                            string taskId = (string)taskStaes.Key;
-                            if (_taskIDMap.ContainsKey(taskId))
-                            {
-                                int queueIndex = _taskIDMap[taskId];
-                                string cachekey = _indexToKeyMap[queueIndex];
-                                DSWriteBehindOperation operation = _queue[queueIndex] as DSWriteBehindOperation;
-                                _queue.Remove(queueIndex);
-                                _keyToIndexMap.Remove(cachekey);
-                                _indexToKeyMap.Remove(queueIndex);
-                                if (operation.OperationState == OperationState.Requeue)
-                                    _requeuedOps.Remove(operation);
-                            }
-                        }
-                    }
-                    _context.PerfStatsColl.SetWBQueueCounter(this._queue.Count);
-                    _context.PerfStatsColl.SetWBFailureRetryCounter(_requeuedOps.Count);
-                }
-            }
+
+
 
             /// <summary>
             /// Search for the write behind tasks initiated from source address, and move these operations from wait queue to ready queue
@@ -678,48 +807,42 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             /// <param name="source">address of source node</param>
             public void UpdateState(string source)
             {
+                IEnumerator<KeyValuePair<string, DSWriteBehindOperation>> enumerator = null;
+                string taskID = null;
+
                 lock (this._sync_mutex)
                 {
-                    int index = -1;
-                    for (int i = 0; i < this._waitQueue.Count; i++)
+                    enumerator = _waitQueue.GetEnumerator();
+                }
+                while (enumerator.MoveNext())
+                {
+                    if (enumerator.Current.Value.Source == source)
                     {
-                        DSWriteBehindOperation queueOp = this._waitQueue[i] as DSWriteBehindOperation;
-                        if (queueOp.Source == source)
+                        lock (this._sync_mutex)
                         {
+                            DSWriteBehindOperation queueOp = enumerator.Current.Value;
                             queueOp.State = TaskState.Execute;
                             this.Enqueue(queueOp.Key, false, queueOp);
-                            index = i;
+                            taskID = enumerator.Current.Key;
                             break;
                         }
+
                     }
-                    if (index >= 0)
-                        _waitQueue.RemoveAt(index);
                 }
+                lock (this._sync_mutex)
+                {
+                    _waitQueue.Remove(taskID);
+                }
+
             }
             /// <summary>
             /// Search for the write behind task in wait queue
             /// </summary>
             /// <param name="source">address of source node</param>
-            public bool SearchWaitQueue(string taskId)
+            public bool RemoveFromWaitQueue(string taskId)
             {
-                lock (this._sync_mutex)
-                {
-                    bool found = false;
-                    int index = -1;
-                    for (int i = 0; i < this._waitQueue.Count; i++)
-                    {
-                        DSWriteBehindOperation queueOp = this._waitQueue[i] as DSWriteBehindOperation;
-                        if (queueOp.TaskId.Contains(taskId))
-                        {
-                            found = true;
-                            index = i;
-                            break;
-                        }
-                    }
-                    if (index >= 0)
-                        _waitQueue.RemoveAt(index);
-                    return found;
-                }
+                return _waitQueue.Remove(taskId);
+
             }
             /// <summary>
             /// Clears the write behind queue
@@ -816,15 +939,18 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
 
             internal void ExecuteWaitQueue()
             {
+                IEnumerator<KeyValuePair<string, DSWriteBehindOperation>> enumerator = null;
+
                 lock (this._sync_mutex)
                 {
-                    for (int i = 0; i < this._waitQueue.Count; i++)
+                    enumerator = _waitQueue.GetEnumerator();
+                    while (enumerator.MoveNext())
                     {
-                        DSWriteBehindOperation queueOp = this._waitQueue[i] as DSWriteBehindOperation;
+                        DSWriteBehindOperation queueOp = enumerator.Current.Value;
                         queueOp.State = TaskState.Execute;
                         this.Enqueue(queueOp.Key, false, queueOp);
-                        _waitQueue.Remove(queueOp.TaskId);
                     }
+                    _waitQueue.Clear();
                 }
             }
 
@@ -844,7 +970,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         private Thread _worker;
 
         private WriteBehindQueue _queue;
-        
+
 
         /// <summary>Operation time out</summary>
         private int _timeout;
@@ -931,7 +1057,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
 
             if (_queue != null)
                 _queue.WaitForShutDown(interval);
-            
+
             _context.NCacheLog.CriticalInfo("WriteBehindAsyncProcessor", "Shutdown task completed.");
         }
 
@@ -981,7 +1107,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             }
             //Setting config value in WB Queue
             if (_queue != null)
-                _queue.SetConfigDefaults(this._requeueLimit, this._requeueEvcRatio);           
+                _queue.SetConfigDefaults(this._requeueLimit, this._requeueEvcRatio);
         }
 
         /// <summary>
@@ -1204,7 +1330,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                             return;
                         }
                         _cacheImpl.DoWrite("Executing WriteBehindTask", "taskId=" + operation.TaskId + "operation result status=" + result.DSOperationStatus, new OperationContext(OperationContextFieldName.OperationType, OperationContextOperationType.CacheOperation));
-                                                
+
                         opResult.Add(operation.Key, result.DSOperationStatus);
                     }
                     else
@@ -1391,19 +1517,18 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         /// </summary>
         protected void ExecuteAllTaskForSource(object args)
         {
-            DSWriteBehindOperation operation = null;
             object[] objs = args as object[];
             string source = objs[0] as string;
             bool execute = (bool)objs[1];
 
-            ArrayList removableIndexes = new ArrayList();
-            WaitQueue waitQueue = _queue.WaitQueue;
-            for (int i = 0; i < waitQueue.Count; i++)
+            ArrayList removableKeys = new ArrayList();
+            IEnumerator<KeyValuePair<string, DSWriteBehindOperation>> enumerator = _queue.WaitQueue.GetEnumerator();
+
+            while (enumerator.MoveNext())
             {
                 try
                 {
-                    operation = waitQueue[i];
-
+                    DSWriteBehindOperation operation = enumerator.Current.Value;
                     if (operation == null)
                     {
                         continue;
@@ -1412,7 +1537,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                     {
                         continue;
                     }
-                    removableIndexes.Add(i);
+                    removableKeys.Add(enumerator.Current.Key);
+
                     if (!execute)
                     {
                         continue;
@@ -1432,10 +1558,9 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                 {
                 }
             }
-
-            for (int i = removableIndexes.Count - 1; i >= 0; i--)
+            for (int i = 0; i < removableKeys.Count; i++)
             {
-                _queue.WaitQueue.RemoveAt((int)removableIndexes[i]);
+                _queue.WaitQueue.Remove((string)removableKeys[i]);
             }
         }
         /// <summary> 
@@ -1464,8 +1589,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                 for (int j = 0; j < taskId.Length; j++)
                 {
                     //for operations in por replica
-                    if (this._queue.SearchWaitQueue(taskId[j]))
-                        return;
+                    if (this._queue.RemoveFromWaitQueue(taskId[j]))
+                        continue;
                     DSWriteBehindOperation operation = this._queue.Peek();
                     if (operation != null && operation.TaskId.Contains(taskId[j]))
                     {
@@ -1486,6 +1611,22 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                     }
                 }
             }
+        }
+
+
+
+        public void GetCacheLogs()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("---------------- BackingSource Status ------------").AppendLine();
+            sb.Append("Queue Count : " + _queue.Count).AppendLine();
+            sb.Append("Wait Queue Count : " + _queue.WaitQueue.Count).AppendLine();
+            sb.Append("Wait cache key Queue Count : " + _queue.WaitQueue.CacheKeyCount).AppendLine();
+            sb.Append("Requeued Operations  : " + _queue._requeuedOps.Count).AppendLine();
+            sb.Append("_keyToIndexMap : " + _queue._keyToIndexMap.Count).AppendLine();
+            sb.Append("_indexToKeyMap : " + _queue._indexToKeyMap.Count).AppendLine();
+            sb.Append("_taskIDMap : " + _queue._taskIDMap.Count).AppendLine();
+            NCacheLog.CriticalInfo(sb.ToString());
         }
 
         /// <summary>
@@ -1533,7 +1674,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         internal WriteBehindQueue CloneQueue()
         {
             lock (this)
-            {                
+            {
                 return (WriteBehindQueue)this._queue.Clone();
             }
         }

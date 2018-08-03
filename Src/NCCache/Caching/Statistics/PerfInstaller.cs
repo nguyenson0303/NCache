@@ -151,7 +151,7 @@ namespace Alachisoft.NCache.Caching.Statistics
             new System.Diagnostics.CounterCreationData("Average us/datasource update","Average time, in microseconds (us), taken to complete one datasource update cache operation.", System.Diagnostics.PerformanceCounterType.AverageTimer32),
             new System.Diagnostics.CounterCreationData("Average us/datasource update base", "Base counter for Average microseconds (us)/datasource update", System.Diagnostics.PerformanceCounterType.AverageBase),
             new System.Diagnostics.CounterCreationData("Datasource failed operations/sec", "Number of datasource write operations failed per second. Write operations performed on datasource provider returning Failure/FailureRetry/FailureDontRemove as status of OperationResult are counted.", System.Diagnostics.PerformanceCounterType.SampleCounter),
-            new System.Diagnostics.CounterCreationData("Current batch operations count", "Number of operations selected in current batch interval for execution. For write-behind, if batching is enabled, number of operations dequeued in current batch interval for execution is displayed by this counter.", System.Diagnostics.PerformanceCounterType.NumberOfItems64),
+            new System.Diagnostics.CounterCreationData("Write-behind batch count", "Number of operations selected in current batch interval for execution. For write-behind, if batching is enabled, number of operations dequeued in current batch interval for execution is displayed by this counter.", System.Diagnostics.PerformanceCounterType.NumberOfItems64),
             
 
             //Bulk Counters

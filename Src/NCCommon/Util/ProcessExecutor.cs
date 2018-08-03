@@ -13,16 +13,9 @@
 // limitations under the License
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 using System.Diagnostics;
-using System.Collections;
-using System.Collections.Specialized;
 using System.Configuration;
-using Alachisoft.NCache.Common.Stats;
-using System.Threading;
 #if NETCORE
 using System.Runtime.InteropServices;
 #endif
@@ -55,6 +48,14 @@ namespace Alachisoft.NCache.Common.Util
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     ExecuteOnWindows(process.StartInfo);
+
+                    // Process is running after this call
+                    process = ProcessCreator.CreateProcess(process.StartInfo.FileName, process.StartInfo.Arguments);
+
+                    if (process != null)
+                        return process;
+
+                    throw new Runtime.Exceptions.ManagementException("Unable to start Cache Process");
                 }
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {

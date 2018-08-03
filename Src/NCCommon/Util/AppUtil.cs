@@ -39,6 +39,7 @@ namespace Alachisoft.NCache.Common
         static string javaLibDir = null;
         static int _bucketSize;
         static string logDir = null;
+        
 
         static AppUtil()
         {

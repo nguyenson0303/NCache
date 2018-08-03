@@ -156,6 +156,7 @@ namespace Alachisoft.NCache.Util
             CompactFormatterServices.RegisterCompactType(typeof(RequestStatus), 303);
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Caching.Statistics.BucketStatistics.TopicStats), 383);
 
+	    CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Common.DataStructures.NewHashmap), 346);
 #if (COMMUNITY ) && (!CLIENT)
             CompactFormatterServices.RegisterCompactType(typeof(ReadFromStreamOperation), 138);
             CompactFormatterServices.RegisterCompactType(typeof(WriteToStreamOperation), 139);
@@ -283,14 +284,14 @@ namespace Alachisoft.NCache.Util
         /// <returns></returns>
         internal static object[] GetKeyset(CacheBase cache, int timeout)
         {
-            ulong index = 0;
+            int index = 0;
             object[] objects = null;
             cache.Sync.AcquireWriterLock(timeout);
             try
             {
                 if (!cache.Sync.IsWriterLockHeld || cache.Count < 1) return objects;
                 objects = new object[cache.Count];
-                for (IEnumerator i = cache.GetEnumerator(); i.MoveNext(); )
+                for (IEnumerator i = cache.GetEnumerator(); i.MoveNext() || index < objects.Length;)
                 {
                     objects[index++] = ((DictionaryEntry)i.Current).Key;
                 }

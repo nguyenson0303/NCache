@@ -78,10 +78,18 @@ namespace Alachisoft.NCache.SocketServer.Command
                 operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
                 //client id
                 operationContext.Add(OperationContextFieldName.ClientId, clientManager.ClientID);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
                 resultSetList = nCache.Cache.ExecuteReader(cmdInfo.Query, cmdInfo.Values, cmdInfo.GetData, cmdInfo.ChunkSize, false, operationContext);
                 stopWatch.Stop();
                 ReaderResponseBuilder.Cache = nCache.Cache;
                 ReaderResponseBuilder.BuildExecuteReaderResponse(resultSetList, cmdInfo.CommandVersion, cmdInfo.RequestId, _serializedResponsePackets, command.commandID, clientManager.ClientVersion < 4620, out resultCount);
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

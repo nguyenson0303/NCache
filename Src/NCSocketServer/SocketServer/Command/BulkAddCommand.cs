@@ -94,6 +94,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 expHint = cmdInfo.Entries[0].ExpirationHint;
 
                 IDictionary itemVersions = null;
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
 
                 Hashtable addResult = (Hashtable)nCache.Cache.Add(cmdInfo.Keys, cmdInfo.Entries, cmdInfo.Flag, cmdInfo.ProviderName, out itemVersions, operationContext);
                 stopWatch.Stop();
@@ -116,7 +118,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.bulkAdd = bulkAddResponse;
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
             }
-            catch (Exception exc)
+	    catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+            }            
+	    catch (Exception exc)
             {
                 _addBulkResult = OperationResult.Failure;
                 exception = exc.ToString();

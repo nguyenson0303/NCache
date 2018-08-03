@@ -56,6 +56,7 @@ using Alachisoft.NCache.Common.DataStructures.Clustered;
 using Alachisoft.NCache.Common.Events;
 
 using Alachisoft.NCache.Caching.Messaging;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Topologies.Clustered
 {
@@ -121,7 +122,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         public ReplicatedServerCache(IDictionary cacheClasses, IDictionary properties, ICacheEventsListener listener, CacheRuntimeContext context, IClusterEventsListener clusterListener)
             : base(properties, listener, context, clusterListener)
         {
-            _stats.ClassName = "replicated-server";           
+            _stats.ClassName = "replicated-server";
         }
 
         #region	/                 --- IDisposable ---           /
@@ -325,16 +326,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             if (Cluster.IsCoordinator)
             {
 
-                
 
-                if (_context.DsMgr != null && _context.DsMgr.IsWriteBehindEnabled )
+
+                if (_context.DsMgr != null && _context.DsMgr.IsWriteBehindEnabled)
                     _context.DsMgr.StartWriteBehindProcessor();
                 if (_context.MessageManager != null) _context.MessageManager.StartMessageProcessing();
             }
 
 
 
-             
+
             //async replicator is used to replicate the update index operations to other replica nodes.
             if (Cluster.Servers.Count > 1)
             {
@@ -414,7 +415,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     if (!_nodesInStateTransfer.Contains(address))
                         _nodesInStateTransfer.Add(address);
                 }
-                
+
                 //add into the list of other servers.
                 if (!_otherServers.Contains(address))
                     _otherServers.Add(address);
@@ -489,11 +490,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                 case (int)OpCodes.Insert:
                     _stateTransferLatch.WaitForAny((byte)ReplicatedStateTransferStatus.STATE_TRANSFER_COMPLETED);
-                   
+
                     return handleInsert(src, func.Operand, func.UserPayload);
 
                 case (int)OpCodes.Add:
-                    _stateTransferLatch.WaitForAny((byte)ReplicatedStateTransferStatus.STATE_TRANSFER_COMPLETED);                   
+                    _stateTransferLatch.WaitForAny((byte)ReplicatedStateTransferStatus.STATE_TRANSFER_COMPLETED);
                     return handleAdd(src, func.Operand, func.UserPayload);
 
                 case (int)OpCodes.AddHint:
@@ -506,7 +507,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                 case (int)OpCodes.Remove:
                     _stateTransferLatch.WaitForAny((byte)ReplicatedStateTransferStatus.STATE_TRANSFER_COMPLETED);
-                    
+
                     return handleRemove(src, func.Operand);
 
                 case (int)OpCodes.RemoveRange:
@@ -736,7 +737,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     info.Statistics = other.Statistics;
                     info.NodeGuid = other.NodeGuid;
                     info.StatsReplicationCounter = other.StatsReplicationCounter;
-                    info.LocalConnectedClientsInfo = other.LocalConnectedClientsInfo;
+
                     info.ConnectedClients = other.ConnectedClients;
                     info.Status = other.Status;
                 }
@@ -923,7 +924,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IDictionaryEnumerator ie = _parent.Clustered_GetEnumerator(_parent.Cluster.Coordinator);
                     if (ie == null)
                     {
-                        TransferMessages();                       
+                        TransferMessages();
                         // there are no keys, the cache is empty
                         _parent._stateTransferLatch.SetStatusBit((byte)ReplicatedStateTransferStatus.STATE_TRANSFER_COMPLETED, (byte)ReplicatedStateTransferStatus.UNDER_STATE_TRANSFER);
                         return;
@@ -1107,7 +1108,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         {
                             if (_parent.NCacheLog.IsInfoEnabled)
                                 _parent.NCacheLog.Info("StateTransferTask.TransferMessages", " topic : " + topicWiseMessage.Key + " messaeg count : " + messageList.Count);
-                            
+
                             foreach (string messageId in messageList)
                             {
                                 if (!_stopProcessing)
@@ -1247,7 +1248,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             get { return _srvrJustLeft; }
             set { _srvrJustLeft = value; }
         }
-  
+
         public override int ServersCount
         {
             get { return Cluster.ValidMembers.Count; }
@@ -1262,7 +1263,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             }
             return false;
         }
-   
+
 
 
         /// <summary>
@@ -1275,7 +1276,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 return _internalCache.SessionCount;
             return 0;
         }
- 
+
 
         private long Clustered_SessionCount()
         {
@@ -1878,7 +1879,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     e = Local_Get(key, false, operationContext);
                     if (e != null)
                     {
-                         
+
                         //if the item does not exist at the speicified version.
                         if (access == LockAccessType.MATCH_VERSION)
                         {
@@ -1887,7 +1888,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                                 e = null;
                             }
                         }
-                         
+
                         //if the item in the cache is not newer than the specified version.
                         else if (access == LockAccessType.COMPARE_VERSION)
                         {
@@ -1898,7 +1899,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             }
                             else
                             {
-                                 
+
                                 //set the latest version.
                                 version = e.Version;
                             }
@@ -2029,6 +2030,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 IDictionaryEnumerator ine = table.GetEnumerator();
                 while (ine.MoveNext())
                 {
+                    if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     CacheEntry e = (CacheEntry)ine.Value;
                     if (e == null)
                     {
@@ -3190,7 +3193,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             {
                                 operationContext.RemoveValueByField(OperationContextFieldName.GenerateQueryInfo);
                             }
-                            
+
                         }
                         catch (Exception e)
                         {
@@ -3506,7 +3509,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     // Try to add to the local node and the cluster.
                     retVal = Clustered_Insert(key, cacheEntry, taskId, lockId, accessType, operationContext);
 
-                     
+
                     //if coordinator has sent the previous entry, use that one...
                     //otherwise send back the localy got previous entry...
                     if (retVal.Entry != null)
@@ -3767,9 +3770,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator ideInsterted = inserted.GetEnumerator();
                     while (ideInsterted.MoveNext())
                     {
-                        key = ideInsterted.Current;                      
+                        if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                        key = ideInsterted.Current;
                         RemoveUpdateIndexOperation(key);
-                    }                  
+                    }
                 }
 
                 //This function is expected to only return Failed Keys therfore removing Dependencies within the insetBulk call
@@ -3932,7 +3937,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         }
                     }
                     #endregion
-                    
+
                 }
             }
             catch (Exception e)
@@ -3994,7 +3999,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         {
                             Hashtable goodKeysTable = Contains(tempKeys, operationContext);
 
-                           
+
                             if (goodKeysTable.ContainsKey("items-found") && goodKeysTable["items-found"] != null && tempKeys.Length == ((ArrayList)goodKeysTable["items-found"]).Count)
                             {
                                 goodKeysList.Add(keys[i]);
@@ -4030,7 +4035,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                     for (int i = 0; i < goodKeysList.Count; i++)
                     {
-                        CacheInsResultWithEntry result = retVal[goodKeysList[i]] as CacheInsResultWithEntry;
+                        if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed); CacheInsResultWithEntry result = retVal[goodKeysList[i]] as CacheInsResultWithEntry;
 
                         if (result != null)
                         {
@@ -4203,7 +4209,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     operationContext = objs[3] as OperationContext;
                 }
 
-                  
+
                 //if client node is requesting for the previous cache entry
                 //then cluster coordinator must send it back...
                 if (objs.Length == 7)
@@ -4248,7 +4254,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         }
                         else
                         {
-                              
+
                             //we need not to send this entry back... it is needed only for custom notifications and/or key dependencies...
                             if (resultWithEntry.Entry.KeysDependingOnMe == null || resultWithEntry.Entry.KeysDependingOnMe.Count == 0) returnEntry = false;
                             opRes.UserPayload = null;
@@ -4464,6 +4470,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 IDictionaryEnumerator ide = removed.GetEnumerator();
                 while (ide.MoveNext())
                 {
+                    if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     object key = ide.Key;
                     CacheEntry e = (CacheEntry)ide.Value;
                     if (e != null)
@@ -4517,7 +4525,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         }
                         _internalCache.RemoveDepKeyList(oldKeysTable, operationContext);
                     }
-                }                
+                }
             }
 
             if (retVal != null && taskId != null)
@@ -4588,6 +4596,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                 for (int i = 0; i < keys.Count; i++)
                 {
+                    if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     if (retVal[keys[i]] is CacheEntry)
                     {
                         CacheEntry entry = (CacheEntry)retVal[keys[i]];
@@ -4896,7 +4906,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 return nextChunk;
             }
             catch (CacheException e)
-            {;
+            {
+                ;
                 throw;
             }
             catch (Exception e)
@@ -5239,17 +5250,17 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 // do not notify if explicitly removed by Remove()
-               
+
                 if (Context.NCacheLog.IsInfoEnabled) Context.NCacheLog.Info("Replicated.OnItemsRemoved()", "items evicted/expired, now replicating");
                 if (IsItemRemoveNotifier)
                 {
                     CacheEntry entry;
                     for (int i = 0; i < keys.Length; i++)
                     {
-                      
+
                         entry = (CacheEntry)values[i];
                         object value = entry.Value;
-                       
+
                         FilterEventContextForGeneralDataEvents(Runtime.Events.EventType.ItemRemoved, eventContexts[i]);
                         //value is contained inside eventContext
                         object data = new object[] { keys[i], reason, operationContext, eventContexts[i] };
@@ -5262,7 +5273,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             perEvent.PersistedEventId.EventType = EventType.ITEM_REMOVED_EVENT;
                             _context.PersistenceMgr.AddToPersistedEvent(perEvent);
                         }
-                        
+
                         if (Cluster.IsCoordinator && _nodesInStateTransfer.Count > 0)
                         {
                             RaiseItemRemoveNotifier((ArrayList)_nodesInStateTransfer.Clone(), data);
@@ -5331,7 +5342,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (value != null && value is ArrayList)
                 {
                     ArrayList itemUpdateCallbackListener = (ArrayList)value;
-     
+
                     if (_context.PersistenceMgr != null)
                     {
                         if (itemUpdateCallbackListener != null && itemUpdateCallbackListener.Count > 0)
@@ -5341,7 +5352,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             perEvent.PersistedEventInfo.Key = (String)key;
                             perEvent.PersistedEventId.EventType = EventType.ITEM_UPDATED_CALLBACK;
                             perEvent.PersistedEventInfo.CallBackInfoList = itemUpdateCallbackListener;
-                           
+
                             _context.PersistenceMgr.AddToPersistedEvent(perEvent);
                         }
                     }
@@ -5355,7 +5366,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     if (_allowEventRaiseLocally)
                     {
                         NotifyCustomUpdateCallback(key, itemUpdateCallbackListener, true, operationContext, eventContext);
-                    }                   
+                    }
                 }
             }
             catch (Exception e)
@@ -5442,7 +5453,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         private void RaiseCQCallbackNotifier(ArrayList servers, string key, QueryChangeType changeType, List<CQCallbackInfo> queries, EventContext eventContext)
         {
             try
-            {                
+            {
                 Function func = new Function((int)OpCodes.NotifyCQUpdate, new object[] { key, changeType, queries, eventContext });
                 Cluster.Multicast(servers, func, GroupRequest.GET_NONE, false, Cluster.Timeout);
             }
@@ -5548,7 +5559,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         #endregion
 
-     
+
 
 
         #region Lock
@@ -6215,7 +6226,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (list != null)
                 {
 
-                    ClusteredArrayList updateIndiceKeyList = null;                 
+                    ClusteredArrayList updateIndiceKeyList = null;
                     IDictionaryEnumerator ine = list.GetEnumerator();
                     while (ine.MoveNext())
                     {
@@ -6792,6 +6803,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         #endregion
+        public override void LogBackingSource()
+        {
+            _context.DsMgr._writeBehindAsyncProcess.GetCacheLogs();
+
+        }
     }
 
 }

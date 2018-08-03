@@ -14,7 +14,7 @@ using System.Net;
 using System.IO;
 using Alachisoft.NCache.Runtime.Serialization;
 using Alachisoft.NCache.Runtime.Serialization.IO;
-
+using System.Runtime.Serialization;
 
 namespace Alachisoft.NCache.Common.Net
 {
@@ -31,11 +31,11 @@ namespace Alachisoft.NCache.Common.Net
 	/// <author>  Bela Ban
 	/// </author>
 	[Serializable]
-	public class Address : ICloneable, IComparable,ICompactSerializable
-	{
-		private IPAddress ip_addr;
-		private int port;
-		private byte[] additional_data;
+    public class Address : ICloneable, IComparable, ICompactSerializable, ISerializable
+    {
+        private IPAddress ip_addr;
+        private int port;
+        private byte[] additional_data;
 
 		[NonSerialized]
 		internal static bool resolve_dns = false;
@@ -78,6 +78,23 @@ namespace Alachisoft.NCache.Common.Net
 			{
 			}
 		}
+
+        protected Address(SerializationInfo info, StreamingContext context)
+        {
+            byte[] ip = (byte[])info.GetValue("ip", typeof(byte[]));
+
+            if (ip != null)
+            {
+                try
+                {
+                    ip_addr = new IPAddress(ip);
+                }
+                catch (Exception) { }
+            }
+
+            port = info.GetInt32("port");
+            additional_data = (byte[])info.GetValue("additional_data", typeof(byte[]));
+        }
 
 
 		public IPAddress IpAddress { get { return ip_addr; } }
@@ -138,13 +155,22 @@ namespace Alachisoft.NCache.Common.Net
 				else
 					return -1;
 
-            
-			h1 = ip_addr.GetHashCode();
+
+#if NETCORE
+            h1 = ip_addr.Address.GetHashCode();
+#else
+            h1 = ip_addr.GetHashCode();
+#endif
             if (other.ip_addr != null)
+#if NETCORE
+                h2 = other.ip_addr.Address.GetHashCode();
+#else
                 h2 = other.ip_addr.GetHashCode();
-			rc = h1 < h2 ? -1 : (h1 > h2 ? 1 : 0);
-			return rc != 0 ? rc : (port < other.port ? -1 : (port > other.port ? 1 : 0));
-		}
+#endif
+
+            rc = h1 < h2 ? -1 : (h1 > h2 ? 1 : 0);
+            return rc != 0 ? rc : (port < other.port ? -1 : (port > other.port ? 1 : 0));
+        }
 
 		public override bool Equals(object obj)
 		{
@@ -396,9 +422,15 @@ namespace Alachisoft.NCache.Common.Net
             string[] hostPort = address.Split(':');
             return new Address(hostPort[0], Convert.ToInt32(hostPort[1]));
         }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            byte[] ip = ip_addr != null ? ParseIPAddress(ip_addr.ToString()) : null;
+
+            info.AddValue("ip", ip);
+            info.AddValue("port", port);
+            info.AddValue("additional_data", additional_data);
+        }
     }
 }
 
-namespace Alachisoft.NCache.Common
-{
-}

@@ -139,6 +139,15 @@ namespace Alachisoft.NCache.Common.Protobuf
       get { return _clientInfo; }
       set { _clientInfo = value; }
     }
+
+    private int _operationTimeout = (int)90000;
+    [global::ProtoBuf.ProtoMember(18, IsRequired = false, Name=@"operationTimeout", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    [global::System.ComponentModel.DefaultValue((int)90000)]
+    public int operationTimeout
+    {
+      get { return _operationTimeout; }
+      set { _operationTimeout = value; }
+    }
     private global::ProtoBuf.IExtension extensionObject;
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }

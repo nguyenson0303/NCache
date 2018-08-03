@@ -24,6 +24,7 @@ using Alachisoft.NCache.Runtime.Caching;
 using Alachisoft.NCache.Common.Enum;
 using Alachisoft.NCache.Common;
 using System.Collections;
+using Alachisoft.NCache.Runtime.Exceptions;
 
 namespace Alachisoft.NCache.Web.Caching
 {
@@ -66,6 +67,7 @@ namespace Alachisoft.NCache.Web.Caching
         {
             if (string.IsNullOrEmpty(topicName))
                 throw new ArgumentException("TopicName is null or empty string");
+            if (_cacheImpl == null) throw new OperationFailedException("Cache is not initialized");
 
             Topic topic = null;
 

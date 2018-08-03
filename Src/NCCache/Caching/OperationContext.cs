@@ -15,11 +15,10 @@
 using System;
 using System.Collections;
 using Alachisoft.NCache.Runtime.Serialization;
+using System.Threading;
+
 namespace Alachisoft.NCache.Caching
 {
-
-   
-
     /// <summary>
     /// make it serializable coz cache operations performed through remoting will fail 
     /// otherwise.
@@ -33,22 +32,25 @@ namespace Alachisoft.NCache.Caching
         private static object s_lock = new object();
         public static UInt64 _itemVersion = 0;
 
+        [NonSerialized]
+        private CancellationToken _cancelationToken;
+
         [ThreadStatic]
-        private static bool s_isReplicationOperaton; 
+        private static bool s_isReplicationOperaton;
 
         static OperationContext()
         {
             s_operationUniqueID = Guid.NewGuid().ToString().Substring(0, 4);
         }
 
-        public OperationContext() 
+        public OperationContext()
         {
             CreateOperationId();
-            
-            /*_fieldValueTable = new Hashtable();*/ 
+
+            /*_fieldValueTable = new Hashtable();*/
         }
 
-        
+
         public static bool IsReplicationOperation
         {
             get { return s_isReplicationOperaton; }
@@ -68,13 +70,13 @@ namespace Alachisoft.NCache.Caching
             {
                 opCounter = s_operationCounter++;
             }
-            OperationID operationId = new OperationID(s_operationUniqueID,opCounter);
+            OperationID operationId = new OperationID(s_operationUniqueID, opCounter);
             Add(OperationContextFieldName.OperationId, operationId);
         }
 
-        public OperationID OperatoinID 
+        public OperationID OperatoinID
         {
-            get { return (OperationID)GetValueByField(OperationContextFieldName.OperationId); } 
+            get { return (OperationID)GetValueByField(OperationContextFieldName.OperationId); }
         }
 
         public bool IsRemoveQueryOperation
@@ -87,6 +89,11 @@ namespace Alachisoft.NCache.Caching
             }
         }
 
+        public CancellationToken CancellationToken
+        {
+            set { _cancelationToken = value; }
+            get { return _cancelationToken; }
+        }
         public void Add(OperationContextFieldName fieldName, object fieldValue)
         {
             lock (this)
@@ -118,6 +125,15 @@ namespace Alachisoft.NCache.Caching
             return contains;
         }
 
+        public long ClientOperationTimeout
+        {
+            get
+            {
+                if (GetValueByField(OperationContextFieldName.ClientOperationTimeout) != null)
+                    return (long)GetValueByField(OperationContextFieldName.ClientOperationTimeout);
+                return -1;
+            }
+        }
         public void RemoveValueByField(OperationContextFieldName fieldName)
         {
             lock (this)
@@ -138,7 +154,7 @@ namespace Alachisoft.NCache.Caching
             return new OperationContext().With(field, value);
         }
 
-        public  OperationContext With(OperationContextFieldName field,object value)
+        public OperationContext With(OperationContextFieldName field, object value)
         {
             Add(field, value);
             return this;

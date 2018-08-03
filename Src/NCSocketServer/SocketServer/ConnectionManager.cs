@@ -130,6 +130,7 @@ namespace Alachisoft.NCache.SocketServer
 
         private AsyncCallback _receiveCallback;
 
+        private static int _requestTimeout = 0;
         public ConnectionManager(PerfStatsCollector statsCollector)
         {
             _receiveCallback = new AsyncCallback(RecieveCallback);
@@ -165,6 +166,11 @@ namespace Alachisoft.NCache.SocketServer
             get { return _eventsAndCallbackQueue; }
         }
 
+        internal static int RequestTimeout
+        {
+            set { _requestTimeout = value; }
+            get { return _requestTimeout; }
+        }
         /// <summary>
         /// Gets the fragmented unique message id
         /// </summary>
@@ -1145,6 +1151,8 @@ namespace Alachisoft.NCache.SocketServer
                 }
                 ConnectionTable = null;
             }
+            if (_cmdManager != null)
+                _cmdManager.Dispose();
             if (_cmdManager != null && _cmdManager.RequestLogger != null) _cmdManager.RequestLogger.Dispose();
         }
 

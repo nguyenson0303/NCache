@@ -21,6 +21,8 @@ using Alachisoft.NCache.Caching.Topologies;
 using Alachisoft.NCache.Caching.Queries.Continuous;
 using Alachisoft.NCache.Common.Threading;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
+using System.Threading;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Queries
 {
@@ -1114,7 +1116,7 @@ namespace Alachisoft.NCache.Caching.Queries
         }
 
 
-        public ClusteredArrayList Search(string queryId)
+        public ClusteredArrayList Search(string queryId, CancellationToken token)
         {
             ClusteredArrayList keys = new ClusteredArrayList();
 
@@ -1142,8 +1144,12 @@ namespace Alachisoft.NCache.Caching.Queries
                                 {
                                     while (ide.MoveNext())
                                     {
+                                        if (token !=null && token.IsCancellationRequested)
+                                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                                         IList value = (IList)ide.Value;
-                                        if(value.Contains(holder))
+
+                                        if (value.Contains(holder))
                                             keys.Add(ide.Key);
                                     }
                                 }

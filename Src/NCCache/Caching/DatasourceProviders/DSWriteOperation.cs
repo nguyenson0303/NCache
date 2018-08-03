@@ -54,6 +54,12 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
 
         }
 
+
+        public CacheRuntimeContext Context
+        {
+            get { return _context; }
+            set { _context = value; }
+        }
         /// <summary>
         /// Get key associate with the this task
         /// </summary>

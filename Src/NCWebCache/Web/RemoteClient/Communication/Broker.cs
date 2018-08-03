@@ -662,7 +662,9 @@ namespace Alachisoft.NCache.Web.Communication
 
         internal void InitializeCache(Connection connection, IPAddress address, int port, bool balanceNodes)
         {
-            _command = new InitCommand(_cache.ClientID, _cacheId, connection.GetClientLocalIP(), connection.Address, _clientInfo);
+                       _command = new InitCommand(_cache.ClientID, _cacheId,
+                    connection.GetClientLocalIP(), connection.Address, _clientInfo,_operationTimeout);
+
 
             Request request = new Request(false, _operationTimeout);
             request.AddCommand(connection.ServerAddress, _command);
@@ -815,6 +817,27 @@ namespace Alachisoft.NCache.Web.Communication
             {
                 lock (_hashmapUpdateMutex)
                 {
+                    if (!_pool.FullyDisConnnected)
+                    {
+                        if (_pool.Connections != null)
+                        {
+                            try
+                            {
+                                //as pool is fully disconnected,let's start reconnection task
+                                foreach (Connection connection in _pool.Connections.Values)
+                                {
+                                    if (connection != null && !connection.IsReconnecting)
+                                    {
+                                        this._processor.Enqueue(new ReconnectTask(this, connection));
+                                    }
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                //enumeration exception can occur
+                            }
+                        }
+                    }
                     if (_shutdownServers.Count > 1)
                         return false;
                     return _pool.FullyConnnected;
@@ -2631,8 +2654,6 @@ namespace Alachisoft.NCache.Web.Communication
 
                     try
                     {
-                        lock (request)
-                        {
                             while (timeout > 0)
                             {
                                 if (request.IsAsync)
@@ -2664,6 +2685,8 @@ namespace Alachisoft.NCache.Web.Communication
                                     else
                                         break;
                                 }
+                            lock (request)
+                            {
 
                                 timeout = Convert.ToInt32(request.RequestTimeout) -
                                           (int)((System.DateTime.Now.Ticks - 621355968000000000) / 10000 - startTime);
@@ -3628,6 +3651,10 @@ namespace Alachisoft.NCache.Web.Communication
                     connection = this._pool[new Address(nextServer.IP.ToString(), nextServer.Port)];
 
                     if (connection != null && connection.IsConnected) break;
+                    else if (connection != null && !connection.IsReconnecting)
+                    {
+                        _processor.Enqueue(new ReconnectTask(this, connection));
+                    }
                     else
                     {
                         nextServer = _clientConfig.NextServer;

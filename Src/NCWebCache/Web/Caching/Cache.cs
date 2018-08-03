@@ -884,6 +884,7 @@ namespace Alachisoft.NCache.Web.Caching
 
                     if (_perfStatsCollector != null)
                         _perfStatsCollector.Dispose();
+                    if (_messagingService != null) _messagingService.Dispose();
 
                     if (disposing) GC.SuppressFinalize(this);
                 }
@@ -4477,13 +4478,56 @@ namespace Alachisoft.NCache.Web.Caching
             try
             {
                 Hashtable table = CacheImpl.GetByTag(new Tag[] {tag}, TagComparisonType.BY_TAG);
+                return GetByTagInternal(table, stats);
+            }
+            finally
+            {
+                TargetMethodAttribute.MethodOverload = 0;
+            }
+        }
 
-                long sumObjectSize = 0;
-                long sumCompressedObjectSize = 0;
-                long sumEncryptedObjectSize = 0;
-                int noOfObjects = 0;
+         /// <summary>
+        /// Gets all the cached objects with the specified tag.
+        /// </summary>
+        /// <param name="wildCardExpression">The wild card Expression to search with.</param>
+        /// <returns>Returns a dictionary containing the cache keys and associated objects.</returns>
+        /// <example>The following example demonstrates how to get the objects with the specified tag.
+        /// <code>
+        /// 
+        /// Cache cache = NCache.InitializeCache("myCache");
+        /// Tag tag = new Tag("Sports");
+        ///	Hashtable table = cache.GetByTag(tag);
+        /// 
+        /// </code>
+        /// </example>
+        [TargetMethod(1)]
+        public virtual Hashtable GetByTag(string wildCardExpression)
+        {
+            if (string.IsNullOrEmpty(wildCardExpression)) throw new ArgumentException("wildCardExpression");
 
-                if (table != null)
+            if (TargetMethodAttribute.MethodOverload == 0) TargetMethodAttribute.MethodOverload = 4;
+
+            UsageStats stats = new UsageStats();
+            stats.BeginSample();
+
+            try
+            {
+                Hashtable table = CacheImpl.GetByTag(new Tag[] { new Tag(wildCardExpression) }, TagComparisonType.BY_WILDCARDTAG);
+
+                return GetByTagInternal(table, stats);
+            }
+            finally
+            {
+                TargetMethodAttribute.MethodOverload = 0;
+
+            }
+        }
+
+        private Hashtable GetByTagInternal(Hashtable table, UsageStats stats)
+        {
+            long sumObjectSize = 0;
+            int noOfObjects = 0;          
+             if (table != null)
                 {
                     if (DebugAPIConfiguraions.LoggingEnabled)
                         noOfObjects = table.Count;
@@ -4527,11 +4571,6 @@ namespace Alachisoft.NCache.Web.Caching
 
 
                 return table;
-            }
-            finally
-            {
-                TargetMethodAttribute.MethodOverload = 0;
-            }
         }
 
         /// <summary>
@@ -4564,6 +4603,35 @@ namespace Alachisoft.NCache.Web.Caching
             }
         }
 
+        /// <summary>
+        /// Gets all the keys with the wild card supported tag.
+        /// </summary>
+        /// <param name="wildCardExpression">The wild card Expression to search with.</param>
+        /// <returns>Returns collection containing the cache keys.</returns>
+        /// <example>The following example demonstrates how to get the keys with the specified tag.
+        /// <code>
+        /// 
+        /// Cache cache = NCache.InitializeCache("myCache");
+        /// Tag tag = new Tag("*Sports*");
+        ///	ICollection keys = cache.GetKeysByTag(tag);
+        /// 
+        /// </code>
+        /// </example>
+        [TargetMethod(1)]
+        public virtual ICollection GetKeysByTag(string wildCardExpression)
+        {
+            if (string.IsNullOrEmpty(wildCardExpression)) throw new ArgumentException("wildCardExpression");
+            try
+            {
+                if (TargetMethodAttribute.MethodOverload == 0)
+                    TargetMethodAttribute.MethodOverload = 4;
+                return CacheImpl.GetKeysByTag(new Tag[] { new Tag(wildCardExpression) }, TagComparisonType.BY_WILDCARDTAG);
+            }
+            finally
+            {
+                TargetMethodAttribute.MethodOverload = 0;
+            }
+        }
         /// <summary>
         /// Returns the cached objects that have all the same tags in common. (Returns the Intersection set.) 
         /// </summary>
@@ -8161,6 +8229,12 @@ namespace Alachisoft.NCache.Web.Caching
 
 
                 CacheImpl.Delete(key, flagMap, dsItemRemovedCallbackId, lockId, version, accessType, providerName);
+                if (_perfStatsCollector != null)
+                {
+                    stats.EndSample();
+                    _perfStatsCollector.IncrementMsecPerDelSample(stats.Current);
+                    _perfStatsCollector.IncrementDelPerSecStats();
+                }
             }
             catch (Exception)
             {

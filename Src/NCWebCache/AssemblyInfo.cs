@@ -56,5 +56,5 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion("4.9.0")]
 [assembly: AssemblyDescriptionAttribute("Web API")]
-[assembly: AssemblyFileVersionAttribute("4.9.0.0")]
+[assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

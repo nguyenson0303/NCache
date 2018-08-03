@@ -21,6 +21,7 @@ using Alachisoft.NCache.Common.Util;
 using Alachisoft.NCache.Util;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
 using System;
+using System.Threading;
 
 namespace Alachisoft.NCache.Caching.Topologies.Local
 {
@@ -224,7 +225,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             return Remove(keys, ItemRemoveReason.Removed, notify, operationContext);
         }
 
-        internal override QueryContext SearchInternal(Predicate pred, IDictionary values, Boolean includeFilters = false)
+        internal override QueryContext SearchInternal(Predicate pred, IDictionary values, CancellationToken token, Boolean includeFilters = false)
         {
             return null;
         }

@@ -20,17 +20,25 @@ using Alachisoft.NCache.Web.Synchronization;
 using Alachisoft.NCache.SocketServer.Statistics;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
 using System.Collections;
+using Alachisoft.NCache.Common.Monitoring;
+using System.Diagnostics;
+using System.Threading;
 
 namespace Alachisoft.NCache.SocketServer.Command
 {
-    abstract class CommandBase
+    abstract class CommandBase: IDisposable, ICancellableRequest
     {
         protected string immatureId = "-2";
         protected object _userData;
+        Stopwatch _watch = new Stopwatch();
 
         protected int forcedViewId = -5;
+        protected long _requestTimeout;
+        protected CancellationTokenSource _cancellationTokenSource;
+        //Usefull for debugging (Dump analysis)
+        private TimeSpan _elapsedTime;
 
-        internal virtual OperationResult OperationResult{get {return OperationResult.Failure;}}
+        internal virtual OperationResult OperationResult { get {return OperationResult.Failure;}}
         public virtual int Operations { get { return 1; } }
 
         protected IList _serializedResponsePackets = new ClusteredArrayList();
@@ -120,5 +128,69 @@ namespace Alachisoft.NCache.SocketServer.Command
 
             return syncDep;
         } 
+
+     public long RequestTimeout { get { return _requestTimeout; } set { _requestTimeout = value; } }
+
+        public bool IsCancelled
+        {
+            get
+            {
+                return _cancellationTokenSource != null ? _cancellationTokenSource.IsCancellationRequested : false;
+            }
+        }
+
+        public bool HasTimedout
+        {
+            get
+            {
+                _elapsedTime = _watch != null ? _watch.Elapsed : TimeSpan.Zero;
+                return _elapsedTime.TotalMilliseconds > _requestTimeout;
+            }
+        }
+
+        public CancellationToken CancellationToken
+        {
+            get
+            {
+                if (_cancellationTokenSource == null)
+                    _cancellationTokenSource = new CancellationTokenSource();
+
+                return _cancellationTokenSource.Token;
+            }
+        }
+
+
+        public void StartWatch()
+        {
+            if (!_watch.IsRunning)
+            {
+                _watch.Start();
+            }
+        }
+
+
+        public long ElapsedTIme()
+        {
+            return _watch.ElapsedMilliseconds;
+        }
+
+        public void Dispose()
+        {
+            if (_cancellationTokenSource != null)
+                _cancellationTokenSource.Dispose();
+            if (_watch != null)
+                _watch.Stop();
+        }
+
+        public bool Cancel()
+        {
+            if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
+            {
+                _cancellationTokenSource.Cancel();
+                return true;
+            }
+            return false;
+        }
+
     }
 }

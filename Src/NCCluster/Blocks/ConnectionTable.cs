@@ -92,7 +92,7 @@ namespace Alachisoft.NGroups.Blocks
         private System.Collections.Hashtable secondayrConns_NIC_2 = System.Collections.Hashtable.Synchronized(new System.Collections.Hashtable()); // keys: Addresses (peer address), values: Connection
 
         private System.Collections.Hashtable dedicatedSenders = System.Collections.Hashtable.Synchronized(new System.Collections.Hashtable()); // keys: Addresses (peer address), values: Connection
-        private Receiver receiver = null;
+        private ConnectionTable.Receiver receiver = null;
         private System.Net.Sockets.TcpListener srv_sock1 = null;
 
         private System.Net.Sockets.TcpListener srv_sock2 = null;
@@ -146,8 +146,23 @@ namespace Alachisoft.NGroups.Blocks
         private int _retryInterval;
 
         private int _idGenerator = 0;
-        
-        
+
+
+        /// <summary>Used for message reception </summary>
+        public interface Receiver
+        {
+            void receive(Message msg);
+        }
+
+        /// <summary>Used to be notified about connection establishment and teardown </summary>
+        public interface ConnectionListener
+        {
+            void connectionOpened(Address peer_addr);
+            void connectionClosed(Address peer_addr);
+            void couldnotConnectTo(Address peer_addr);
+            void HandleFailedNodes(object failedNodes);
+
+        }
 
 
         /// <summary> Regular ConnectionTable without expiration of idle connections</summary>
@@ -199,7 +214,7 @@ namespace Alachisoft.NGroups.Blocks
         /// </param>
         /// 
 
-        public ConnectionTable(Receiver r, System.Net.IPAddress bind_addr1, System.Net.IPAddress bind_addr2, int srv_port, int port_range, ILogger NCacheLog, int retries, int retryInterval, bool isInproc)
+        public ConnectionTable(ConnectionTable.Receiver r, System.Net.IPAddress bind_addr1, System.Net.IPAddress bind_addr2, int srv_port, int port_range, ILogger NCacheLog, int retries, int retryInterval, bool isInproc)
         {
             setReceiver(r);
             enclosingInstance = (TCP)r;
@@ -244,7 +259,7 @@ namespace Alachisoft.NGroups.Blocks
         /// </param>
         /// 
 
-        public ConnectionTable(Receiver r, System.Net.IPAddress bind_addr, int srv_port, long reaper_interval, long conn_expire_time, ILogger NCacheLog)
+        public ConnectionTable(ConnectionTable.Receiver r, System.Net.IPAddress bind_addr, int srv_port, long reaper_interval, long conn_expire_time, ILogger NCacheLog)
         {
             setReceiver(r);
             this.bind_addr1 = bind_addr;
@@ -256,20 +271,20 @@ namespace Alachisoft.NGroups.Blocks
         }
 
 
-        public virtual void setReceiver(Receiver r)
+        public virtual void setReceiver(ConnectionTable.Receiver r)
         {
             receiver = r;
         }
 
 
-        public virtual void addConnectionListener(ConnectionListener l)
+        public virtual void addConnectionListener(ConnectionTable.ConnectionListener l)
         {
             if (l != null && !conn_listeners.Contains(l))
                 conn_listeners.Add(l);
         }
 
 
-        public virtual void removeConnectionListener(ConnectionListener l)
+        public virtual void removeConnectionListener(ConnectionTable.ConnectionListener l)
         {
             if (l != null)
                 conn_listeners.Remove(l);
@@ -314,6 +329,8 @@ namespace Alachisoft.NGroups.Blocks
 
                         if (!conns_NIC_1.Contains(memeber))
                         {
+                            NCacheLog.CriticalInfo("ConnectionTable.synchronzeMembership", "member :" + memeber + " is not part of the custer");
+
                             if (indexOfLocal > indexOfmember)
                             {
                                 newConList.Add(memeber);
@@ -431,7 +448,16 @@ namespace Alachisoft.NGroups.Blocks
                 {
                     if (stopped) return;
 
-                    Connection con = GetConnection(member, null, true, useDualConnection, true);
+                    Connection con = null;
+
+                    try
+                    {
+                        con = GetConnection(member, null, true, useDualConnection, true);
+                    }
+                    catch (Exception e)
+                    {
+                        NCacheLog.Error("ConnectionTable.MakeConnectionAsync", " Exception:" + e.ToString());
+                    }
 
                     if (con == null)
                     {
@@ -443,7 +469,10 @@ namespace Alachisoft.NGroups.Blocks
                         con.IsPartOfCluster = true;
                         if (NCacheLog.IsInfoEnabled) NCacheLog.Info("ConnectionTable.MakeConnectionAsync",   "established connection with " + member);
                     }
+
                 }
+                for (int i = 0; i < conn_listeners.Count; i++)
+                    ((ConnectionTable.ConnectionListener)conn_listeners[i]).HandleFailedNodes(failedNodes);
             }
             catch (Exception e)
             {
@@ -499,7 +528,7 @@ namespace Alachisoft.NGroups.Blocks
             {
                 if (NCacheLog.IsErrorEnabled) NCacheLog.Error("ConnectionTable.GetConnection",   sock_ex.Message);
                 for (int i = 0; i < conn_listeners.Count; i++)
-                    ((ConnectionListener)conn_listeners[i]).couldnotConnectTo(dest);
+                    ((ConnectionTable.ConnectionListener)conn_listeners[i]).couldnotConnectTo(dest);
 
                 return bytesSent;
             }
@@ -1754,7 +1783,7 @@ namespace Alachisoft.NGroups.Blocks
             if (peer == null)
                 return;
             for (int i = 0; i < conn_listeners.Count; i++)
-                ((ConnectionListener)conn_listeners[i]).connectionOpened(peer);
+                ((ConnectionTable.ConnectionListener)conn_listeners[i]).connectionOpened(peer);
         }
 
         internal virtual void notifyConnectionClosed(Address peer)
@@ -1763,7 +1792,7 @@ namespace Alachisoft.NGroups.Blocks
             if (peer == null)
                 return;
             for (int i = 0; i < conn_listeners.Count; i++)
-                ((ConnectionListener)conn_listeners[i]).connectionClosed(peer);
+                ((ConnectionTable.ConnectionListener)conn_listeners[i]).connectionClosed(peer);
         }
 
 

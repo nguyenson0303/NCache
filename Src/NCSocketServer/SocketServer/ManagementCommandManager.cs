@@ -80,5 +80,9 @@ namespace Alachisoft.NCache.SocketServer
         {
             get { return null; }
         }
+        public void Dispose()
+        {
+
+        }
     }
 }

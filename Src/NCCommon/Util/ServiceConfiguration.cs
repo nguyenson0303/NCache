@@ -108,6 +108,7 @@ namespace Alachisoft.NCache.Common.Util
         private static double _commandExecutionThreshold = 5; // seconds
         private static bool _enableCommandThresholdLogging = false;
         private static int _touchInterval = 5; // seconds
+        private static bool _enableRequestCancellation = true;
 
         /// <summary>
         /// Touch interval in seconds
@@ -287,7 +288,7 @@ namespace Alachisoft.NCache.Common.Util
                 }
                 catch (Exception ex) { }
 
-               
+
                 isHotApply = true;
 
             }
@@ -307,8 +308,8 @@ namespace Alachisoft.NCache.Common.Util
             }
             catch (Exception ex) { }
 
-          
-           
+
+
 
             try
             {
@@ -774,17 +775,6 @@ namespace Alachisoft.NCache.Common.Util
 
             try
             {
-                if (config.AppSettings.Settings["NCacheServer.LicenseCheckInterval"] != null)
-                {
-                    tempLong = Int64.Parse(config.AppSettings.Settings["NCacheServer.LicenseCheckInterval"].Value);
-                    if (tempLong >= 10)
-                        LicenseCheckInterval = tempLong * 60 * 60 * 1000;
-                }
-            }
-            catch (Exception ex) { }
-
-            try
-            {
 
                 if (config.AppSettings.Settings["NCache.SimulateSocketClose"] != null)
                     SimulateSocketClose = bool.Parse(config.AppSettings.Settings["NCache.SimulateSocketClose"].Value);
@@ -983,7 +973,7 @@ namespace Alachisoft.NCache.Common.Util
                 }
             }
             catch (Exception ex) { }
-            
+
             try
             {
                 if (config.AppSettings.Settings["NCacheServer.CommandExecutionThreshold"] != null)
@@ -1017,7 +1007,7 @@ namespace Alachisoft.NCache.Common.Util
                 }
             }
             catch (Exception ex) { }
-         
+
             try
             {
                 if (config.AppSettings.Settings["NCacheServer.ManagementPortLower"] != null)
@@ -1089,7 +1079,16 @@ namespace Alachisoft.NCache.Common.Util
                 }
             }
             catch (Exception ex) { }
-        }
+            try
+            {
+                if (config.AppSettings.Settings["NCacheServer.CancelTimedOutRequests"] != null)
+                {
+                    _enableRequestCancellation = bool.Parse(config.AppSettings.Settings["NCacheServer.CancelTimedOutRequests"].Value);
+
+                }
+            }
+            catch (Exception ex) { }
+        }      
 
         public static int Port
         {
@@ -1450,6 +1449,13 @@ namespace Alachisoft.NCache.Common.Util
         {
             get { return ServiceConfiguration._preparedQueryTableSize; }
             private set { ServiceConfiguration._preparedQueryTableSize = value; }
+        }
+
+
+        public static bool EnableRequestCancellation
+        {
+            get { return _enableRequestCancellation; }
+            private set { _enableRequestCancellation = value; }
         }
 
         public static int PreparedQueryEvictionPercentage

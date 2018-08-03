@@ -1985,7 +1985,12 @@ namespace Alachisoft.NCache.Caching.Topologies
             return new PollingResult();
         }
 
-        public virtual void RegisterPollingNotification(short callbackId, OperationContext operationContext)
+ 	public virtual void LogBackingSource()
+        {
+            InternalCache.LogBackingSource();
+        }       
+
+         public virtual void RegisterPollingNotification(short callbackId, OperationContext operationContext)
         { }
 
         internal virtual void HandleDeadClientsNotification(string deadClient, ClientInfo info)

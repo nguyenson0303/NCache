@@ -23,6 +23,7 @@ using Alachisoft.NCache.Common.DataReader;
 using Alachisoft.NCache.Common.DataStructures;
 using Alachisoft.NCache.Common.Enum;
 using Alachisoft.NCache.Common.Queries;
+using Alachisoft.NCache.Common.Resources;
 using RecordColumn = Alachisoft.NCache.Common.DataReader.RecordColumn;
 
 namespace Alachisoft.NCache.Caching.Queries.Filters
@@ -100,12 +101,16 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
             {
                 foreach (string key in queryContext.InternalQueryResult)
                 {                    
+		    if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     KeyValuesContainer keyValues = new KeyValuesContainer();
                     keyValues.Key = key;
                    
                     bool invalidGroupKey = false;
                     for (int i = 0; i < _orderByArguments.Count; i++)
                     {
+                        if (queryContext.CancellationToken!=null && queryContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                         string attribute = _orderByArguments[i].AttributeName;
                         CacheEntry cacheentry = queryContext.Cache.GetEntryInternal(key, false);
                         if (cacheentry == null)

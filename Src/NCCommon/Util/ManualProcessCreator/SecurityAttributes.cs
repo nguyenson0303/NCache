@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+using System;
+using System.Runtime.InteropServices;
 
-
-namespace Alachisoft.NCache.Common
+namespace Alachisoft.NCache.Common.Util
 {
-    public enum VersionType
+#if NETCORE
+    [StructLayout(LayoutKind.Sequential)]
+    internal class SecurityAttributes
     {
-        Enterprise,
-        Professional,
-        PCloud,
-        Express,
-        Dev,
-        Community,
-        None
+        public int nLength = 12;
+        public SafeLocalMemHandle lpSecurityDescriptor = new SafeLocalMemHandle(IntPtr.Zero, false);
+        public bool bInheritHandle;
     }
+#endif
 }

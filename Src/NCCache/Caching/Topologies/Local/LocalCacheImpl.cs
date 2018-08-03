@@ -32,6 +32,7 @@ using Alachisoft.NCache.Common.DataStructures.Clustered;
 using Alachisoft.NCache.Common.Events;
 using Alachisoft.NCache.Caching.Messaging;
 using Alachisoft.NCache.Common.Enum;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Topologies.Local
 {
@@ -252,6 +253,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                 while (ide.MoveNext())
                 {
+  		    if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     entry = ide.Value as CacheEntry;
                     if (entry != null)
                     {
@@ -545,7 +548,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                 for (int i = 0; i < goodKeysList.Count; i++)
                 {
-                    if (table[goodKeysList[i]] is Exception)
+			if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                        	throw new OperationCanceledException(ExceptionsResource.OperationFailed);                    if (table[goodKeysList[i]] is Exception)
                         continue;
                     CacheAddResult retVal = (CacheAddResult)table[goodKeysList[i]];
                     object[] depKeys = goodEntries[i].KeysIAmDependingOn;
@@ -743,6 +747,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                 for (int i = 0; i < goodKeysList.Count; i++)
                 {
+                    if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                     CacheInsResultWithEntry result = retVal[goodKeysList[i]] as CacheInsResultWithEntry;
 
                     if (result != null && (result.Result == CacheInsResult.Success || result.Result == CacheInsResult.SuccessOverwrite))
@@ -953,6 +960,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             foreach(object key in keys)
             {
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                 CacheEntry entry = (CacheEntry)retVal[key];
                 if (entry != null && entry.KeysIAmDependingOn != null)
                 {
@@ -1589,5 +1599,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
         
         #endregion
 
+        public override void LogBackingSource()
+        {
+            _context.DsMgr._writeBehindAsyncProcess.GetCacheLogs();
+
+        }
     }
 }

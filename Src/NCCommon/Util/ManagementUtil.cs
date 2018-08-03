@@ -138,7 +138,7 @@ namespace Alachisoft.NCache.Common.Util
             public const string StartAPILogging = "StartAPILogging";
             public const string StopAPILogging = "StopAPILogging";
             public const string GetAPILogData = "GetAPILogData";
-
+            public const string LogBackingSourceStatus = "LogBacKingSourceStatus";
 
 
             #endregion

@@ -63,8 +63,6 @@ namespace Alachisoft.NCache.Caching.Statistics
 
 
 
-        private IDictionary<string, Runtime.Caching.ClientInfo> _localConnectedClientsInfo =
-            new HashVector<string, ClientInfo>();
 
         /// <summary>
         /// Constructor.
@@ -104,9 +102,7 @@ namespace Alachisoft.NCache.Caching.Statistics
                 lock (info._connectedClients.SyncRoot)
                 {
                     this._connectedClients = info._connectedClients.Clone() as ArrayList;
-                    _localConnectedClientsInfo = info._localConnectedClientsInfo != null
-                        ? new HashVector<string, ClientInfo>(info._localConnectedClientsInfo)
-                        : null;
+                    
                 }
             }
         }
@@ -120,11 +116,6 @@ namespace Alachisoft.NCache.Caching.Statistics
             set { _address = value; }
         }
 
-        public IDictionary<string, ClientInfo> LocalConnectedClientsInfo
-        {
-            get { return _localConnectedClientsInfo; }
-            set { _localConnectedClientsInfo = value; }
-        }
 
         public Address RendererAddress
         {
@@ -275,7 +266,7 @@ namespace Alachisoft.NCache.Caching.Statistics
             _nodeGuid = reader.ReadObject() as string;
             _statsReplicationCounter = reader.ReadInt32();
             this.CacheNodeStatus =(Alachisoft.NCache.Common.Monitoring.CacheNodeStatus) reader.ReadByte();
-            _localConnectedClientsInfo = SerializationUtility.DeserializeDictionary<string, ClientInfo>(reader);
+          
         }
 
         public void Serialize(CompactWriter writer)
@@ -291,9 +282,7 @@ namespace Alachisoft.NCache.Caching.Statistics
             writer.WriteObject(_nodeGuid);
             writer.Write(_statsReplicationCounter);
             writer.Write((byte)CacheNodeStatus);
-            SerializationUtility.SerializeDictionary(_localConnectedClientsInfo, writer);
-        }
-
+          }
         #endregion
 
         public static NodeInfo ReadNodeInfo(CompactReader reader)

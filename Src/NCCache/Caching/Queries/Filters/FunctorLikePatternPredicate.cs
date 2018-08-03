@@ -53,9 +53,9 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
             if (store != null)
             {
                 if (Inverse)
-                    store.GetData(pattern, ComparisonType.NOT_LIKE, queryContext.InternalQueryResult, mergeType);
+                    store.GetData(pattern, ComparisonType.NOT_LIKE, queryContext.InternalQueryResult, mergeType, queryContext.CancellationToken);
                 else
-                    store.GetData(pattern, ComparisonType.LIKE, queryContext.InternalQueryResult, mergeType);
+                    store.GetData(pattern, ComparisonType.LIKE, queryContext.InternalQueryResult, mergeType, queryContext.CancellationToken);
             }
             else
             {
@@ -79,9 +79,9 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
             if (store != null)
             {
                 if (Inverse)
-                    store.GetData(pattern, ComparisonType.NOT_LIKE, queryContext.InternalQueryResult, CollectionOperation.Union);
+                    store.GetData(pattern, ComparisonType.NOT_LIKE, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
                 else
-                    store.GetData(pattern, ComparisonType.LIKE, queryContext.InternalQueryResult, CollectionOperation.Union);
+                    store.GetData(pattern, ComparisonType.LIKE, queryContext.InternalQueryResult, CollectionOperation.Union, queryContext.CancellationToken);
 
             }
             else

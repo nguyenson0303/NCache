@@ -20,7 +20,7 @@ using Alachisoft.NCache.Caching.Queries;
 using Alachisoft.NCache.SocketServer.RuntimeLogging;
 using System.Diagnostics;
 using Alachisoft.NCache.Common.Monitoring;
-
+using Alachisoft.NCache.Caching;
 
 namespace Alachisoft.NCache.SocketServer.Command
 {
@@ -70,6 +70,9 @@ namespace Alachisoft.NCache.SocketServer.Command
                 System.Collections.Generic.Dictionary<Runtime.Events.EventType, Runtime.Events.EventDataFilter> arr = new System.Collections.Generic.Dictionary<Runtime.Events.EventType, Runtime.Events.EventDataFilter>();
 
                 QueryDataFilters datafilters = new QueryDataFilters(cmdInfo.addDataFilter, cmdInfo.updateDataFilter, cmdInfo.removeDataFilter);
+                OperationContext context = new OperationContext(OperationContextFieldName.OperationType, OperationContextOperationType.CacheOperation);
+                context.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                context.CancellationToken = CancellationToken;
                 string queryId = nCache.Cache.RegisterCQ(cmdInfo.Query, cmdInfo.Values, cmdInfo.clientUniqueId, clientManager.ClientID, cmdInfo.notifyAdd, cmdInfo.notifyUpdate, cmdInfo.notifyRemove, new Alachisoft.NCache.Caching.OperationContext(Alachisoft.NCache.Caching.OperationContextFieldName.OperationType, Alachisoft.NCache.Caching.OperationContextOperationType.CacheOperation), datafilters);
                 stopWatch.Stop();
                 Alachisoft.NCache.Common.Protobuf.Response response = new Alachisoft.NCache.Common.Protobuf.Response();
@@ -82,6 +85,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.responseType = Alachisoft.NCache.Common.Protobuf.Response.Type.REGISTER_CQ;
 
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {
