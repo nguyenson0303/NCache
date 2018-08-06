@@ -7,7 +7,13 @@
     <ApplicationIcon />
     <StartupObject />
     <AssemblyName>Alachisoft.NCache.Linq</AssemblyName>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\..\Resources\ncache.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Alachisoft.NCache.SDK" Version="4.9.1" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Alachisoft.NCache.Web">
