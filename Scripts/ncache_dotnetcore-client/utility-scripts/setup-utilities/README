@@ -5,7 +5,7 @@ NCache is an extremely fast and scalable distributed cache that caches applicati
 
 Pre-requisites
 --------------
-Supported .NET version is 2.0.0
+Supported .NET version is 2.1.0
 
 How to Install
 --------------
@@ -13,7 +13,7 @@ To install this setup,
 
 Run the install script with the your first name, last name, email address and .NET home as follows
 	
-	sh install -f firstname -l lastname -e email@yourcompany.com -d /path/to/dotnet/home
+	sh install -f firstname -l lastname -e email@yourcompany.com 
 
 for more detailed installation information, run the installation as follows
 

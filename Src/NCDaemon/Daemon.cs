@@ -51,7 +51,7 @@ namespace Alachisoft.NCache.Daemon
 
                 else
                 {
-                    ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "/bin/bash", Arguments = "-c \" " + args[0] + "/dotnet " + args[1] + "/bin/service/Alachisoft.NCache.Daemon.dll start " + "\"" };
+                    ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "/bin/bash", Arguments = "-c \" " + "dotnet " + args[0] + "/bin/service/Alachisoft.NCache.Daemon.dll start " + "\"" };
                     Process proc = new Process() { StartInfo = startInfo, };
                     proc.Start();
                 }
