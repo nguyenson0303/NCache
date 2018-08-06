@@ -159,6 +159,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\NCacheOptions.cs" />
     <Compile Include="Interface\ISessionKeyGenerator.cs" />
     <Compile Include="NCacheDistributedCache.cs" />
     <Compile Include="Utilities\CookieProtection.cs" />
