@@ -6,8 +6,8 @@ DefaultDependencies=no
 User=ncache
 Group=ncache
 Type=forking
-ExecStart=<DOTNETHOME>/dotnet <INSTALLDIR>/bin/service/Alachisoft.NCache.Daemon.dll <DOTNETHOME> <INSTALLDIR>
-ExecStop=<DOTNETHOME>/dotnet <INSTALLDIR>/bin/service/Alachisoft.NCache.Daemon.dll stop
+ExecStart=<DOTNETHOME> <INSTALLDIR>/bin/service/Alachisoft.NCache.Daemon.dll <INSTALLDIR>
+ExecStop=<DOTNETHOME> <INSTALLDIR>/bin/service/Alachisoft.NCache.Daemon.dll stop
 Restart=always
 
 [Install]
