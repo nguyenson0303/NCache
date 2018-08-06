@@ -40,7 +40,7 @@ namespace Alachisoft.Samples.GuessGameCore
         {
             // Add framework services.
             services.AddMvc();
-            
+
             //To test Sesssions with NCache Distributed Cache, uncomment these and comment the two lines below these
             //services.AddNCacheDistributedCache(Configuration.GetSection("NCacheSettings"));
             //services.AddSession();
