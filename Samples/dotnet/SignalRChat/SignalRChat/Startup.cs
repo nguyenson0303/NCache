@@ -26,13 +26,9 @@ namespace SignalRChat
             else
                 throw new Exception("EventKey is required to start the application");
             
+					
 			
-			if(ConfigurationManager.AppSettings["userID"]!=null)
-					userId=ConfigurationManager.AppSettings["userID"];
-			if(ConfigurationManager.AppSettings["password"]!=null)
-					password=ConfigurationManager.AppSettings["password"];
-			
-			GlobalHost.DependencyResolver.UseNCache(cache, eventKey, userId, password);
+			GlobalHost.DependencyResolver.UseNCache(cache, eventKey);
 
             app.MapSignalR();
             // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=316888
