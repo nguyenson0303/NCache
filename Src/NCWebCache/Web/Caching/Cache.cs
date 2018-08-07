@@ -128,7 +128,7 @@ namespace Alachisoft.NCache.Web.Caching
         internal PerfStatsCollector2 _perfStatsCollector;
 
 
-        ///// <summary> Cache event listener object. Implements all events.</summary>
+        /// <summary> Cache event listener object. Implements all events.</summary>
         internal ResourcePool _asyncCallbackIDsMap = new ResourcePool();
         internal ResourcePool _asyncCallbacksMap = new ResourcePool();
 

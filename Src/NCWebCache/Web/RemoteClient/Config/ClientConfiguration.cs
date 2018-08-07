@@ -25,7 +25,7 @@ using System.Threading;
 namespace Alachisoft.NCache.Web.RemoteClient.Config
 {
     /// <summary>
-    /// Contains the
+    /// Contains the config params
     /// </summary>
     class ClientConfiguration
     {

@@ -260,7 +260,6 @@ namespace Alachisoft.NCache.Web.Command
         public static CommandBase GetDedicatedCommand(IEnumerable<CommandBase> commands)
         {
             /*
-             *
              * This function will be called only for bulk commands
              * If commands are non-key commands, each command in passed commands will be the same,
              * If commands are key based bulk command, each command will have seperate set of keys. Need to merge all keys to create a dedicated command.
