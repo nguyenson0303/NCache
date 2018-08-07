@@ -218,6 +218,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     {
                         ((OperationContext)argument).CancellationToken = token;
                         _clientRequestTimeout = TimeSpan.FromMilliseconds(((OperationContext)argument).ClientOperationTimeout);
+                        if (_clientRequestTimeout <TimeSpan.Zero)
+                            _clientRequestTimeout = TimeSpan.FromSeconds(90);
                         break;
                     }
                 }
