@@ -33,7 +33,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Alachisoft.NGroups")]
 #endif
 
-[assembly: AssemblyProduct("Alachisoft® NCache Professional")]
+[assembly: AssemblyProduct("Alachisoft® NCache Open Source")]
 
 [assembly: AssemblyTrademark("NCache ™ is a registered trademark of Alachisoft.")]
 
@@ -80,11 +80,6 @@ using System.Runtime.InteropServices;
 //
 [assembly: AssemblyDelaySign(false)]
 [assembly: AssemblyKeyName("")]
-#if DEBUG
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\ncache.snk")]
-#else
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\ncache.snk")]
-#endif
 [assembly: AssemblyDescriptionAttribute("Cluster Core")]
 [assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

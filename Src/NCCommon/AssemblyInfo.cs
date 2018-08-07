@@ -17,7 +17,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-
 //
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
@@ -50,12 +49,6 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 
 [assembly: AssemblyVersion("4.9.0")]
-#if DEBUG
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
-#else
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
-#endif
-
 [assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyDescriptionAttribute("Common Classes")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

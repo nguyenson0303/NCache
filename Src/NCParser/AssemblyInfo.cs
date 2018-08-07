@@ -53,7 +53,7 @@ using System.Security.Permissions;
 #endif
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Alachisoft")]
-[assembly: AssemblyProduct("Alachisoft® NCache")]
+[assembly: AssemblyProduct("Alachisoft® NCache Open Source")]
 [assembly: AssemblyCopyright("Copyright © 2005-2018 Alachisoft")]
 [assembly: AssemblyTrademark("NCache ™ is a registered trademark of Alachisoft.")]
 [assembly: AssemblyCulture("")]	
@@ -104,11 +104,6 @@ using System.Security.Permissions;
 
 [assembly: AssemblyDelaySign(false)]
 [assembly: AssemblyKeyName("")]
-#if DEBUG
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
-#else
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
-#endif
 [assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyDescriptionAttribute("Pasring Engine")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

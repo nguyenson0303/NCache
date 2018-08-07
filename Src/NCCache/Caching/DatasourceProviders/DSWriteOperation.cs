@@ -22,6 +22,8 @@ using Alachisoft.NCache.Runtime.DatasourceProviders;
 using Alachisoft.NCache.Runtime.Serialization;
 using Alachisoft.NCache.Runtime.Serialization.IO;
 using Alachisoft.NCache.Util;
+using Alachisoft.NCache.Runtime.Events;
+
 
 namespace Alachisoft.NCache.Caching.DatasourceProviders
 {

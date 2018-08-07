@@ -59,11 +59,6 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyDelaySign(false)]
 [assembly: AssemblyKeyName("")]
-#if DEBUG
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
-#else
-[assembly: AssemblyKeyFile("..\\..\\..\\..\\Resources\\alachisoft.snk")]
-#endif
 
 [assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 
