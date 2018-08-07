@@ -231,7 +231,6 @@ namespace Alachisoft.NCache.Caching.Util
 
             lock (connection)
             {
-                //if (nTrace.IsErrorEnabled) nTrace.error("ConnectionPool.LoadTableData", "Begining transaction");
                 var transaction = connection.BeginTransaction(System.Data.IsolationLevel.RepeatableRead);
 
                 try

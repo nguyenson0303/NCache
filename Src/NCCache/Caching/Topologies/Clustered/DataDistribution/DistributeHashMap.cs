@@ -123,7 +123,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             ArrayList distMatrix = distData.DistributionMatrixForNodes;
             ArrayList finalBuckets = new ArrayList();
 
-            //We need to cater for the cases where we dont need to actually balance the data over nodes, as cluster itself is starting
+            //We need to cater for the cases where we don't need to actually balance the data over nodes, as cluster itself is starting
             //and no actual load is present within a cluster and on each node.
 
             foreach (DistributionMatrix dMatrix in distMatrix)
@@ -135,10 +135,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
             }
 
-            //If cluster is not loaded only shuffled disribution is required. No need to balance any weight.
+            //If cluster is not loaded only shuffled distribution is required. No need to balance any weight.
             if (bShouldBalanceWeight == false)
             {
-                if (NCacheLog.IsInfoEnabled) NCacheLog.Info("DistributionImpl.BalanceBuckets()", "Cluster is not loaded only shuffled disribution is required. No need to balance any weight.");
+                if (NCacheLog.IsInfoEnabled) NCacheLog.Info("DistributionImpl.BalanceBuckets()", "Cluster is not loaded only shuffled distribution is required. No need to balance any weight.");
                 distInfo.DistribMode = DistributionMode.ShuffleBuckets;
             }
 
@@ -161,7 +161,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     }
                     return finalBuckets;
 
-                case DistributionMode.ShuffleBuckets: //Although code replication is observed here. Still I prefer to make its copy rather puting fewer if-else to control. I need some time efficiency here.
+                case DistributionMode.ShuffleBuckets: //Although code replication is observed here. Still I prefer to make its copy rather putting fewer if-else to control. I need some time efficiency here.
                     foreach (DistributionMatrix dMatrix in distMatrix)
                     {
                         int[,] IdMatrix = dMatrix.IdMatrix;

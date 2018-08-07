@@ -18,7 +18,6 @@ using Alachisoft.NCache.Runtime.Serialization;
 namespace Alachisoft.NCache.Config.Dom
 {
 	/// <summary>
-	/// Dated: 20100413
 	/// This Class is responsible for holding the recipient of notification
 	/// ID attribute can be used to hold recipient of different type for example it can email, in future can be
 	/// SMS etc

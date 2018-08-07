@@ -156,8 +156,8 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
 
         private ArrayList GetComparibleValues(QueryContext queryContext)
         {
-            // arraylist contaons take too much time to check for duplicate members, wheras hashset has better effeciency 
-            // so mainting two data structures 
+            // arraylist contains take too much time to check for duplicate members, whereas hashset has better efficiency 
+            // so maintaining two data structures 
             ArrayList values = new ArrayList();
             HashSet<object> duplicateValues = new HashSet<object>();
             var providedValues = queryContext.AttributeValues[((MemberFunction)functor).MemberName] as ArrayList;

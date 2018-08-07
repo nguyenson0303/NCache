@@ -21,7 +21,7 @@ namespace Alachisoft.NCache.Caching.Queries
     [Serializable]
     public class DeleteQueryResultSet : ICompactSerializable
     {
-        /// <summary> List of keys which are dependiong on this item. </summary>
+        /// <summary> List of keys which are depending on this item. </summary>
         private Hashtable _keysDependingOnMe = new Hashtable();
         private Hashtable _keysEffected = new Hashtable();
         private int _keysEffectedCount;

@@ -124,7 +124,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Add the key and entry in teh Hashtable for Invalidation by preodic thread.
+        /// Add the key and entry in the Hashtable for Invalidation by preodic thread.
         /// </summary>
         /// <param name="key">The key of the item to invalidate.</param>
         /// <param name="entry">CacheEntry to Invalidate.</param>
@@ -368,7 +368,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         #region IDisposable Members
         /// <summary>
-        /// Terminates the replciation thread and Disposes the instance.
+        /// Terminates the replication thread and Disposes the instance.
         /// </summary>
         public void Dispose()
         {

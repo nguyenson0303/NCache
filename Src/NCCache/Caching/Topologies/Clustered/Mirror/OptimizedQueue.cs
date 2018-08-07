@@ -105,7 +105,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     int index = 0;
                     do               //fetch the next valid operation from the queue
                     {
-                        if (_head < _tail || _tailMaxReached)  //or condition checks if the _tail has reached max long value and _head has not yet reached there , so in this case _head<_tail will fail bcz _tail has been reinitialized
+                        if (_head < _tail || _tailMaxReached)  //or condition checks if the _tail has reached max long value and _head has not yet reached there , so in this case _head<_tail will fail because _tail has been reinitialized
                         {
                             if (_head == int.MaxValue)     //checks if _head has reached the max long value, so reinitialize _head and make _tailMaxReached is set to false as _head<_tail is now again valid
                             {
@@ -144,7 +144,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Clears queue and helping datastructures like map, cache, itemstobereplicated
+        /// Clears queue and helping data structures like map, cache, items to be replicated
         /// </summary>
         internal void Clear()
         {

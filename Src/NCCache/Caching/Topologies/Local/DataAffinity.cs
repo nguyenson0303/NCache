@@ -182,7 +182,7 @@ namespace Alachisoft.NCache.Caching.DataGrouping
         }
 
         /// <summary>
-        /// Determine whether the spceified group exist in unbinded groups list or not.
+        /// Determine whether the specified group exist in unbinded groups list or not.
         /// </summary>
         /// <param name="group"></param>
         /// <returns></returns>

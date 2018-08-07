@@ -104,7 +104,7 @@ namespace Alachisoft.NCache.Caching.EvictionPolicies
         }
 
         /// <summary>
-        /// insert at the begining...
+        /// insert at the beginning...
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
@@ -359,7 +359,7 @@ namespace Alachisoft.NCache.Caching.EvictionPolicies
             return selectedKeys;
         }
 
-        #region ISizable Impelementation
+        #region ISizable Implementation
         public long IndexInMemorySize
         {
             get

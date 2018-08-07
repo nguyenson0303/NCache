@@ -207,7 +207,7 @@ namespace Alachisoft.NCache.Caching.Queries
 		{
             //selectType can be one of the following depending on the query text: -
             //1. A plain string that is the name of Type; we can build IsOfTypePredicate from this.
-            //2. AggregateFunctionPredicate that has IsOfTypePredicate set as its ChildPredicate // cant be this, grammer changed
+            //2. AggregateFunctionPredicate that has IsOfTypePredicate set as its ChildPredicate // cant be this, grammar changed
             //3. IsOfTypePredicate
 
 			object selectType = ((Reduction)reduction.GetToken(1).Data).Tag;
@@ -773,7 +773,6 @@ namespace Alachisoft.NCache.Caching.Queries
 		{
 			IFunctor nested = 
 				new MemberFunction(((Reduction)((Token)reduction.GetToken(2)).Data).Tag.ToString());
-			//			IFunctor func = (MemberFunction)((Reduction)reduction.GetToken(0).Data).Tag;
 			IFunctor func = 
 				new MemberFunction(((Reduction)((Token)reduction.GetToken(0)).Data).Tag.ToString());
 

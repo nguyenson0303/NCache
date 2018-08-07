@@ -163,9 +163,6 @@ namespace Alachisoft.NCache.Caching.CacheLoader
             }
         }
 
-
-        //-
-
         internal static Hashtable GetNamedTagsInfo(object value, NamedTagsDictionary namedTags, TypeInfoMap typeMap)
         {
             CheckDuplicateIndexName(value, namedTags, typeMap);
@@ -214,7 +211,7 @@ namespace Alachisoft.NCache.Caching.CacheLoader
                 ArrayList attributes = typeMap.GetAttribList(handleId);
                 foreach (string name in attributes)
                 {
-                    if (namedTags.Contains(name)) //@UH whether this should be case insensitive
+                    if (namedTags.Contains(name)) 
                     {
                         throw new Exception("Key in named tags conflicts with the indexed attribute name of the specified object.");
                     }

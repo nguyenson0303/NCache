@@ -122,7 +122,7 @@ namespace Alachisoft.NCache.Caching.Messaging
                     }
                     finally
                     {
-                        //For for new udpates to come
+                        //For new updates to come
                         WaitForUpdates(currentVersion);
                     }
                 }
@@ -273,17 +273,17 @@ namespace Alachisoft.NCache.Caching.Messaging
         {
             lock(_mutex)
             {
-                //see if version is already udpated
+                //see if version is already updated
                 if (currentVersion < _version || _hadPendingWork) return;
 
-                //wait for version udpate
+                //wait for version update
                 Monitor.Wait(_mutex, TimeSpan.FromSeconds(5));
             }
         }
 
         #endregion
 
-        #region /                           --- Client notificaitons ----                                     /
+        #region /                           --- Client notifications ----                                     /
         private void NotifyClients()
         {
             try
@@ -414,7 +414,7 @@ namespace Alachisoft.NCache.Caching.Messaging
             }
 
             /// <summary>
-            /// True if task is cancelled, false otherwise
+            /// True if task is canceled, false otherwise
             /// </summary>
             public bool IsCancelled
             {

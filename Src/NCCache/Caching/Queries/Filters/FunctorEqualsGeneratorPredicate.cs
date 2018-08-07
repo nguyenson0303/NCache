@@ -55,7 +55,6 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
             }
             else
             {
-                //if (queryContext.Cache.Count != 0)
                 throw new AttributeIndexNotDefined("Index is not defined for attribute '" + ((MemberFunction)functor).MemberName + "'");
             }
         }

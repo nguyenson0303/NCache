@@ -68,7 +68,7 @@ namespace Alachisoft.NCache.Caching.Queries
                                 foreach (string tag in tagsList)
                                 {
                                     Hashtable tmp = new Hashtable();
-                                    tmp["$Tag$"] = tag;//.ToLower();
+                                    tmp["$Tag$"] = tag;
                                     value.ItemArrtributes = tmp;
                                     index.AddToIndex(key, value);
                                 }

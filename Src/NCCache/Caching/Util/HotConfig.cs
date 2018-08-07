@@ -33,20 +33,16 @@ namespace Alachisoft.NCache.Caching.Util
 
         private bool _expirationEnabled;
         private bool _absoluteLongerEnabled;
-   //     private bool _absoluteLongestEnabled;
         private bool _absoluteDefaultEnabled;
         private bool _defaultSlidingEnabled;
         private bool _slidingDefaultEnabled;
         private bool _slidingLongerEnabled;
-    //    private bool _slidingLongestEnabled;
 
         private long _absoluteDefault;
         private long _absoluteLonger;
-   //     private long _absoluteLongest;
 
         private long _slidingDefault;
         private long _slidingLonger;
-      //  private long _slidingLongest;
       
         /// <summary>
         /// Registered Backing Source.

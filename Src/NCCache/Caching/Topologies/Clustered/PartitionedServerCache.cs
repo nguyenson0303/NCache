@@ -256,7 +256,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// </summary>
         protected override void StartStateTransfer(bool isBalanceDataLoad)
         {
-            /// Tell everyone that we are not fully-functional, i.e., initilizing.
+            /// Tell everyone that we are not fully-functional, i.e., initializing.
             if (NCacheLog.IsInfoEnabled) NCacheLog.Info("PartitionedCache.StartStateTransfer()", "Requesting state transfer " + LocalAddress);
 
             if (_stateTransferTask == null)
@@ -324,7 +324,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// </summary>
         /// <param name="address">address of the joining member</param>
         /// <param name="identity">additional identity information</param>
-        /// <returns>true if the node joined successfuly</returns>
+        /// <returns>true if the node joined successfully</returns>
         public override bool OnMemberJoined(Address address, NodeIdentity identity)
         {
             if (!base.OnMemberJoined(address, identity) || !((Identity)identity).HasStorage)
@@ -403,7 +403,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// Called when an existing member leaves the group.
         /// </summary>
         /// <param name="address">address of the joining member</param>
-        /// <returns>true if the node left successfuly</returns>
+        /// <returns>true if the node left successfully</returns>
         public override bool OnMemberLeft(Address address, NodeIdentity identity)
         {
             if (!base.OnMemberLeft(address, identity))
@@ -1498,10 +1498,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         /// <summary>
-        /// Hanlde cluster-wide Get(key) requests.
+        /// Handel cluster-wide Get(key) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         private object handleCount()
         {
             try
@@ -1719,10 +1719,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide Get(key) requests.
+        /// Handel cluster-wide Get(key) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         private object handleContains(object info)
         {
             try
@@ -2611,7 +2611,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         private CacheEntry Local_GetGroup(object key, string group, string subGroup, ref ulong version, ref object lockId, ref DateTime lockDate, LockExpiration lockExpiration, LockAccessType accessType, OperationContext operationContext)
         {
@@ -2629,7 +2629,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             return null;
         }
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         private Hashtable Local_GetGroup(object[] keys, string group, string subGroup, OperationContext operationContext)
         {
@@ -2640,7 +2640,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected override ArrayList Local_GetGroupKeys(string group, string subGroup, OperationContext operationContext)
         {
@@ -2652,7 +2652,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected override HashVector Local_GetGroupData(string group, string subGroup, OperationContext operationContext)
         {
@@ -2663,10 +2663,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide Get(key) requests.
+        /// Handel cluster-wide Get(key) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         private object handleGet(object info)
         {
             try
@@ -2719,10 +2719,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide Get(key) requests.
+        /// Handle cluster-wide Get(key) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         private object handleGetGroup(object info)
         {
             try
@@ -3210,10 +3210,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide Add(key) requests.
+        /// Handel cluster-wide Add(key) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         /// <remarks>
         /// This method can only be called on one node in the cluster. It triggers <see cref="OnItemAdded"/>,
         /// which initiates a cluster-wide item added notification.
@@ -3255,10 +3255,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide GetKeys(group, subGroup) requests.
+        /// Handel cluster-wide GetKeys(group, subGroup) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         private object handleGetKeys(object info)
         {
             try
@@ -3280,10 +3280,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide GetData(group, subGroup) requests.
+        /// Handel cluster-wide GetData(group, subGroup) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         private object handleGetData(object info)
         {
             try
@@ -3377,7 +3377,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// Gets data group info the items
         /// </summary>
         /// <param name="keys">Keys of the items</param>
-        /// <returns>IDictionary of the data grup info the items</returns>
+        /// <returns>IDictionary of the data group info the items</returns>
         public override Hashtable GetGroupInfoBulk(object[] keys, OperationContext operationContext)
         {
             _statusLatch.WaitForAny(NodeStatus.Running);
@@ -3406,7 +3406,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// Gets data group info the items
         /// </summary>
         /// <param name="keys">Keys of the items</param>
-        /// <returns>IDictionary of the data grup info the items</returns>
+        /// <returns>IDictionary of the data group info the items</returns>
         private Hashtable Local_GetGroupInfoBulk(Object[] keys, OperationContext operationContext)
         {
             if (_internalCache != null)
@@ -3440,11 +3440,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         #region /                    --- Data Integrity ---                     /
 
         /// <summary>
-        /// Handles the data integrity varification from a new joining node.
+        /// Handles the data integrity verification from a new joining node.
         /// </summary>
         /// <param name="info">Data groups of the joining node.</param>
         /// <returns>True, if conflict found, otherwise false</returns>
-        /// <remarks>Varifies whether the data groups of the joining node exist on
+        /// <remarks>Verifies whether the data groups of the joining node exist on
         /// this node or not. We get the list of all the groups contained by the
         /// cache. Remove the own data affinity groups. From remaining groups, if
         /// the joining node groups exist, we return true.</remarks>
@@ -3502,7 +3502,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// </summary>
         /// <param name="keys">keys of the entries.</param>
         /// <param name="cacheEntries">cache entries.</param>
-        /// <returns>List of keys that are added or that alredy exists in the cache and their status.</returns>
+        /// <returns>List of keys that are added or that already exists in the cache and their status.</returns>
         /// <remarks>
         /// This method either invokes <see cref="handleAdd"/> on every server-node in the cluster, 
         /// or invokes <see cref="Local_Add"/> locally. <see cref="Local_Add"/> can only be called on 
@@ -4362,7 +4362,6 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
             }
 
-            //Fix for NCache Bug4981
             object generateQueryInfo = operationContext.GetValueByField(OperationContextFieldName.GenerateQueryInfo);
 
             if (generateQueryInfo == null)
@@ -4682,7 +4681,6 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
             }
 
-            //Fix for NCache Bug4981
             object generateQueryInfo = operationContext.GetValueByField(OperationContextFieldName.GenerateQueryInfo);
             if (generateQueryInfo == null)
             {
@@ -4767,8 +4765,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Adds key and va
-        /// lue pairs to the cache. If any of the specified key already exists 
+        /// Adds key and value pairs to the cache. If any of the specified key already exists 
         /// in the cache; it is updated, otherwise a new item is added to the cache.
         /// </summary>
         /// <param name="keys">keys of the entry.</param>
@@ -4941,7 +4938,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// in the cache; it is updated, otherwise a new item is added to the cache.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         /// <remarks>
         /// This method triggers either <see cref="OnItemAdded"/> or <see cref="OnItemUpdated"/>, which
         /// in turn trigger either an item-added or item-updated cluster-wide notification.
@@ -5716,10 +5713,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide Remove(key) requests.
+        /// Handel cluster-wide Remove(key) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         /// <remarks>
         /// This method triggers <see cref="OnItemsRemoved"/>, which then triggers a cluster-wide 
         /// Item removed notification. 
@@ -5793,10 +5790,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         /// <summary>
-        /// Hanlde cluster-wide RemoveGroup(group, subGroup) requests.
+        /// Handel cluster-wide RemoveGroup(group, subGroup) requests.
         /// </summary>
         /// <param name="info">the object containing parameters for this operation.</param>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         /// <remarks>
         /// This method triggers <see cref="OnItemsRemoved"/>, which then triggers a cluster-wide 
         /// Item removed notification. 
@@ -5900,9 +5897,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlde cluster-wide KeyList requests.
+        /// Handel cluster-wide KeyList requests.
         /// </summary>
-        /// <returns>object to be sent back to the requestor.</returns>
+        /// <returns>object to be sent back to the requester.</returns>
         private object handleKeyList()
         {
             try
@@ -5942,7 +5939,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlder for clustered cache clear notification.
+        /// Handler for clustered cache clear notification.
         /// </summary>
         /// <param name="info">packaged information</param>
         /// <returns>null</returns>
@@ -5990,7 +5987,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         /// <summary>
-        /// Hanlder for clustered item added notification.
+        /// Handler for clustered item added notification.
         /// </summary>
         /// <param name="info">packaged information</param>
         /// <returns>null</returns>
@@ -6037,7 +6034,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlder for clustered item updated notification.
+        /// Handler for clustered item updated notification.
         /// </summary>
         /// <param name="info">packaged information</param>
         /// <returns>null</returns>
@@ -6125,7 +6122,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlder for clustered item removal notification.
+        /// Handler for clustered item removal notification.
         /// </summary>
         /// <param name="info">packaged information</param>
         /// <returns>null</returns>
@@ -6145,7 +6142,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Hanlder for clustered item removal notification.
+        /// Handler for clustered item removal notification.
         /// </summary>
         /// <param name="info">packaged information</param>
         /// <returns>null</returns>

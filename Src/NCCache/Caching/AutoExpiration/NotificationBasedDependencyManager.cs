@@ -793,7 +793,7 @@ namespace Alachisoft.NCache.Caching.AutoExpiration
             /// <summary>
             /// Initializes the sql dependency instance. registers the change event handler for it.
             /// </summary>
-            /// <returns>true if the dependency was successfuly initialized.</returns>
+            /// <returns>true if the dependency was successfully initialized.</returns>
             public override bool Initialize()
             {
                 SqlCommand sqlCmd = null;
@@ -1087,7 +1087,7 @@ namespace Alachisoft.NCache.Caching.AutoExpiration
             /// <summary>
             /// Initializes the sql dependency instance. registers the change event handler for it.
             /// </summary>
-            /// <returns>true if the dependency was successfuly initialized.</returns>
+            /// <returns>true if the dependency was successfully initialized.</returns>
             public override bool Initialize()
             {
                 RegisterNotification();

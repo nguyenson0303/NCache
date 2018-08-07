@@ -36,7 +36,7 @@ using Alachisoft.NCache.Common.DataStructures.Clustered;
 namespace Alachisoft.NCache.Caching.DatasourceProviders
 {
 	/// <summary>
-	/// Manager class for read-trhough and write-through operations
+	/// Manager class for read-through and write-through operations
 	/// </summary>
 
 	internal class DatasourceMgr: IDisposable
@@ -500,8 +500,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                         throw new OperationFailedException("Error occurred while synchronization with data source; " + ex.Message);
                     }
                 }
-                //}
-                ////verify group/subgroup and tags
+
+                //verify group/subgroup and tags
                 
                 if (!item.Value.GetType().IsSerializable && !_type.IsAssignableFrom(item.Value.GetType())) throw new OperationFailedException("Read through provider returned an object that is not serializable.");
 
@@ -915,7 +915,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         }
 
         /// <summary>
-        /// Deqeueu a task mathcing taskId
+        /// Dequeue a task matching taskId
         /// </summary>
         /// <param name="taskId">taskId</param>
         public void DequeueWriteBehindTask(string[] taskId, string providerName)

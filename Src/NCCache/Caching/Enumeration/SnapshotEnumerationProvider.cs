@@ -70,7 +70,7 @@ namespace Alachisoft.NCache.Caching.Enumeration
             if (currentIndex == _snapshot.Length - 1)
                 _pointer.ChunkId = -1;
             else
-                _pointer.ChunkId = currentIndex; //Set the chunkId to strating index of the next chunk to fetch.
+                _pointer.ChunkId = currentIndex; //Set the chunkId to starting index of the next chunk to fetch.
             
             chunk.Pointer = _pointer;
 

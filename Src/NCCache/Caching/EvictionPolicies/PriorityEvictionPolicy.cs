@@ -426,7 +426,7 @@ namespace Alachisoft.NCache.Caching.EvictionPolicies
             }
         }
 
-        #region ISizable Impelementation
+        #region ISizable Implementation
         public long IndexInMemorySize { get { return PriorityEvictionIndexSize; } }
        
         private long PriorityEvictionIndexSize

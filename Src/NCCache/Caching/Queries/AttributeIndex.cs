@@ -33,10 +33,10 @@ namespace Alachisoft.NCache.Caching.Queries
         protected internal List<AttributeIndex> _sharedTypes;
         protected internal Hashtable commonRbStores;
         
-        //Cacluate Size of this Attribute Index accumulated size of all stores
+        //Calculate Size of this Attribute Index accumulated size of all stores
         private long _attributeIndexSize;
 
-        //Cacluate Size of indexTable and IndexInformation Associated with Keys
+        //Calculate Size of indexTable and IndexInformation Associated with Keys
         private long _keyIndexInformationSize;
         private readonly bool _haveDuplicateKeys;
         private readonly object _mutex = new object();

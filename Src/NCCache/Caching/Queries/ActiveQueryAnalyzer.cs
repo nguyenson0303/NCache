@@ -48,7 +48,7 @@ namespace Alachisoft.NCache.Caching.Queries
 
         /// <summary>
         /// 1. string based object type as key i.e. "Application.Data.Employee"
-        /// 2. Dicationary for which
+        /// 2. Dictionary for which
         ///     a. key is the cache key
         ///     b. value is predicate holder
         /// 

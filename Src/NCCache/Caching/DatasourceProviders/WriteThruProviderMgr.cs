@@ -27,7 +27,7 @@ using System.Collections.Generic;
 namespace Alachisoft.NCache.Caching.DatasourceProviders
 {
     /// <summary>
-    /// Manager class for read-trhough and write-through operations
+    /// Manager class for read-through and write-through operations
     /// </summary>
     internal class WriteThruProviderMgr: IDisposable
     {
@@ -419,7 +419,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         /// <param name="keys">array of keys to be updated</param>
         /// <param name="values">array of values. required in case of insert or add operations.
         /// pass null otherwise</param>
-        /// <param name="entries">array of cache enteries. required in case of remove operations.
+        /// <param name="entries">array of cache entries. required in case of remove operations.
         /// pass null otherwise</param>
         /// <param name="returnSet">the table returned from the bulk operation that was performed.
         /// this table will be updated accordingly</param>

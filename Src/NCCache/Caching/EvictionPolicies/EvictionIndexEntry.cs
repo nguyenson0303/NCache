@@ -69,7 +69,7 @@ namespace Alachisoft.NCache.Caching.EvictionPolicies
             return _hintIndex.Contains(key);
         }
 
-        #region ISizable Impelementation
+        #region ISizable Implementation
         public int Size { get { return EvictionIndexEntrySize; } }
 
         public int InMemorySize{ get { return this.Size; } }

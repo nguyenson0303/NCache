@@ -257,6 +257,7 @@ namespace Alachisoft.NCache.Caching.AutoExpiration
         {
             return _expiringHint;
         }
+
         /// <summary>
         /// Resets only the variant ExpirationHints.
         /// </summary>

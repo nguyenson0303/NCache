@@ -263,7 +263,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             if (secondaryRowWeight < weightToAchieve)
                 bSecondaryNeedsToLoose = false;
 
-            //lets first populated indicies list for each row.This would help in geting the final set of indicies.
+            //lets first populated indicies list for each row.This would help in getting the final set of indicies.
             for (int i = 0; i < bMatrix.MatrixDimension.Cols; i++)
             {
                 primaryIndicies[i] = (rowPair.First * bMatrix.MatrixDimension.Cols) + i;
@@ -381,7 +381,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             int[] primaryIndicies = new int[bMatrix.MatrixDimension.Cols];
 
             RowsBalanceResult rbResult = new RowsBalanceResult();
-            //lets first populated indicies list for each row.This would help in geting the final set of indicies.
+            //lets first populated indicies list for each row.This would help in getting the final set of indicies.
             for (int i = 0; i < bMatrix.MatrixDimension.Cols; i++)
                 primaryIndicies[i] = (rowPair.First * bMatrix.MatrixDimension.Cols) + i;
 

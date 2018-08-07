@@ -414,7 +414,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         /// <summary>
         /// A new map is required when a member leaves or joins the cluster.
-        /// This method returns a new map based on the input paramameters.
+        /// This method returns a new map based on the input parameters.
         /// </summary>
         /// <param name="member">Address of the member that has either left
         /// or joined the cluster</param>
@@ -962,7 +962,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                                 if (requestingNode.Equals(bucket.TempAddress))
                                 {
                                     bucket.Status = BucketStatus.Functional;
-                                    //Change permnant address only when node who locked the bucket 
+                                    //Change permanent address only when node who locked the bucket 
                                     //has sent request to release after he has transfered the bucket completely.
                                     bucket.PermanentAddress = bucket.TempAddress;
                                 }
@@ -982,7 +982,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                                 int startIndex = 0;
                                 do
                                 {
-                                    //TempFix: Updates status for multipile occurances of the same bucket in ownership map for replica.
+                                    //TempFix: Updates status for multiple occurrences of the same bucket in ownership map for replica.
                                     indexOfBucket = nodeBuckets.IndexOf(new HashMapBucket(null, bucketId), startIndex);
                                     if (indexOfBucket != -1)
                                     {
@@ -990,7 +990,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                                         if (requestingNode.Equals(bucket.TempAddress))
                                         {
                                             bucket.Status = BucketStatus.Functional;
-                                            //Change permnant address only when node who locked the bucket 
+                                            //Change permanent address only when node who locked the bucket 
                                             //has sent request to release after he has transfered the bucket completely.
 
                                             bucket.PermanentAddress = requestingNode;
@@ -1018,7 +1018,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             }
         }
         /// <summary>
-        /// Verifies whether the given node is temorary owner of the bucket or not.
+        /// Verifies whether the given node is temporary owner of the bucket or not.
         /// </summary>
         /// <param name="bucketId"></param>
         /// <param name="temOwner"></param>

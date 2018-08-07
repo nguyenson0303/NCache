@@ -161,7 +161,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         #region	/                 --- Partitioned ICache.GetKeys ---           /
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected ArrayList Clustered_GetKeys(ArrayList dests, string group, string subGroup)
         {
@@ -206,7 +206,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected HashVector Clustered_GetData(string group, string subGroup, OperationContext operationContext)
         {
@@ -366,7 +366,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected Hashtable Clustered_GetData(ArrayList dests, string group, string subGroup, OperationContext operationContext)
         {
@@ -428,7 +428,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// </summary>
         /// <param name="key"></param>
         /// <returns>Result of the operation</returns>
-        /// <remarks>On the other ndoe handleGetGroupInfo is called</remarks>
+        /// <remarks>On the other node handleGetGroupInfo is called</remarks>
         public ClusteredOperationResult Clustered_GetGroupInfo(object key, OperationContext operationContext)
         {
             return Clustered_GetGroupInfo(Cluster.Servers, key, true, operationContext);
@@ -436,11 +436,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         /// <summary>
         /// Gets the data group info the items. Node containing items will return a table
-        /// of Data grop information.
+        /// of Data group information.
         /// </summary>
         /// <param name="keys"></param>
         /// <returns></returns>
-        /// /// <remarks>On the other ndoe handleGetGroupInfo is called</remarks>
+        /// /// <remarks>On the other node handleGetGroupInfo is called</remarks>
         public ICollection Clustered_GetGroupInfoBulk(object[] keys, OperationContext operationContext)
         {
             return Clustered_GetGroupInfoBulk(Cluster.Servers, keys, true, operationContext);
@@ -474,7 +474,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         #region	/                 --- Partitioned ICache.Add ---           /
 
         /// <summary>
-        /// Add the object to specfied node in the cluster. 
+        /// Add the object to specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -523,7 +523,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Add the ExpirationHint to a specfied node in the cluster. 
+        /// Add the ExpirationHint to a specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -559,7 +559,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Add the ExpirationHint to a specfied node in the cluster. 
+        /// Add the ExpirationHint to a specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -598,7 +598,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         /// <summary>
-        /// Add the object to specfied node in the cluster. 
+        /// Add the object to specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -654,7 +654,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// strongly affiliated groups can be loadbalanced to any of the existing node. In such a
         /// situation if a new node joins and it has strong affinity with the groups whose data 
         /// was previously distributed evenly, then a data integrity conflict arises. To avoid such
-        /// conflicts each joining node first varifes that no other node on the cluster has data
+        /// conflicts each joining node first verifies that no other node on the cluster has data
         /// of his groups. If it is so, then he has to leave the cluster.</remarks>
         public bool VerifyDataIntegrity()
         {

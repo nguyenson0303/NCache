@@ -57,7 +57,7 @@ namespace Alachisoft.NCache.CacheHost
                         DirectoryInfo directoryInfo = Directory.GetParent(location);
                         string bin = directoryInfo.Parent.FullName; /// in bin folder
                         string assembly = Path.Combine(bin, "assembly"); /// in assembly folder 
-                        final = Path.Combine(assembly, "netcore20"); /// from where you neeed the assemblies
+                        final = Path.Combine(assembly, "netcore20"); /// from where you need the assemblies
                     }
                 }
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))

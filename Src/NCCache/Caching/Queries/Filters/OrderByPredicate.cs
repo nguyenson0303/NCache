@@ -54,7 +54,7 @@ namespace Alachisoft.NCache.Caching.Queries.Filters
             }
         }
 
-        //Contains member atributes and aggregate functions to be returned in result
+        //Contains member attributes and aggregate functions to be returned in result
         public List<OrderByArgument> OrderByArguments
         {
             get { return _orderByArguments; }

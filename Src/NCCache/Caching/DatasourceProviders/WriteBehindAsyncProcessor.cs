@@ -26,7 +26,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
 {
     /// <summary>
     /// Processor to perform asynchronous operation, which will only be executed
-    /// when preemted.
+    /// when preempted.
     /// </summary>
     public class WriteBehindAsyncProcessor : IGRShutDown
     {
@@ -63,8 +63,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             private IDictionary<string, DSWriteBehindOperation> _queue;
             private IDictionary<string, ArrayList> _cacheKyes;
             private object _sync_mutex = new object();
-            //private Hashtable _temp = new Hashtable();
             ILogger NcacheLog;
+
             /// <summary>
             /// Initializes new instance of WriteBehindQueue
             /// </summary>
@@ -85,8 +85,6 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                 _cacheKyes = new Dictionary<string, ArrayList>(capacity);
                 NcacheLog = logger;
             }
-
-
 
             /// <summary>
             /// Queue a write behind task
@@ -250,9 +248,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
 
                 }
             }
-            /// <summary>
-            /// 
-            /// </summary>
+
             public int Count
             {
                 get { lock (_sync_mutex) { return _queue.Count; } }
@@ -312,7 +308,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             private object _sync_mutex = new object();
 
             private int _requeueLimit = 0;
-            private int _evictionRatio = 0;//requeue operations evictions ratio
+            private int _evictionRatio = 0; //requeue operations evictions ratio
             private float _ratio = 0.25F;
 
             internal Hashtable _requeuedOps = new Hashtable();
@@ -363,7 +359,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             }
 
             /// <summary>
-            /// Enqueue opeartion, adds the opeartion at the end of the queue and removes 
+            /// Enqueue operation, adds the operation at the end of the queue and removes 
             /// any previous operations on that key.
             /// </summary>
             /// <param name="operation"></param>
@@ -689,7 +685,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             /// </summary>
             /// <param name="taskId">taskId</param>
             /// <param name="state">new state</param>
-            /// <param name="newBulkTable">table that contains keys and value that succeded bulk operation</param>
+            /// <param name="newBulkTable">table that contains keys and value that succeeded bulk operation</param>
             public void UpdateState(string taskId, TaskState state, Hashtable newBulkTable)
             {
                 IDictionary<string, DSWriteBehindOperation> waitQueue = null;
@@ -700,7 +696,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
 
                 lock (this._sync_mutex)
                 {
-                    //for waite status
+                    //for wait status
                     waitQueue = _waitQueue.GetMatchingKeys(taskId);
                 }
 
@@ -1089,7 +1085,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                         this._batchInterval = (5 * 1000);//in sec
                     else
                     {
-                        this._batchInterval = (int)batchInterval;// Now we receive value in miliseconds
+                        this._batchInterval = (int)batchInterval;// Now we receive value in milliseconds
                     }
                     if (operationDelay < 0)
                         this._operationDelay = 0;
@@ -1242,7 +1238,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                     break;
                 case WriteBehindMode.Batch:
                     ArrayList selectedOperations = new ArrayList();
-                    DateTime selectionTime = DateTime.Now;//we will select all expired operations uptill this limit
+                    DateTime selectionTime = DateTime.Now;//we will select all expired operations uptil this limit
                     _currentSelectedBatchOperations = new ArrayList();
 
                     while (this._worker != null && !this._isDisposing)
@@ -1371,7 +1367,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                     OperationResult[] returnOps = _dsManager.WriteThru(operations, provider, returnSet, context);
                     if (returnOps != null && returnOps.Length > 0)
                     {
-                        for (int i = 0; i < operations.Length; i++)//iterate on passed operation array coz we dont have complete info to generate ds operation here.
+                        for (int i = 0; i < operations.Length; i++)//iterate on passed operation array because we don't have complete info to generate datasource operation here.
                         {
                             if (returnSet.ContainsKey(operations[i].Key) && !(returnSet[operations[i].Key] is Exception))//for retry operations
                             {
@@ -1433,7 +1429,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                                 opResult[operations[i].Key] = operations[i];
                             }
                         }
-                        //populating operations with taskids other than retry
+                        //populating operations with task ids other than retry
                         if (!retryOps.Contains(operations[i].Key))
                             taskList.Add(operations[i].TaskId);
                     }
@@ -1444,7 +1440,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                             taskIds = new string[taskList.Count];
                             Array.Copy(taskList.ToArray(), 0, taskIds, 0, taskList.Count);
                         }
-                        _cacheImpl.NotifyWriteBehindTaskStatus(opResult, taskIds, provider, context);//taskids:to dequeue all operations on other nodes.
+                        _cacheImpl.NotifyWriteBehindTaskStatus(opResult, taskIds, provider, context);//task ids:to dequeue all operations on other nodes.
                     }
                     catch { }
                 }
@@ -1642,7 +1638,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         }
 
         /// <summary>
-        /// Update the state of write behing task
+        /// Update the state of write behind task
         /// </summary>
         /// <param name="taskId"></param>
         /// <param name="state"></param>
@@ -1655,7 +1651,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         }
 
         /// <summary>
-        /// Update the state of write behing task
+        /// Update the state of write behind task
         /// </summary>
         /// <param name="taskId"></param>
         /// <param name="state"></param>
@@ -1752,7 +1748,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         /// <summary>
         /// Check if WriteBehind queue contains the key.
         /// </summary>
-        /// <param name="key">key to check the queue for existance.</param>
+        /// <param name="key">key to check the queue for existence.</param>
         /// <returns>True if queue has the key, else False.</returns>
         internal bool CheckQueue(object key)
         {

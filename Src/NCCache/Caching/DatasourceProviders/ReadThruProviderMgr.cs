@@ -29,7 +29,7 @@ using Alachisoft.NCache.Caching.DataGrouping;
 namespace Alachisoft.NCache.Caching.DatasourceProviders
 {
     /// <summary>
-    /// Manager class for read-trhough and write-through operations
+    /// Manager class for read-through and write-through operations
     /// </summary>
     internal class ReadThruProviderMgr : IDisposable
     {
@@ -319,7 +319,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             }
             catch (Exception e)
             {
-                //Client doesnt throw the inner exception
+                //Client doesn't throw the inner exception
                 //Client casts the thrown exception message into Operation failed Exception therefore the current inner exception will be casted 
                 //in Operation failed exception > Inner Exception > Inner Exception
                 throw new OperationFailedException("IReadThruProvider.LoadFromSource failed. Error: " + e.ToString(), e);

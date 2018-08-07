@@ -21,9 +21,7 @@ namespace Alachisoft.NCache.Config.NewDom
     [Serializable]
     public class CacheServerConfigSetting : ICloneable,ICompactSerializable
     {
-        //bool autoStartCacheOnServiceStartup = false;       
         bool inproc;
-        //string lastModified;
         /// <summary>
         /// This helps to differentiate between a local-cache, client-cache and clustered-cache
         /// </summary>
