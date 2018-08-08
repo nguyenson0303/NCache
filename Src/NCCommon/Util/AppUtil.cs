@@ -116,18 +116,11 @@ namespace Alachisoft.NCache.Common
             }
             catch (Exception)
             {
-#if CLIENT
-    //ignore this exception as in case of Nuget client package, nclicense.dll is not shipped with
-#else
-                throw;
-#endif
+                //ignore this exception as in case of Nuget client package, nclicense.dll is not shipped with
             }
+
             if (path == null || path.Length == 0)
-#if CLIENT
                 path = System.Environment.CurrentDirectory + Path.DirectorySeparatorChar;
-#else
-                return null;
-#endif
 
             return path;
         }
@@ -160,18 +153,11 @@ namespace Alachisoft.NCache.Common
             }
             catch (Exception)
             {
-#if CLIENT
                 //ignore this exception as in case of Nuget client package, nclicense.dll is not shipped with
-#else
-                throw;
-#endif
             }
+
             if (path == null || path.Length == 0)
-#if CLIENT
                 path = System.Environment.CurrentDirectory + Path.DirectorySeparatorChar;
-#else
-                return null;
-#endif
 
             return path;
         }
