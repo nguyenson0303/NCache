@@ -62,8 +62,8 @@
     <Reference Include="Alachisoft.NCache.Serialization, Version=4.9.0.0, Culture=neutral, PublicKeyToken=1448e8d1123e9096, processorArchitecture=MSIL">
       <HintPath>..\packages\Alachisoft.NCache.OpenSource.SDK.4.9.1\lib\net40\Alachisoft.NCache.Serialization.dll</HintPath>
     </Reference>
-    <Reference Include="Alachisoft.NCache.SignalR, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Alachisoft.NCache.OpenSource.SignalR.4.9.0\lib\net40\Alachisoft.NCache.SignalR.dll</HintPath>
+    <Reference Include="Alachisoft.NCache.SignalR, Version=4.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Alachisoft.NCache.OpenSource.SignalR.4.9.1\lib\net40\Alachisoft.NCache.SignalR.dll</HintPath>
     </Reference>
     <Reference Include="Alachisoft.NCache.Storage, Version=4.9.0.0, Culture=neutral, PublicKeyToken=1448e8d1123e9096, processorArchitecture=MSIL">
       <HintPath>..\packages\Alachisoft.NCache.OpenSource.SDK.4.9.1\lib\net40\Alachisoft.NCache.Storage.dll</HintPath>
