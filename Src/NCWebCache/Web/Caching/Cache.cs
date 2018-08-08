@@ -4486,17 +4486,19 @@ namespace Alachisoft.NCache.Web.Caching
             }
         }
 
-         /// <summary>
+        /// <summary>
         /// Gets all the cached objects with the specified tag.
         /// </summary>
-        /// <param name="wildCardExpression">The wild card Expression to search with.</param>
+        /// <param name="wildCardExpression">The wild card Expression to search with. We provide two wildcard expressions i.e with '*' and '?'.
+        /// '*' specifies that a word can be at the start or end of the expression where as '?' specifies missing character.
+        /// Number of '?' specify the number of missing characters.</param>
         /// <returns>Returns a dictionary containing the cache keys and associated objects.</returns>
         /// <example>The following example demonstrates how to get the objects with the specified tag.
         /// <code>
         /// 
         /// Cache cache = NCache.InitializeCache("myCache");
-        /// Tag tag = new Tag("Sports");
-        ///	Hashtable table = cache.GetByTag(tag);
+        /// Tag tag = new Tag("Sports:Cricket");
+        ///	Hashtable table = cache.GetByTag("*Cric??t"); //this will return a dictionary containing cache keys and associated objects with the tags that match the expression.
         /// 
         /// </code>
         /// </example>
@@ -4606,14 +4608,16 @@ namespace Alachisoft.NCache.Web.Caching
         /// <summary>
         /// Gets all the keys with the wild card supported tag.
         /// </summary>
-        /// <param name="wildCardExpression">The wild card Expression to search with.</param>
+        /// <param name="wildCardExpression">The wild card Expression to search with. We provide two wildcard expressions i.e with '*' and '?'.
+        /// '*' specifies that a word can be at the start or end of the expression where as '?' specifies missing character.
+        /// Number of '?' specify the number of missing characters.</param>
         /// <returns>Returns collection containing the cache keys.</returns>
         /// <example>The following example demonstrates how to get the keys with the specified tag.
         /// <code>
         /// 
         /// Cache cache = NCache.InitializeCache("myCache");
-        /// Tag tag = new Tag("*Sports*");
-        ///	ICollection keys = cache.GetKeysByTag(tag);
+        /// Tag tag = new Tag("Sports:Cricket");
+        ///	Hashtable table = cache.GetByTag("*Cric??t"); //this will return a collection of cache keys with the tags that match the expression.
         /// 
         /// </code>
         /// </example>

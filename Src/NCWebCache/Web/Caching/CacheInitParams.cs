@@ -383,6 +383,9 @@ namespace Alachisoft.NCache.Web.Caching
             set { _cachePort = value; }
         }
 
+		/// <summary>
+        /// Sets the log level either as Info, Error or Debug
+        /// </summary>
         public LogLevel LogLevel
         {
             get
@@ -395,6 +398,9 @@ namespace Alachisoft.NCache.Web.Caching
             }
         }
 
+		/// <summary>
+        /// Enables client logs.
+        /// </summary>
         public bool EnableClientLogs
         {
             get { return _enableClientLogs; }
