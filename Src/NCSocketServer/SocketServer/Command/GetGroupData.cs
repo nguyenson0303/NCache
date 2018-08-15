@@ -70,11 +70,19 @@ namespace Alachisoft.NCache.SocketServer.Command
                     operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
 
                 }
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
 
                 HashVector groupResult = nCache.Cache.GetGroupData(cmdInfo.Group, cmdInfo.SubGroup, operationContext);
                 stopWatch.Stop();
                 result = groupResult.Count;
                 GetGroupDataResponseBuilder.BuildResponse(groupResult, cmdInfo.CommandVersion, cmdInfo.RequestId, _serializedResponsePackets, command.commandID, nCache.Cache);
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

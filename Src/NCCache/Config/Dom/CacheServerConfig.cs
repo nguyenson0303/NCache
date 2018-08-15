@@ -27,7 +27,6 @@ namespace Alachisoft.NCache.Config.Dom
         bool cacheIsRunning = false;
         bool cacheIsRegistered = false;
         bool licenseIsExpired = false;
-        //bool autoStartCacheOnServiceStartup = false;
         string name;
         bool inproc;
        

@@ -21,6 +21,7 @@ using Alachisoft.NCache.SocketServer.Command.ResponseBuilders;
 using Alachisoft.NCache.SocketServer.RuntimeLogging;
 using System.Diagnostics;
 using Alachisoft.NCache.Common.Monitoring;
+using Alachisoft.NCache.Caching;
 
 namespace Alachisoft.NCache.SocketServer.Command
 {
@@ -69,7 +70,9 @@ namespace Alachisoft.NCache.SocketServer.Command
 
                 Alachisoft.NCache.Caching.OperationContext operationContext = new Alachisoft.NCache.Caching.OperationContext(Alachisoft.NCache.Caching.OperationContextFieldName.OperationType, Alachisoft.NCache.Caching.OperationContextOperationType.CacheOperation);
                 if (Convert.ToInt64(cmdInfo.ClientLastViewId) != -1)
-                    operationContext.Add(Alachisoft.NCache.Caching.OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                    operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
                 resultSet = nCache.Cache.SearchCQ(cmdInfo.Query, cmdInfo.Values, cmdInfo.clientUniqueId, clientManager.ClientID, cmdInfo.notifyAdd, cmdInfo.notifyUpdate, cmdInfo.notifyRemove, operationContext, datafilters);
                 stopWatch.Stop();
                 Alachisoft.NCache.Common.Protobuf.Response response = new Alachisoft.NCache.Common.Protobuf.Response();
@@ -79,6 +82,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.responseType = Alachisoft.NCache.Common.Protobuf.Response.Type.SEARCH_CQ;
 
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

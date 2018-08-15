@@ -15,7 +15,10 @@
 using Alachisoft.NCache.EntityFrameworkCore.NCache;
 using Alachisoft.NCache.Web.Caching;
 using Microsoft.Extensions.Logging;
+using Alachisoft.NCache.Web.Caching;
+using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using Alachisoft.NCache.EntityFrameworkCore.NCache;
 
 namespace Alachisoft.NCache.EntityFrameworkCore
 {
@@ -55,7 +58,6 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// </summary>
         public static DependencyType DatabaseType => _databaseType;
 
-
         internal static ILoggerFactory LoggerFactory => _loggerFactory;
 
         /// <summary>
@@ -63,12 +65,13 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// </summary>
         /// <param name="cacheId">Cache id that will be used to store result sets.</param>
         /// <param name="databaseType">Database type that will be used when creating database dependencies.</param>
-        public static void Configure(string cacheId, DependencyType databaseType)
+        public static void Configure(string cacheId, DependencyType databaseType/*, DbContext context*/)
         {
             _cacheId = cacheId;
             _databaseType = databaseType;
 
             _isConfigured = true;
+
         }
 
         /// <summary>
@@ -77,7 +80,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// <param name="cacheId">Cache id that will be used to store result sets.</param>
         /// <param name="databaseType">Database type that will be used when creating database dependencies.</param>
         /// <param name="initParams">Additional parameters used to initialize NCache.</param>
-        public static void Configure(string cacheId, DependencyType databaseType, CacheInitParams initParams)
+        public static void Configure(string cacheId, DependencyType databaseType, /*DbContext context, */CacheInitParams initParams)
         {
             _initParams = initParams;
             Configure(cacheId, databaseType);
@@ -92,7 +95,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// <param name="categoryName">specifies the category name of the logger.</param>
         /// <param name="path">corresponds to the custom path where user wants to create the logs. can be null.</param>
         /// <param name="logLevel">Specifies the severity of the event that is to be logged.</param>
-        public static void ConfigureLogger(ILoggerFactory factory = default(ILoggerFactory), string categoryName = default(string), string path = default(string), LogLevel logLevel = LogLevel.Debug)
+        public static void ConfigureLogger(ILoggerFactory factory = default(ILoggerFactory), string categoryName = default(string), string path = default(string), Microsoft.Extensions.Logging.LogLevel logLevel = Microsoft.Extensions.Logging.LogLevel.Debug)
         {
             if (factory == default(ILoggerFactory))
             {
@@ -118,7 +121,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// </summary>
         /// <param name="logLevel">The severity level which is to be checked.</param>
         /// <returns>returns true if logging is available for the specified severity level else returns false.</returns>
-        public static bool IsLoggerEnabled(LogLevel logLevel)
+        public static bool IsLoggerEnabled(Microsoft.Extensions.Logging.LogLevel logLevel)
         {
             if (QueryCacheManager.Loggers != default(ILogger[]))
             {

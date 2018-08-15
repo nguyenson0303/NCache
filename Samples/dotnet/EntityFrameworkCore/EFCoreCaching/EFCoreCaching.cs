@@ -954,7 +954,7 @@ namespace Alachisoft.NCache.Samples
             cache.Insert(shipperPandaExpress, out cacheKey, options);
 
             // Update caching options and set value for query identifier
-            options.QueryIdentifier = new Runtime.Caching.Tag($"{shipperTitanic.GetType().FullName}:{shipperTitanic.CompanyName}");
+            options.QueryIdentifier = $"{shipperTitanic.GetType().FullName}:{shipperTitanic.CompanyName}";
 
             // Insert this new entity into cache with updated caching 
             // options where query identifier is set

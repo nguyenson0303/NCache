@@ -378,11 +378,7 @@ namespace Alachisoft.NCache.Web.Caching
 
                                     CacheConfig cacheConfig = CacheConfig.FromDom(config);
 
-                                    if (Caching.APILogging.DebugAPIConfiguraions.LoggingEnabled)
-                                        cache = new WrapperCache(new Cache(null, cacheConfig));
-                                    else
-
-                                        cache = new Cache(null, cacheConfig);
+                                    cache = new Cache(null, cacheConfig);
 
 
                                     ncache = CacheFactory.CreateFromPropertyString(cacheConfig.PropertyString, config,
@@ -415,12 +411,7 @@ namespace Alachisoft.NCache.Web.Caching
                                         PerfStatsCollector2 perfStatsCollector =
                                             new PerfStatsCollector2(cacheId, false);
 
-                                        if (Caching.APILogging.DebugAPIConfiguraions.LoggingEnabled)
-                                            primaryCache =
-                                                new WrapperCache(new Cache(null, cacheId, perfStatsCollector));
-                                        else
-
-                                            primaryCache = new Cache(null, cacheId, perfStatsCollector);
+                                        primaryCache = new Cache(null, cacheId, perfStatsCollector);
                                         cacheImpl = new RemoteCache(cacheId, primaryCache, initParams,
                                             perfStatsCollector);
 

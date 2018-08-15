@@ -25,5 +25,6 @@ namespace Alachisoft.NCache.SocketServer
         object Deserialize(Stream buffer);
         RequestStatus GetRequestStatus(string clientId, long requestId, long commandId);
         Bookie RequestLogger { get; }
+        void Dispose();
     }
 }

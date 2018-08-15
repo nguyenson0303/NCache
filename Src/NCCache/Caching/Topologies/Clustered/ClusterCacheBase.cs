@@ -57,6 +57,7 @@ using Alachisoft.NCache.Common.Queries;
 
 using Alachisoft.NCache.Caching.Messaging;
 using Alachisoft.NCache.Caching.Topologies.Clustered.Operations.Messaging;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Topologies.Clustered
 {
@@ -64,7 +65,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
     /// A class to serve as the base for all clustered cache implementations.
     /// </summary>
     internal class ClusterCacheBase : CacheBase, IClusterParticipant, IPresenceAnnouncement, IDistributionPolicyMember
-        //, IMirrorManagementMember
+    //, IMirrorManagementMember
     {
         /// <summary>
         /// An enumeration that defines the various opcodes to be used by this cache scheme.
@@ -428,7 +429,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         private readonly object _registerLock = new object(), _otherNodesRegisterLock = new object();
 
         protected int _serverFailureWaitTime = 2000;//time in msec
-        
+
 
         protected ReplicationOperation GetClearReplicationOperation(int opCode, object info)
         {
@@ -497,7 +498,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     {
                         if (node.RendererAddress != null && node.RendererAddress.IpAddress.Equals(IntendedRecipient.IpAddress))
                         {
-                           return new Address(node.Address.IpAddress, IntendedRecipient.Port);                            
+                            return new Address(node.Address.IpAddress, IntendedRecipient.Port);
                         }
                     }
                 }
@@ -510,7 +511,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             string[] hostPort = address.Split(':');
 
-            return new Address(hostPort[0], hostPort.Length > 1 ? Convert.ToInt32(hostPort[1]):0);
+            return new Address(hostPort[0], hostPort.Length > 1 ? Convert.ToInt32(hostPort[1]) : 0);
         }
 
         /// <summary> 
@@ -545,7 +546,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             set { _hasDisposed = value; }
         }
 
-        public virtual bool IsRetryOnSuspected 
+        public virtual bool IsRetryOnSuspected
         {
             get { return false; }
         }
@@ -557,7 +558,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <returns></returns>
         protected int NextSequence()
         {
-            return ++_taskSequenceNumber;
+            return Interlocked.Increment(ref _taskSequenceNumber);
         }
 
         /// <summary>
@@ -577,7 +578,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             _nodeName = Environment.MachineName.ToLower();
             if (ServiceConfiguration.ServerFailureRetryDelayInterval > 0)
                 _serverFailureWaitTime = ServiceConfiguration.ServerFailureRetryDelayInterval;
-           
+
         }
 
         /// <summary>
@@ -601,7 +602,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             if (ServiceConfiguration.ServerFailureRetryDelayInterval > 0)
                 _serverFailureWaitTime = ServiceConfiguration.ServerFailureRetryDelayInterval;
-            
+
 
         }
 
@@ -638,8 +639,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                Function func = new Function((int) OpCodes.BlockActivity,
-                    new object[] {uniqueId, _cluster.LocalAddress, interval}, false);
+                Function func = new Function((int)OpCodes.BlockActivity,
+                    new object[] { uniqueId, _cluster.LocalAddress, interval }, false);
                 RspList results = Cluster.Broadcast(func, GroupRequest.GET_ALL, false, Priority.High);
             }
             catch (Exception e)
@@ -651,7 +652,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         public override void NotifyUnBlockActivity(string uniqueId)
         {
-            Address server = (Address) _cluster.Renderers[Cluster.LocalAddress];
+            Address server = (Address)_cluster.Renderers[Cluster.LocalAddress];
 
             if (server != null)
             {
@@ -692,7 +693,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 if (Cluster.Renderers.Contains(clusterAddress))
                 {
-                    Address mappedAddress = (Address) Cluster.Renderers[clusterAddress];
+                    Address mappedAddress = (Address)Cluster.Renderers[clusterAddress];
                     serverAddress = new Address(mappedAddress.IpAddress.ToString(), mappedAddress.Port);
                 }
             }
@@ -841,7 +842,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             get { return _stats; }
         }
 
-      
+
 
         protected virtual byte GetFirstResponse
         {
@@ -881,7 +882,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         Convert.ToInt64(Convert.ToString(properties["stats-repl-interval"]).TrimEnd('s', 'e', 'c'));
                     if (val < 1) val = 1;
                     if (val > 300) val = 300;
-                    val = val*1000;
+                    val = val * 1000;
                     _statsReplInterval = val;
                 }
 
@@ -940,7 +941,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 _cluster = new ClusterService(_context, this, this);
                 _cluster.ClusterEventsListener = _clusterListener;
-                _cluster.Initialize(properties, channelName, domain, identity,  twoPhaseInitialization,
+                _cluster.Initialize(properties, channelName, domain, identity, twoPhaseInitialization,
                     isPor, _context.CacheRoot.IsInProc);
             }
             catch (Exception e)
@@ -1004,7 +1005,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (Context.NCacheLog.IsInfoEnabled)
                 Context.NCacheLog.Info("ClusterCacheBase.OnMemberLeft()", "Member left: " + address);
-                        
+
             if (_context.ExpiryMgr != null)
             {
                 if (_cluster.IsCoordinator)
@@ -1022,7 +1023,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     t.Start();
                 }
 
-                if (_context.IsDbSyncCoordinator && _context.SyncManager!=null && _context.SyncManager.InactiveDependencies.Count > 0)
+                if (_context.IsDbSyncCoordinator && _context.SyncManager != null && _context.SyncManager.InactiveDependencies.Count > 0)
                 {
                     // to start a parallel thread for activating CacheSyncDependencies.
                     Thread t = new Thread(new ThreadStart(_context.SyncManager.ActivateDependencies));
@@ -1033,9 +1034,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             }
 
-         
 
-            if (address != null && _context.DsMgr != null && _context.DsMgr._writeBehindAsyncProcess!=null)
+
+            if (address != null && _context.DsMgr != null && _context.DsMgr._writeBehindAsyncProcess != null)
             {
                 _context.DsMgr._writeBehindAsyncProcess.NodeLeft(address.ToString());
             }
@@ -1059,7 +1060,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         public virtual void OnAfterMembershipChange()
         {
 
-            if (_cluster.IsCoordinator )
+            if (_cluster.IsCoordinator)
             {
                 _statusLatch.SetStatusBit(NodeStatus.Coordinator, 0);
             }
@@ -1083,7 +1084,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     if (!_cluster.Servers.Contains(addrs))
                     {
-                        ShutDownServerInfo info = (ShutDownServerInfo) _shutdownServers[addrs];
+                        ShutDownServerInfo info = (ShutDownServerInfo)_shutdownServers[addrs];
                         _context.CacheRoot.NotifyUnBlockActivityToClients(info.UniqueBlockingId,
                             info.RenderedAddress.IpAddress.ToString(), info.RenderedAddress.Port);
                         removedServers.Add(addrs);
@@ -1096,8 +1097,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
 
             }
-          
-           
+
+
         }
 
         public virtual object HandleClusterMessage(Address src, Function func, out Address destination,
@@ -1229,9 +1230,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     handleInformEveryoneOfClientActivity(func.Operand);
                     break;
 
-                case (int)OpCodes.RemoveDeadClientInfo:
-                    handleCleanDeadClientInfos(new object[] { src, func.Operand });
-                    break;
+
 
                 case (int)OpCodes.Touch:
                     return HandleTouch(func.Operand, src);
@@ -1264,7 +1263,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     break;
 
                 case (int)OpCodes.GetAssignedMessages:
-                     return HandleGetAssignedMessages((GetAssignedMessagesOperation)func.Operand);
+                    return HandleGetAssignedMessages((GetAssignedMessagesOperation)func.Operand);
 
                 case (int)OpCodes.NotifyPollRequest:
                     return HandlePollRequestCallback(func.Operand);
@@ -1283,22 +1282,22 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         private object HandleGetTransferrableMessage(GetTransferrableMessageOperation operation)
         {
-            if(InternalCache != null && operation != null)
+            if (InternalCache != null && operation != null)
             {
                 return InternalCache.GetTransferrableMessage(operation.Topic, operation.Message);
             }
             return null;
         }
 
-       
+
 
         private Alachisoft.NCache.Common.DataStructures.RequestStatus handleRequestStatusInquiry(object arguments)
         {
             if (_context.Render == null)
                 return null;
 
-            object[] data = (object[]) arguments;
-            return _context.Render.GetRequestStatus((string) data[0], (long) data[1], (long) data[2]);
+            object[] data = (object[])arguments;
+            return _context.Render.GetRequestStatus((string)data[0], (long)data[1], (long)data[2]);
         }
 
         #endregion
@@ -1336,7 +1335,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         public void SignalEndOfStateTxfr(Address dest)
         {
-            Function fun = new Function((int) OpCodes.SignalEndOfStateTxfr, new object());
+            Function fun = new Function((int)OpCodes.SignalEndOfStateTxfr, new object());
             if (_cluster != null) _cluster.SendNoReplyMessage(dest, fun);
         }
 
@@ -1357,7 +1356,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         protected void Clustered_AnnounceStateTransfer(ArrayList bucketIds)
         {
-            Function function = new Function((int) OpCodes.AnnounceStateTransfer, bucketIds, false);
+            Function function = new Function((int)OpCodes.AnnounceStateTransfer, bucketIds, false);
             Cluster.Broadcast(function, GroupRequest.GET_NONE, false, Priority.High);
         }
 
@@ -1376,8 +1375,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                Function func = new Function((int) OpCodes.TransferBucket,
-                    new object[] {bucketIds, transferType, sparsedBuckets, expectedTxfrId, isBalanceDataLoad}, true);
+                Function func = new Function((int)OpCodes.TransferBucket,
+                    new object[] { bucketIds, transferType, sparsedBuckets, expectedTxfrId, isBalanceDataLoad }, true);
                 if (Context.NCacheLog.IsInfoEnabled)
                     Context.NCacheLog.Info("ClusteredCacheBase.Clustered_TransferBucket",
                         " Sending request for bucket transfer to " + targetNode);
@@ -1417,19 +1416,19 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 new Alachisoft.NCache.Common.DataStructures.VirtualIndex();
             for (int i = 0; i < compilationInfo.Count; i++)
             {
-                if ((long) compilationInfo[i] == 0)
+                if ((long)compilationInfo[i] == 0)
                 {
                     result[i] = null;
                 }
                 else
                 {
-                    VirtualArray atomicPayLoadArray = new VirtualArray((long) compilationInfo[i]);
+                    VirtualArray atomicPayLoadArray = new VirtualArray((long)compilationInfo[i]);
                     Alachisoft.NCache.Common.DataStructures.VirtualIndex atomicVirtualIndex =
                         new Alachisoft.NCache.Common.DataStructures.VirtualIndex();
 
                     VirtualArray.CopyData(payLoadArray, virtualIndex, atomicPayLoadArray, atomicVirtualIndex,
-                        (int) atomicPayLoadArray.Size);
-                    virtualIndex.IncrementBy((int) atomicPayLoadArray.Size);
+                        (int)atomicPayLoadArray.Size);
+                    virtualIndex.IncrementBy((int)atomicPayLoadArray.Size);
                     result[i] = atomicPayLoadArray.BaseArray;
                 }
             }
@@ -1447,7 +1446,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         protected void Clustered_ReleaseBuckets(ArrayList bucketIds)
         {
-            Function function = new Function((int) OpCodes.ReleaseBuckets, bucketIds, false);
+            Function function = new Function((int)OpCodes.ReleaseBuckets, bucketIds, false);
             Cluster.Broadcast(function, GroupRequest.GET_NONE, false, Priority.High);
         }
 
@@ -1493,7 +1492,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     NodeInfo localStats = _stats.LocalNode;
                     localStats.StatsReplicationCounter++;
-                    Function func = new Function((int) OpCodes.PeriodicUpdate, handleReqStatus());
+                    Function func = new Function((int)OpCodes.PeriodicUpdate, handleReqStatus());
                     if (!urgent)
                         Cluster.SendNoReplyMessage(func);
                     else
@@ -1534,15 +1533,15 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             CacheEntry retVal = null;
             try
             {
-                Function func = new Function((int) OpCodes.Get, new object[] {key, operationContext, isUserOperaton});
+                Function func = new Function((int)OpCodes.Get, new object[] { key, operationContext, isUserOperaton });
                 object result = Cluster.SendMessage(address, func, GroupRequest.GET_FIRST);
                 if (result == null)
                 {
                     return retVal;
                 }
-                retVal = (CacheEntry) ((OperationResponse) result).SerializablePayload;
-                if (retVal != null && ((OperationResponse) result).UserPayload != null)
-                    retVal.Value = ((OperationResponse) result).UserPayload;
+                retVal = (CacheEntry)((OperationResponse)result).SerializablePayload;
+                if (retVal != null && ((OperationResponse)result).UserPayload != null)
+                    retVal.Value = ((OperationResponse)result).UserPayload;
             }
 
             catch (Runtime.Exceptions.TimeoutException te)
@@ -1584,7 +1583,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (operationContext.Contains(OperationContextFieldName.IsClusteredOperation))
                 {
                     priority = Priority.Critical;
-                    return new CacheEntry() { IsSurrogate = true};
+                    return new CacheEntry() { IsSurrogate = true };
                 }
                 Function func = new Function((int)OpCodes.Get, new object[] { key, lockId, lockDate, access, version, lockExpiration, operationContext });
                 object result = Cluster.SendMessage(address, func, GetFirstResponse, priority);
@@ -1593,16 +1592,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     return retVal;
                 }
 
-                object[] objArr = (object[]) ((OperationResponse) result).SerializablePayload;
+                object[] objArr = (object[])((OperationResponse)result).SerializablePayload;
                 retVal = objArr[0] as CacheEntry;
 
-                if (retVal != null && ((OperationResponse) result).UserPayload != null)
-                    retVal.Value = ((OperationResponse) result).UserPayload;
+                if (retVal != null && ((OperationResponse)result).UserPayload != null)
+                    retVal.Value = ((OperationResponse)result).UserPayload;
 
                 lockId = objArr[1];
 
-                lockDate = (DateTime) objArr[2];
-                version = (ulong) objArr[3];
+                lockDate = (DateTime)objArr[2];
+                version = (ulong)objArr[3];
             }
             catch (Runtime.Exceptions.TimeoutException te)
             {
@@ -1631,8 +1630,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             LockOptions retVal = null;
             try
             {
-                Function func = new Function((int) OpCodes.LockKey,
-                    new object[] {key, lockId, lockDate, lockExpiration, operationContext});
+                Function func = new Function((int)OpCodes.LockKey,
+                    new object[] { key, lockId, lockDate, lockExpiration, operationContext });
                 object result = Cluster.SendMessage(address, func, GroupRequest.GET_FIRST);
                 if (result == null)
                 {
@@ -1674,8 +1673,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             LockOptions retVal = null;
             try
             {
-                Function func = new Function((int) OpCodes.IsLocked,
-                    new object[] {key, lockId, lockDate, operationContext});
+                Function func = new Function((int)OpCodes.IsLocked,
+                    new object[] { key, lockId, lockDate, operationContext });
                 object result = Cluster.SendMessage(address, func, GroupRequest.GET_FIRST);
                 if (result == null)
                 {
@@ -1717,8 +1716,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             LockOptions retVal = null;
             try
             {
-                Function func = new Function((int) OpCodes.UnLockKey,
-                    new object[] {key, lockId, isPreemptive, operationContext});
+                Function func = new Function((int)OpCodes.UnLockKey,
+                    new object[] { key, lockId, isPreemptive, operationContext });
                 Cluster.SendMessage(address, func, GroupRequest.GET_NONE);
             }
 
@@ -1753,7 +1752,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             try
             {
-                Function func = new Function((int) OpCodes.Get, new object[] {keys, operationContext});
+                Function func = new Function((int)OpCodes.Get, new object[] { keys, operationContext });
+                func.Cancellable = true;
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST);
                 if (result == null)
                     return null;
@@ -1779,7 +1779,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             }
         }
 
-      
+
         /// <summary>
         /// Retrieve the object from the cluster. 
         /// </summary>
@@ -1794,7 +1794,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             try
             {
-                Function func = new Function((int) OpCodes.GetGroup,
+                Function func = new Function((int)OpCodes.GetGroup,
                     new object[]
                     {key, group, subGroup, lockId, lockDate, accessType, version, lockExpiration, operationContext});
                 object result = Cluster.SendMessage(dest, func, GetFirstResponse);
@@ -1804,15 +1804,15 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     return retVal;
                 }
 
-                object[] objArr = (object[]) ((OperationResponse) result).SerializablePayload;
+                object[] objArr = (object[])((OperationResponse)result).SerializablePayload;
                 retVal = objArr[0] as CacheEntry;
                 if (retVal != null)
                 {
-                    retVal.Value = ((OperationResponse) result).UserPayload;
+                    retVal.Value = ((OperationResponse)result).UserPayload;
                 }
                 lockId = objArr[1];
-                lockDate = (DateTime) objArr[2];
-                version = (ulong) objArr[3];
+                lockDate = (DateTime)objArr[2];
+                version = (ulong)objArr[3];
             }
 
             catch (Runtime.Exceptions.TimeoutException te)
@@ -1847,8 +1847,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                Function func = new Function((int) OpCodes.GetGroup,
-                    new object[] {keys, group, subGroup, operationContext});
+                Function func = new Function((int)OpCodes.GetGroup,
+                    new object[] { keys, group, subGroup, operationContext });
+                func.Cancellable = true;
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST);
 
                 if (result == null)
@@ -1937,7 +1938,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 ArrayList servers = GetServerParticipatingInStateTransfer();
                 try
                 {
-                     list = Clustered_GetGroupKeys(servers, group, subGroup, operationContext, IsRetryOnSuspected);              
+                    list = Clustered_GetGroupKeys(servers, group, subGroup, operationContext, IsRetryOnSuspected);
                 }
                 catch (Alachisoft.NGroups.SuspectedException ex)
                 {
@@ -1947,7 +1948,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     Thread.Sleep(_onSuspectedWait);
                     servers = GetServerParticipatingInStateTransfer();
 
-                list = Clustered_GetGroupKeys(servers, group, subGroup, operationContext);
+                    list = Clustered_GetGroupKeys(servers, group, subGroup, operationContext);
                 }
             }
             else if (!VerifyClientViewId(clientLastViewId))
@@ -1988,7 +1989,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                 try
                 {
-                    list = Clustered_GetGroupData(servers, group, subGroup, operationContext,IsRetryOnSuspected);
+                    list = Clustered_GetGroupData(servers, group, subGroup, operationContext, IsRetryOnSuspected);
                 }
                 catch (Alachisoft.NGroups.SuspectedException ex)
                 {
@@ -1998,7 +1999,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     Thread.Sleep(_onSuspectedWait);
                     servers = GetServerParticipatingInStateTransfer();
 
-                    list = Clustered_GetGroupData(servers, group, subGroup, operationContext);                   
+                    list = Clustered_GetGroupData(servers, group, subGroup, operationContext);
 
                 }
             }
@@ -2040,7 +2041,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 ArrayList servers = GetServerParticipatingInStateTransfer();
                 try
                 {
-                    list = Clustered_GetTagKeys(servers, tags, comparisonType, operationContext, IsRetryOnSuspected);                                  
+                    list = Clustered_GetTagKeys(servers, tags, comparisonType, operationContext, IsRetryOnSuspected);
                 }
                 catch (Alachisoft.NGroups.SuspectedException ex)
                 {
@@ -2050,8 +2051,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     Thread.Sleep(_onSuspectedWait);
                     servers = GetServerParticipatingInStateTransfer();
 
-                list = Clustered_GetTagKeys(servers, tags, comparisonType, operationContext);
-            }
+                    list = Clustered_GetTagKeys(servers, tags, comparisonType, operationContext);
+                }
 
             }
             else if (!VerifyClientViewId(clientLastViewId))
@@ -2093,18 +2094,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                 try
                 {
-                    list = Clustered_GetTagData(servers, tags, comparisonType, operationContext,IsRetryOnSuspected);
+                    list = Clustered_GetTagData(servers, tags, comparisonType, operationContext, IsRetryOnSuspected);
                 }
                 catch (Alachisoft.NGroups.SuspectedException ex)
                 {
                     if (!IsRetryOnSuspected) throw;
 
-                        //Sleep is used to be sure that new view applied and node is marked in state transfer...
-                        Thread.Sleep(_onSuspectedWait);
-                        servers = GetServerParticipatingInStateTransfer();
+                    //Sleep is used to be sure that new view applied and node is marked in state transfer...
+                    Thread.Sleep(_onSuspectedWait);
+                    servers = GetServerParticipatingInStateTransfer();
 
-                        list = Clustered_GetTagData(servers, tags, comparisonType, operationContext);
-                    
+                    list = Clustered_GetTagData(servers, tags, comparisonType, operationContext);
+
 
                 }
             }
@@ -2234,7 +2235,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     servers = GetServerParticipatingInStateTransfer();
                     result = Clustered_Search(servers, query, values, operationContext);
                 }
-               
+
 
             }
             else if (!VerifyClientViewId(clientLastViewId))
@@ -2273,20 +2274,20 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 ArrayList servers = GetServerParticipatingInStateTransfer();
 
-                try 
-                { 
-                    result = Clustered_SearchEntries(servers, query, values, operationContext,IsRetryOnSuspected);
+                try
+                {
+                    result = Clustered_SearchEntries(servers, query, values, operationContext, IsRetryOnSuspected);
                 }
                 catch (Alachisoft.NGroups.SuspectedException ex)
                 {
                     if (!IsRetryOnSuspected) throw;
-                    
-                    
-                        //Sleep is used to be sure that new view applied and node is marked in state transfer...
-                        Thread.Sleep(_onSuspectedWait);
-                        servers = GetServerParticipatingInStateTransfer();
-                        result = Clustered_SearchEntries(servers, query, values, operationContext);
-                    
+
+
+                    //Sleep is used to be sure that new view applied and node is marked in state transfer...
+                    Thread.Sleep(_onSuspectedWait);
+                    servers = GetServerParticipatingInStateTransfer();
+                    result = Clustered_SearchEntries(servers, query, values, operationContext);
+
 
                 }
             }
@@ -2305,7 +2306,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
                 }
-                
+
             }
 
 
@@ -2329,7 +2330,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             long clientLastViewId = GetClientLastViewId(operationContext);
             if (clientLastViewId == forcedViewId) //Client wants only me to collect data from cluster and return
             {
-                ArrayList servers = GetServerParticipatingInStateTransfer(); 
+                ArrayList servers = GetServerParticipatingInStateTransfer();
                 result = Clustered_SearchCQ(servers, query, values, clientUniqueId, clientId, notifyAdd, notifyUpdate,
                     notifyRemove, operationContext, datafilters);
             }
@@ -2343,7 +2344,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
                 }
-                result = Local_SearchCQ(query, values, clientUniqueId, clientId, notifyAdd, notifyUpdate, notifyRemove,operationContext, datafilters);
+                result = Local_SearchCQ(query, values, clientUniqueId, clientId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters);
                 if (IsInStateTransfer())
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
@@ -2382,7 +2383,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
                 }
-                result = Local_SearchEntriesCQ(query, values, clientUniqueId, clientId, notifyAdd, notifyUpdate,notifyRemove, operationContext, datafilters);
+                result = Local_SearchEntriesCQ(query, values, clientUniqueId, clientId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters);
                 if (IsInStateTransfer())
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
@@ -2436,7 +2437,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         protected virtual void Local_RegisterPollingNotification(short callbackId, OperationContext context)
         { }
-        
+
         protected virtual HashVector Local_GetGroupData(string group, string subGroup, OperationContext operationContext)
         {
             throw new NotImplementedException();
@@ -2481,15 +2482,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             DeleteQueryResultSet res = new DeleteQueryResultSet();
             try
             {
-                Function func = new Function((int) OpCodes.DeleteQuery,
-                    new object[] {query, values, notify, isUserOperation, ir, operationContext}, false);
+                Function func = new Function((int)OpCodes.DeleteQuery,
+                    new object[] { query, values, notify, isUserOperation, ir, operationContext }, false);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
                     return res;
                 }
                 ClusterHelper.ValidateResponses(results, typeof(DeleteQueryResultSet), Name, throwSuspected);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (DeleteQueryResultSet));
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(DeleteQueryResultSet));
                 if (rspList.Count <= 0)
                 {
                     return res;
@@ -2499,8 +2501,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        DeleteQueryResultSet result = (DeleteQueryResultSet) rsp.Value;
+                        if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                        Rsp rsp = (Rsp)im.Current;
+                        DeleteQueryResultSet result = (DeleteQueryResultSet)rsp.Value;
 
                         if (result != null)
                         {
@@ -2538,15 +2542,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             ArrayList list = null;
             try
             {
-                Function func = new Function((int) OpCodes.GetKeys, new object[] {group, subGroup, operationContext},
+                Function func = new Function((int)OpCodes.GetKeys, new object[] { group, subGroup, operationContext },
                     false);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
                     return null;
                 }
                 ClusterHelper.ValidateResponses(results, typeof(ArrayList), Name, throwSuspected);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (ArrayList));
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(ArrayList));
                 if (rspList.Count <= 0)
                 {
                     return null;
@@ -2557,8 +2562,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        ArrayList cList = (ArrayList) rsp.Value;
+                        Rsp rsp = (Rsp)im.Current;
+                        ArrayList cList = (ArrayList)rsp.Value;
                         if (cList != null)
                         {
                             foreach (object key in cList)
@@ -2571,7 +2576,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
             }
             catch (CacheException) { throw; }
-            catch (Alachisoft.NGroups.SuspectedException e) 
+            catch (Alachisoft.NGroups.SuspectedException e)
             {
                 if (throwSuspected)
                 {
@@ -2588,20 +2593,21 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected HashVector Clustered_GetGroupData(ArrayList dests, string group, string subGroup,
-            OperationContext operationContext,Boolean throwSuspected=false)
+            OperationContext operationContext, Boolean throwSuspected = false)
         {
             HashVector table = new HashVector();
             try
             {
                 Function func = new Function((int)OpCodes.GetData, new object[] { group, subGroup, operationContext },
                     false);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
                     return null;
                 }
                 ClusterHelper.ValidateResponses(results, typeof(HashVector), Name, throwSuspected);
-             
+
                 IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(HashVector));
                 if (rspList.Count <= 0)
                 {
@@ -2646,7 +2652,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             }
             catch (Alachisoft.NGroups.SuspectedException e)
             {
-                if (throwSuspected) 
+                if (throwSuspected)
                 {
                     throw;
                 }
@@ -2673,6 +2679,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 Function func = new Function((int)OpCodes.GetKeysByTag,
                     new object[] { tags, comparisonType, operationContext }, false);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
                 if (results == null)
                 {
@@ -2727,21 +2734,22 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// Retrieve the list of keys from the cache for the given tags.
         /// </summary>
         protected HashVector Clustered_GetTagData(ArrayList dests, string[] tags, TagComparisonType comparisonType,
-            OperationContext operationContext,Boolean throwSuspected=false)
+            OperationContext operationContext, Boolean throwSuspected = false)
         {
             HashVector table = new HashVector();
 
             try
             {
-                Function func = new Function((int) OpCodes.GetTag, new object[] {tags, comparisonType, operationContext},
+                Function func = new Function((int)OpCodes.GetTag, new object[] { tags, comparisonType, operationContext },
                     false);
-                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout*10);
+                func.Cancellable = true;
+                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
                 if (results == null)
                 {
                     return null;
                 }
                 ClusterHelper.ValidateResponses(results, typeof(HashVector), Name, throwSuspected);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (HashVector));
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(HashVector));
                 if (rspList.Count <= 0)
                 {
                     return null;
@@ -2751,8 +2759,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        IDictionary entries = (IDictionary) rsp.Value;
+                        Rsp rsp = (Rsp)im.Current;
+                        IDictionary entries = (IDictionary)rsp.Value;
                         if (entries != null)
                         {
                             IDictionaryEnumerator ide = entries.GetEnumerator();
@@ -2801,40 +2809,43 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         internal DeleteQueryResultSet Clustered_Delete(ArrayList dests, string query, IDictionary values, bool notify,
-            bool isUserOperation, ItemRemoveReason ir, OperationContext operationContext,Boolean throwSuspected=false)
+            bool isUserOperation, ItemRemoveReason ir, OperationContext operationContext, Boolean throwSuspected = false)
         {
-            return Clustered_DeleteQuery(dests, query, values, notify, isUserOperation, ir, operationContext,throwSuspected);
+            return Clustered_DeleteQuery(dests, query, values, notify, isUserOperation, ir, operationContext, throwSuspected);
         }
 
         /// <summary>
         /// Retrieve the list of keys from the cache based on the specified query.
         /// </summary>
         protected QueryResultSet Clustered_Search(ArrayList dests, string queryText, IDictionary values,
-            OperationContext operationContext,Boolean throwSuspected=false)
+            OperationContext operationContext, Boolean throwSuspected = false)
         {
             QueryResultSet resultSet = new QueryResultSet();
 
             try
             {
-                Function func = new Function((int) OpCodes.Search, new object[] {queryText, values, operationContext},
+                Function func = new Function((int)OpCodes.Search, new object[] { queryText, values, operationContext },
                     false);
-                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout*10);
+                func.Cancellable = true;
+                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
 
                 if (results == null)
                     return null;
                 ClusterHelper.ValidateResponses(results, typeof(QueryResultSet), Name, throwSuspected);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (QueryResultSet));
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(QueryResultSet));
                 if (rspList.Count <= 0)
                     return null;
                 else
                 {
-                    IEnumerator im = rspList.GetEnumerator();                  
+                    IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        QueryResultSet cResultSet = (QueryResultSet) rsp.Value;                       
+                        if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                        Rsp rsp = (Rsp)im.Current;
+                        QueryResultSet cResultSet = (QueryResultSet)rsp.Value;
                         resultSet.Compile(cResultSet);
-                    }                   
+                    }
                     //remove duplicates
                     if (resultSet.SearchKeysResult != null)
                     {
@@ -2846,9 +2857,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             {
                                 tbl[key] = null;
                             }
-                            resultSet.SearchKeysResult = new ClusteredArrayList(tbl.Keys);                           
+                            resultSet.SearchKeysResult = new ClusteredArrayList(tbl.Keys);
                         }
-                    }                    
+                    }
                 }
 
                 return resultSet;
@@ -2876,20 +2887,21 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// Retrieve the list of keys and values from the cache based on the specified query.
         /// </summary>
         protected QueryResultSet Clustered_SearchEntries(ArrayList dests, string queryText, IDictionary values,
-            OperationContext operationContext,Boolean throwSuspected=false)
+            OperationContext operationContext, Boolean throwSuspected = false)
         {
             QueryResultSet resultSet = new QueryResultSet();
 
             try
             {
-                Function func = new Function((int) OpCodes.SearchEntries,
-                    new object[] {queryText, values, operationContext}, false);
-                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout*10);
+                Function func = new Function((int)OpCodes.SearchEntries,
+                    new object[] { queryText, values, operationContext }, false);
+                func.Cancellable = true;
+                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
 
                 if (results == null)
                     return null;
                 ClusterHelper.ValidateResponses(results, typeof(QueryResultSet), Name, throwSuspected);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (QueryResultSet));
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(QueryResultSet));
                 if (rspList.Count <= 0)
                 {
                     return null;
@@ -2899,8 +2911,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        QueryResultSet cResultSet = (QueryResultSet) rsp.Value;
+                        if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                        Rsp rsp = (Rsp)im.Current;
+                        QueryResultSet cResultSet = (QueryResultSet)rsp.Value;
                         resultSet.Compile(cResultSet);
                     }
                 }
@@ -2938,18 +2952,19 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 ContinuousQuery cQuery = CQManager.GetCQ(query, values);
 
-                Function func = new Function((int) OpCodes.SearchCQ,
+                Function func = new Function((int)OpCodes.SearchCQ,
                     new object[]
                     {
                         cQuery, clientId, clientUniqueId, notifyAdd, notifyUpdate, notifyRemove, operationContext,
                         datafilters
                     }, false);
-                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout*10);
+                func.Cancellable = true;
+                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
 
                 if (results == null)
                     return null;
-                ClusterHelper.ValidateResponses(results, typeof (QueryResultSet), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (QueryResultSet));
+                ClusterHelper.ValidateResponses(results, typeof(QueryResultSet), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(QueryResultSet));
                 if (rspList.Count <= 0)
                 {
                     return null;
@@ -2959,8 +2974,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        QueryResultSet cResultSet = (QueryResultSet) rsp.Value;
+                        if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                        Rsp rsp = (Rsp)im.Current;
+                        QueryResultSet cResultSet = (QueryResultSet)rsp.Value;
                         resultSet.Compile(cResultSet);
                     }
                     //remove duplicates
@@ -3004,18 +3021,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 ContinuousQuery cQuery = CQManager.GetCQ(query, values);
 
-                Function func = new Function((int) OpCodes.SearchEntriesCQ,
+                Function func = new Function((int)OpCodes.SearchEntriesCQ,
                     new object[]
                     {
                         cQuery, clientId, clientUniqueId, notifyAdd, notifyUpdate, notifyRemove, operationContext,
                         datafilters
                     }, false);
-                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout*10);
+                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
 
                 if (results == null)
                     return null;
-                ClusterHelper.ValidateResponses(results, typeof (QueryResultSet), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (QueryResultSet));
+                ClusterHelper.ValidateResponses(results, typeof(QueryResultSet), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(QueryResultSet));
                 if (rspList.Count <= 0)
                 {
                     return null;
@@ -3025,8 +3042,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        QueryResultSet cResultSet = (QueryResultSet) rsp.Value;
+                        Rsp rsp = (Rsp)im.Current;
+                        QueryResultSet cResultSet = (QueryResultSet)rsp.Value;
                         resultSet.Compile(cResultSet);
                     }
                 }
@@ -3075,18 +3092,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 //NCacheLog.DevTrace("Clustered_Count", "Sending count request to " + Global.CollectionToString(dests));
 
-                Function func = new Function((int) OpCodes.GetCount, null, false);
+                Function func = new Function((int)OpCodes.GetCount, null, false);
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false);
 
-                ClusterHelper.ValidateResponses(results, typeof (long), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (long));
+                ClusterHelper.ValidateResponses(results, typeof(long), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(long));
 
                 IEnumerator ia = rspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
-                    Rsp rsp = (Rsp) ia.Current;
+                    Rsp rsp = (Rsp)ia.Current;
                     if (rsp.Value != null)
-                    {                        
+                    {
                         retVal += Convert.ToInt64(rsp.Value);
                     }
                 }
@@ -3119,23 +3136,23 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             ClusteredOperationResult retVal = null;
             try
             {
-                Function func = new Function((int) OpCodes.GetDataGroupInfo, new object[] {key, operationContext},
+                Function func = new Function((int)OpCodes.GetDataGroupInfo, new object[] { key, operationContext },
                     excludeSelf);
-                
+
                 RspList results = Cluster.Multicast(dest, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
                     return retVal;
                 }
 
-                ClusterHelper.ValidateResponses(results, typeof (DataGrouping.GroupInfo), Name);
+                ClusterHelper.ValidateResponses(results, typeof(DataGrouping.GroupInfo), Name);
 
-                Rsp rsp = ClusterHelper.GetFirstNonNullRsp(results, typeof (DataGrouping.GroupInfo));
+                Rsp rsp = ClusterHelper.GetFirstNonNullRsp(results, typeof(DataGrouping.GroupInfo));
                 if (rsp == null)
                 {
                     return retVal;
                 }
-                retVal = new ClusteredOperationResult((Address) rsp.Sender, rsp.Value);
+                retVal = new ClusteredOperationResult((Address)rsp.Sender, rsp.Value);
             }
             catch (CacheException e)
             {
@@ -3163,17 +3180,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             ArrayList resultList = null;
             try
             {
-                Function func = new Function((int) OpCodes.GetDataGroupInfo, new object[] {keys, operationContext},
+                Function func = new Function((int)OpCodes.GetDataGroupInfo, new object[] { keys, operationContext },
                     excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dest, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
                     return resultList;
                 }
 
-                ClusterHelper.ValidateResponses(results, typeof (Hashtable), Name);
+                ClusterHelper.ValidateResponses(results, typeof(Hashtable), Name);
 
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (Hashtable));
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(Hashtable));
 
                 if (rspList.Count <= 0)
                 {
@@ -3185,14 +3203,14 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        resultList.Add(new ClusteredOperationResult((Address) rsp.Sender, rsp.Value));
+                        Rsp rsp = (Rsp)im.Current;
+                        resultList.Add(new ClusteredOperationResult((Address)rsp.Sender, rsp.Value));
                     }
                 }
 
             }
             catch (CacheException e)
-            {               
+            {
                 throw;
             }
             catch (Exception e)
@@ -3222,10 +3240,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             try
             {
-                Function func = new Function((int) OpCodes.Contains, new object[] {key, operationContext});
+                Function func = new Function((int)OpCodes.Contains, new object[] { key, operationContext });
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST);
 
-                if (result != null && (bool) result)
+                if (result != null && (bool)result)
                     return dest;
                 return null;
             }
@@ -3259,7 +3277,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             try
             {
-                Function func = new Function((int) OpCodes.Contains, new object[] {keys, operationContext});
+                Function func = new Function((int)OpCodes.Contains, new object[] { keys, operationContext });
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST);
 
                 if (result != null)
@@ -3362,8 +3380,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (ActiveServers.Count > 1)
             {
-                object info = new object[] {notifId, data};
-                Function func = new Function((int) OpCodes.NotifyCustomNotif, info, false);
+                object info = new object[] { notifId, data };
+                Function func = new Function((int)OpCodes.NotifyCustomNotif, info, false);
                 Cluster.SendNoReplyMessageAsync(func);
             }
             else
@@ -3378,7 +3396,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                Function func = new Function((int) OpCodes.ReplicatedConnectionString, new object[] {connString, isSql},
+                Function func = new Function((int)OpCodes.ReplicatedConnectionString, new object[] { connString, isSql },
                     excludeSelf);
                 RspList results = Cluster.Multicast(dest, func, GroupRequest.GET_ALL, false);
                 if (results == null)
@@ -3386,9 +3404,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     return null;
                 }
 
-                ClusterHelper.ValidateResponses(results, typeof (bool), Name);
+                ClusterHelper.ValidateResponses(results, typeof(bool), Name);
 
-                return ClusterHelper.GetAllNonNullRsp(results, typeof (bool));
+                return ClusterHelper.GetAllNonNullRsp(results, typeof(bool));
             }
             catch (CacheException e)
             {
@@ -3405,25 +3423,32 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         protected virtual object handleReplicateConnectionString(object info)
         {
-            object[] objs = (object[]) info;
-            string connString = (string) objs[0];
-            bool isSql = (bool) objs[1];
+            object[] objs = (object[])info;
+            string connString = (string)objs[0];
+            bool isSql = (bool)objs[1];
             Context.ExpiryMgr.CacheDbSyncManager.AddConnectionString(connString, isSql);
             return true;
         }
 
         protected virtual void handleEnqueueDSOperation(object info)
         {
-            object[] objs = (object[]) info;
+            object[] objs = (object[])info;
             if (objs != null && objs.Length > 0)
             {
                 if (objs[0] is DSWriteBehindOperation)
                 {
                     DSWriteBehindOperation operation = objs[0] as DSWriteBehindOperation;
+                    if (operation != null)
+                    {
+                        if (operation.Context == null)
+                        {
+                            operation.Context = _context;
+                        }
+                    }
                     _context.DsMgr.WriteBehind(operation);
                 }
                 else if (objs[0] is ArrayList)
-                    _context.DsMgr.WriteBehind((ArrayList) objs[0]);
+                    _context.DsMgr.WriteBehind((ArrayList)objs[0]);
 
             }
         }
@@ -3437,7 +3462,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <returns></returns>
         private object handleCustomNotification(object info)
         {
-            object[] objs = (object[]) info;
+            object[] objs = (object[])info;
             base.NotifyCustomEvent(objs[0], objs[1], false, null, null);
             return null;
         }
@@ -3452,7 +3477,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             EventContext eventContext = null;
 
-            object[] objs = (object[]) info;
+            object[] objs = (object[])info;
             ArrayList callbackListeners = objs[1] as ArrayList;
             Hashtable intendedNotifiers = objs[2] as Hashtable;
             if (objs.Length > 3)
@@ -3482,9 +3507,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <returns>null</returns>
         private object handleCQUpdateCallback(object info)
         {
-            object[] objs = (object[]) info;
-            NotifyCQUpdateCallback(objs[0], (QueryChangeType) objs[1], objs[2] as List<CQCallbackInfo>, true, null,
-                (EventContext) objs[3]);
+            object[] objs = (object[])info;
+            NotifyCQUpdateCallback(objs[0], (QueryChangeType)objs[1], objs[2] as List<CQCallbackInfo>, true, null,
+                (EventContext)objs[3]);
             return null;
         }
 
@@ -3509,7 +3534,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     ArrayList servers = GetServerParticipatingInStateTransfer();
                     try
                     {
-                        result = Clustered_Delete(servers, query, values, notify, isUserOperation, ir, operationContext,IsRetryOnSuspected);
+                        result = Clustered_Delete(servers, query, values, notify, isUserOperation, ir, operationContext, IsRetryOnSuspected);
                     }
                     catch (Alachisoft.NGroups.SuspectedException ex)
                     {
@@ -3519,7 +3544,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         servers = GetServerParticipatingInStateTransfer();
                         result = Clustered_Delete(servers, query, values, notify, isUserOperation, ir, operationContext);
                     }
-                    
+
 
                 }
                 else if (!VerifyClientViewId(clientLastViewId))
@@ -3557,9 +3582,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             DeleteQueryResultSet result = new DeleteQueryResultSet();
             if (_internalCache != null)
             {
-                object[] data = (object[]) info;
-                return Local_DeleteQuery(data[0] as string, data[1] as IDictionary, (bool) data[2], (bool) data[3],
-                    (ItemRemoveReason) data[4], data[5] as OperationContext);              
+                object[] data = (object[])info;
+                return Local_DeleteQuery(data[0] as string, data[1] as IDictionary, (bool)data[2], (bool)data[3],
+                    (ItemRemoveReason)data[4], data[5] as OperationContext);
             }
             return result;
         }
@@ -3574,7 +3599,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <returns>null</returns>
         protected object handleNotifyRemoveCallback(object info)
         {
-            object[] objs = (object[]) info;
+            object[] objs = (object[])info;
             //CallbackEntry cbEntry = objs[1] as CallbackEntry;
             Hashtable intendedNotifiers = objs[2] as Hashtable;
             OperationContext operationContext = objs[3] as OperationContext;
@@ -3597,7 +3622,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     callbackList.Remove(cbinfo);
                 }
             }
-            NotifyCustomRemoveCallback(objs[0], null, (ItemRemoveReason) objs[1], true, operationContext, eventContext);
+            NotifyCustomRemoveCallback(objs[0], null, (ItemRemoveReason)objs[1], true, operationContext, eventContext);
             return null;
 
         }
@@ -3625,16 +3650,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                object[] arguments = new object[] {clientID, events, registeredEventStatus};
+                object[] arguments = new object[] { clientID, events, registeredEventStatus };
                 Address destination = GetDestinationForFilteredEvents();
 
                 if (destination.Equals(Cluster.LocalAddress))
                 {
-                    return (List<NCache.Persistence.Event>) handleGetFileteredEvents(arguments);
+                    return (List<NCache.Persistence.Event>)handleGetFileteredEvents(arguments);
                 }
                 else
                 {
-                    Function func = new Function((int) OpCodes.GetFilteredPersistentEvents, arguments, false);
+                    Function func = new Function((int)OpCodes.GetFilteredPersistentEvents, arguments, false);
                     List<NCache.Persistence.Event> filteredEvents =
                         (List<NCache.Persistence.Event>)
                             Cluster.SendMessage(GetDestinationForFilteredEvents(), func, GroupRequest.GET_FIRST);
@@ -3653,11 +3678,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         protected virtual object handleGetFileteredEvents(object arguments)
         {
-            object[] args = (object[]) arguments;
+            object[] args = (object[])arguments;
 
-            string clientID = (string) args[0];
-            Hashtable events = (Hashtable) args[1];
-            EventStatus registeredEventStatus = (EventStatus) args[2];
+            string clientID = (string)args[0];
+            Hashtable events = (Hashtable)args[1];
+            EventStatus registeredEventStatus = (EventStatus)args[2];
             if (_context.PersistenceMgr != null)
             {
                 return _context.PersistenceMgr.GetFilteredEventsList(clientID, events, registeredEventStatus);
@@ -3669,13 +3694,13 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         protected object handleBlockActivity(object arguments)
         {
-            object[] args = (object[]) arguments;
+            object[] args = (object[])arguments;
 
             ShutDownServerInfo ssInfo = new ShutDownServerInfo();
-            ssInfo.UniqueBlockingId = (string) args[0];
-            ssInfo.BlockServerAddress = (Address) args[1];
-            ssInfo.BlockInterval = (long) args[2];
-            ssInfo.RenderedAddress = (Address) _cluster.Renderers[ssInfo.BlockServerAddress];
+            ssInfo.UniqueBlockingId = (string)args[0];
+            ssInfo.BlockServerAddress = (Address)args[1];
+            ssInfo.BlockInterval = (long)args[2];
+            ssInfo.RenderedAddress = (Address)_cluster.Renderers[ssInfo.BlockServerAddress];
             _shutdownServers.Add(ssInfo.BlockServerAddress, ssInfo);
 
             _context.CacheRoot.NotifyBlockActivityToClients(ssInfo.UniqueBlockingId,
@@ -3685,9 +3710,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
 
-       
 
-       
+
+
 
         #region	/                 --- Clustered Notifiers ---           /
 
@@ -3729,7 +3754,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                 if (Context.NCacheLog.IsInfoEnabled)
                     Context.NCacheLog.Info("ReplicatedBase.RaiseItemAddNotifier()", "onitemadded " + key);
-                RaiseGeneric(new Function((int) OpCodes.NotifyAdd, new object[] {key, context, eventContext}));
+                RaiseGeneric(new Function((int)OpCodes.NotifyAdd, new object[] { key, context, eventContext }));
             }
         }
 
@@ -3795,7 +3820,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             // If everything went ok!, initiate local and cluster-wide notifications.
             if (IsItemUpdateNotifier && ValidMembers.Count > 1)
             {
-                RaiseGeneric(new Function((int) OpCodes.NotifyUpdate, new object[] {key, operationContext, eventcontext}));
+                RaiseGeneric(new Function((int)OpCodes.NotifyUpdate, new object[] { key, operationContext, eventcontext }));
             }
         }
 
@@ -3808,7 +3833,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             // If everything went ok!, initiate local and cluster-wide notifications.
             if (IsItemRemoveNotifier && ValidMembers.Count > 1)
             {
-                RaiseGeneric(new Function((int) OpCodes.NotifyRemoval, packed));
+                RaiseGeneric(new Function((int)OpCodes.NotifyRemoval, packed));
             }
         }
 
@@ -3838,7 +3863,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 (ValidMembers.Count - Servers.Count) > 1)
             {
                 if (Context.NCacheLog.IsInfoEnabled) Context.NCacheLog.Info("ReplicatedBase.RaiseCacheClearNotifier()");
-                RaiseGeneric(new Function((int) OpCodes.NotifyClear, null));
+                RaiseGeneric(new Function((int)OpCodes.NotifyClear, null));
             }
         }
 
@@ -3863,10 +3888,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (async)
                 {
                     _cluster.SendNoReplyMcastMessageAsync(dests,
-                        new Function((int) OpCodes.NotifyCustomRemoveCallback, packed));
+                        new Function((int)OpCodes.NotifyCustomRemoveCallback, packed));
                 }
                 else
-                    _cluster.Multicast(dests, new Function((int) OpCodes.NotifyCustomRemoveCallback, packed),
+                    _cluster.Multicast(dests, new Function((int)OpCodes.NotifyCustomRemoveCallback, packed),
                         GroupRequest.GET_ALL, false);
             }
 
@@ -3941,7 +3966,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         {
                             for (int i = 0; i < cbEntry.ItemRemoveCallbackListener.Count; i++)
                             {
-                                CallbackInfo removeCallbackInfo = (CallbackInfo) cbEntry.ItemRemoveCallbackListener[i];
+                                CallbackInfo removeCallbackInfo = (CallbackInfo)cbEntry.ItemRemoveCallbackListener[i];
                                 if (removeCallbackInfo != null && removeCallbackInfo.NotifyOnExpiration)
                                     notifyOnExpirationCount++;
                             }
@@ -3987,7 +4012,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             continue;
 
                         int index = nodes.IndexOf(new NodeInfo(Cluster.LocalAddress));
-                        if (index != -1 && ((NodeInfo) nodes[index]).ConnectedClients.Contains(cbInfo.Client))
+                        if (index != -1 && ((NodeInfo)nodes[index]).ConnectedClients.Contains(cbInfo.Client))
                         {
                             if (!destinations.Contains(Cluster.LocalAddress))
                             {
@@ -4026,7 +4051,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         cbEntry.ItemRemoveCallbackListener.Clone());
                 }
 
-                object[] packed = new object[] {key, reason, intendedNotifiers, operationContext, eventContext};
+                object[] packed = new object[] { key, reason, intendedNotifiers, operationContext, eventContext };
                 ///Incase of parition and partition of replica, there can be same clients connected
                 ///to multiple server. therefore the destinations list will contain more then 
                 ///one servers. so the callback will be sent to the same client through different server
@@ -4047,7 +4072,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <param name="cbEntry"></param>
         internal void RaiseCustomRemoveCalbackNotifier(object key, CacheEntry cacheEntry, ItemRemoveReason reason)
         {
-            RaiseCustomRemoveCalbackNotifier(key, cacheEntry, reason, null,null);
+            RaiseCustomRemoveCalbackNotifier(key, cacheEntry, reason, null, null);
         }
 
         internal void RaisePollRequestNotifier(string clientId, short callbackId, EventType eventType)
@@ -4119,7 +4144,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 sendLocal = true;
             }
 
-            if (ValidMembers.Count > 1 && broadCasteClusterEvent) 
+            if (ValidMembers.Count > 1 && broadCasteClusterEvent)
             {
                 _cluster.SendNoReplyMcastMessageAsync(dests,
                     new Function((int)OpCodes.NotifyCustomUpdateCallback,
@@ -4128,7 +4153,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             if (sendLocal)
             {
-                handleNotifyUpdateCallback(new object[] {objs[0], callbackListeners.Clone(), objs[2], eventContext});
+                handleNotifyUpdateCallback(new object[] { objs[0], callbackListeners.Clone(), objs[2], eventContext });
             }
         }
 
@@ -4150,14 +4175,14 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             OperationID opId = operationContext != null ? operationContext.OperatoinID : null;
             //generate event id
             if (operationContext == null || !operationContext.Contains(OperationContextFieldName.EventContext))
-                //for atomic operations
+            //for atomic operations
             {
                 eventContext.EventID = EventId.CreateEventId(opId);
             }
             else //for bulk
             {
                 eventContext.EventID =
-                    ((EventContext) operationContext.GetValueByField(OperationContextFieldName.EventContext)).EventID;
+                    ((EventContext)operationContext.GetValueByField(OperationContextFieldName.EventContext)).EventID;
             }
 
             eventContext.EventID.EventType = eventType;
@@ -4221,7 +4246,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     foreach (CallbackInfo cbInfo in itemUpdateCallbackListener)
                     {
                         int index = nodes.IndexOf(new NodeInfo(Cluster.LocalAddress));
-                        if (index != -1 && ((NodeInfo) nodes[index]).ConnectedClients.Contains(cbInfo.Client))
+                        if (index != -1 && ((NodeInfo)nodes[index]).ConnectedClients.Contains(cbInfo.Client))
                         {
                             if (!destinations.Contains(Cluster.LocalAddress))
                             {
@@ -4249,7 +4274,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             }
             if (destinations != null && destinations.Count > 0)
             {
-                object[] packed = new object[] {key, itemUpdateCallbackListener, intendedNotifiers};
+                object[] packed = new object[] { key, itemUpdateCallbackListener, intendedNotifiers };
                 ArrayList selectedServer = new ArrayList(1);
                 ///Incase of parition and partition of replica, there can be same clients connected
                 ///to multiple server. therefore the destinations list will contain more then 
@@ -4301,7 +4326,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                                 EventDataFilter datafilter = CQManager.GetDataFilter(info.CQId, clientId, changeType);
                                 info.DataFilters.Add(clientId, datafilter);
 
-                                if (index != -1 && ((NodeInfo) nodes[index]).ConnectedClients.Contains(clientId))
+                                if (index != -1 && ((NodeInfo)nodes[index]).ConnectedClients.Contains(clientId))
                                 {
                                     if (!localNotified.Contains(info))
                                     {
@@ -4335,7 +4360,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             if (localNotified.Count > 0)
             {
-                handleCQUpdateCallback(new object[] {key, changeType, localNotified, eventContext});
+                handleCQUpdateCallback(new object[] { key, changeType, localNotified, eventContext });
             }
 
             if (remoteNotified.Count > 0)
@@ -4357,11 +4382,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (Cluster.ValidMembers.Count > 1)
             {
-                Function func = new Function((int) OpCodes.NotifyCQUpdate,
-                    new object[] {key, changeType, queries, eventContext});
+                Function func = new Function((int)OpCodes.NotifyCQUpdate,
+                    new object[] { key, changeType, queries, eventContext });
                 ArrayList list = new ArrayList();
                 list.Add(dest);
-                Cluster.Multicast(list, func, GroupRequest.GET_NONE, false, Cluster.Timeout*10);
+                Cluster.Multicast(list, func, GroupRequest.GET_NONE, false, Cluster.Timeout * 10);
             }
         }
 
@@ -4406,8 +4431,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     DoWrite("ClusterCacheBase.RaiseWriteBehindTaskCompleted",
                         "clustered notify, destinations=" + destinS, operationContext);
 
-                    Function func = new Function((int) OpCodes.NotifyWBTResult,
-                        new object[] {operationCode, result, cbEntry, operationContext}, true);
+                    Function func = new Function((int)OpCodes.NotifyWBTResult,
+                        new object[] { operationCode, result, cbEntry, operationContext }, true);
                     Cluster.SendNoReplyMessage(dest, func);
                 }
             }
@@ -4425,11 +4450,6 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     lock (localNode.ConnectedClients.SyncRoot)
                     {
-                        if (!localNode.LocalConnectedClientsInfo.ContainsKey(client))
-                        {
-                            localNode.LocalConnectedClientsInfo.Add(client, clientInfo);                         
-                        }
-                        
                         if (!localNode.ConnectedClients.Contains(client))
                         {
                             localNode.ConnectedClients.Add(client);
@@ -4440,7 +4460,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
             }
         }
-        
+
 
 
         public override void ClientDisconnected(string client, bool isInproc)
@@ -4448,7 +4468,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             if (_stats != null && _stats.LocalNode != null)
             {
-                NodeInfo localNode = (NodeInfo) _stats.LocalNode;
+                NodeInfo localNode = (NodeInfo)_stats.LocalNode;
                 if (localNode.ConnectedClients != null)
                 {
                     lock (localNode.ConnectedClients.SyncRoot)
@@ -4458,7 +4478,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             localNode.ConnectedClients.Remove(client);
                         }
                     }
-                    
+
                     if (!isInproc) UpdateClientsCount(localNode.Address, localNode.ConnectedClients.Count);
                 }
             }
@@ -4467,7 +4487,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 InternalCache.ClientDisconnected(client, isInproc);
             }
 
-          
+
         }
 
         internal override void EnqueueDSOperation(DSWriteBehindOperation operation)
@@ -4541,10 +4561,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         public override void RegisterKeyNotification(string key, CallbackInfo updateCallback,
             CallbackInfo removeCallback, OperationContext operationContext)
         {
-            object[] obj = new object[] {key, updateCallback, removeCallback, operationContext};
+            object[] obj = new object[] { key, updateCallback, removeCallback, operationContext };
             if (_cluster.Servers.Count > 1)
             {
-                Function fun = new Function((byte) OpCodes.RegisterKeyNotification, obj, false);
+                Function fun = new Function((byte)OpCodes.RegisterKeyNotification, obj, false);
                 _cluster.BroadcastToMultiple(_cluster.Servers, fun, GroupRequest.GET_ALL, true);
             }
             else
@@ -4562,13 +4582,14 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             else
                 handleRegisterKeyNotification(obj);
         }
-        
+
         public override void RegisterKeyNotification(string[] keys, CallbackInfo updateCallback, CallbackInfo removeCallback, OperationContext operationContext)
         {
-            object[] obj = new object[] {keys, updateCallback, removeCallback, operationContext};
+            object[] obj = new object[] { keys, updateCallback, removeCallback, operationContext };
             if (_cluster.Servers.Count > 1)
             {
-                Function fun = new Function((byte) OpCodes.RegisterKeyNotification, obj, false);
+                Function fun = new Function((byte)OpCodes.RegisterKeyNotification, obj, false);
+                fun.Cancellable = true;
                 _cluster.BroadcastToMultiple(_cluster.Servers, fun, GroupRequest.GET_ALL, true);
             }
             else
@@ -4584,10 +4605,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         public override void UnregisterKeyNotification(string key, CallbackInfo updateCallback,
             CallbackInfo removeCallback, OperationContext operationContext)
         {
-            object[] obj = new object[] {key, updateCallback, removeCallback, operationContext};
+            object[] obj = new object[] { key, updateCallback, removeCallback, operationContext };
             if (_cluster.Servers.Count > 1)
             {
-                Function fun = new Function((byte) OpCodes.UnregisterKeyNotification, obj, false);
+                Function fun = new Function((byte)OpCodes.UnregisterKeyNotification, obj, false);
                 _cluster.BroadcastToMultiple(_cluster.Servers, fun, GroupRequest.GET_ALL, true);
             }
             else
@@ -4597,10 +4618,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         public override void UnregisterKeyNotification(string[] keys, CallbackInfo updateCallback,
             CallbackInfo removeCallback, OperationContext operationContext)
         {
-            object[] obj = new object[] {keys, updateCallback, removeCallback, operationContext};
+            object[] obj = new object[] { keys, updateCallback, removeCallback, operationContext };
             if (_cluster.Servers.Count > 1)
             {
-                Function fun = new Function((byte) OpCodes.UnregisterKeyNotification, obj, false);
+                Function fun = new Function((byte)OpCodes.UnregisterKeyNotification, obj, false);
+                fun.Cancellable = true;
                 _cluster.BroadcastToMultiple(_cluster.Servers, fun, GroupRequest.GET_ALL, true);
             }
             else
@@ -4649,7 +4671,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                Function func = new Function((int) OpCodes.BalanceNode, requestingNode, false);
+                Function func = new Function((int)OpCodes.BalanceNode, requestingNode, false);
                 Cluster.SendMessage(targetNode, func, GroupRequest.GET_NONE);
             }
             catch (Exception e)
@@ -4661,11 +4683,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         protected void handleUpdateLockInfo(object info)
         {
             object[] args = info as object[];
-            bool acquireLock = (bool) args[0];
+            bool acquireLock = (bool)args[0];
             object key = args[1];
             object lockId = args[2];
-            DateTime lockDate = (DateTime) args[3];
-            LockExpiration lockExpiration = (LockExpiration) args[4];
+            DateTime lockDate = (DateTime)args[3];
+            LockExpiration lockExpiration = (LockExpiration)args[4];
             OperationContext operationContext = null;
 
             if (args.Length > 6)
@@ -4679,7 +4701,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     InternalCache.Lock(key, lockExpiration, ref lockId, ref lockDate, operationContext);
                 else
                 {
-                    bool isPreemptive = (bool) args[5];
+                    bool isPreemptive = (bool)args[5];
                     InternalCache.UnLock(key, lockId, isPreemptive, operationContext);
                 }
             }
@@ -4697,16 +4719,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (Context.NCacheLog.IsInfoEnabled)
                     Context.NCacheLog.Info("ClusteredCacheBase.UpdateClientStatus()",
                         " Updating Client Status accross the cluster");
- 
-                    Object[] objects = null;
-                    if (isConnected)
-                        objects = new Object[] {client, true, info};
-                    else
-                        objects = new Object[] {client, false, DateTime.Now};
-                    Function func = new Function((int) OpCodes.UpdateClientStatus, objects, true);
-                    Cluster.BroadcastToMultiple(Cluster.OtherServers, func, GroupRequest.GET_NONE);
-                    handleUpdateClientStatus(_stats.LocalNode.Address,objects);
-                
+
+                Object[] objects = null;
+                if (isConnected)
+                    objects = new Object[] { client, true, info };
+                else
+                    objects = new Object[] { client, false, DateTime.Now };
+                Function func = new Function((int)OpCodes.UpdateClientStatus, objects, true);
+                Cluster.BroadcastToMultiple(Cluster.OtherServers, func, GroupRequest.GET_NONE);
+                handleUpdateClientStatus(_stats.LocalNode.Address, objects);
+
             }
             catch (Exception e)
             {
@@ -4724,11 +4746,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 object[] args = Obj as object[];
 
                 string client = args[0].ToString();
-                bool isConnected = (bool) args[1];
+                bool isConnected = (bool)args[1];
 
                 if (isConnected)
                 {
-                    ClientInfo info = (ClientInfo) args[2];
+                    ClientInfo info = (ClientInfo)args[2];
                     if (_context.ConnectedClients != null)
                     {
                         _context.ConnectedClients.ClientConnected(client, info, sender);
@@ -4740,7 +4762,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     if (_context.ConnectedClients != null)
                     {
-                        _context.ConnectedClients.ClientDisconnected(client, sender, (DateTime) args[2]);
+                        _context.ConnectedClients.ClientDisconnected(client, sender, (DateTime)args[2]);
                     }
                 }
             }
@@ -4765,7 +4787,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     for (int i = 0; i < newMap.Count; i++)
                     {
                         sb.Append("  " + newMap[i].ToString());
-                        if ((i + 1)%10 == 0)
+                        if ((i + 1) % 10 == 0)
                         {
                             sb.Remove(0, sb.Length);
                         }
@@ -4802,7 +4824,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             }
 
                             sb.Append("  " + bkt.ToString());
-                            if ((i + 1)%10 == 0)
+                            if ((i + 1) % 10 == 0)
                             {
                                 sb.Remove(0, sb.Length);
                             }
@@ -4825,7 +4847,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         " announcing presence ;urget " + urgent);
                 if (this.ValidMembers.Count > 1)
                 {
-                    Function func = new Function((int) OpCodes.PeriodicUpdate, handleReqStatus());
+                    Function func = new Function((int)OpCodes.PeriodicUpdate, handleReqStatus());
                     if (!urgent)
                         Cluster.SendNoReplyMessage(func);
                     else
@@ -4869,7 +4891,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         #endregion
 
-    
+
         public virtual string GetGroupId(Address affectedNode, bool isMirror)
         {
             return String.Empty;
@@ -4878,7 +4900,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         internal WriteBehindQueueResponse TransferQueue(Address coordinator, WriteBehindQueueRequest req)
         {
 
-            Function func = new Function((int) OpCodes.TransferQueue, req);
+            Function func = new Function((int)OpCodes.TransferQueue, req);
             object result = Cluster.SendMessage(coordinator, func, GroupRequest.GET_FIRST);
 
             return result as WriteBehindQueueResponse;
@@ -4920,7 +4942,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         public override void NotifyWriteBehindTaskStatus(OpCode opCode, Hashtable result, CallbackEntry cbEntry,
             string taskId, string providerName, OperationContext operationContext)
         {
-            DequeueWriteBehindTask(new string[] {taskId}, providerName, operationContext);
+            DequeueWriteBehindTask(new string[] { taskId }, providerName, operationContext);
 
             if (cbEntry != null && cbEntry.WriteBehindOperationCompletedCallback != null)
             {
@@ -5000,7 +5022,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             if (data.Length > 3)
                 operationContext = data[3] as OperationContext;
 
-            base.NotifyWriteBehindTaskCompleted((OpCode) data[0], data[1] as Hashtable, data[2] as CallbackEntry,
+            base.NotifyWriteBehindTaskCompleted((OpCode)data[0], data[1] as Hashtable, data[2] as CallbackEntry,
                 operationContext);
         }
 
@@ -5033,12 +5055,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             string destinS = string.Empty;
             for (int i = 0; i < destinations.Count; i++)
             {
-                destinS += "[" + ((Address) destinations[i]).ToString() + "]";
+                destinS += "[" + ((Address)destinations[i]).ToString() + "]";
             }
             DoWrite("ClusterCacheBase.SignalTaskState",
                 "taskId=" + taskId + ", state=" + state.ToString() + ", destinations=" + destinS, operationContext);
 
-            object[] operand = new object[] {taskId, state, providerName, opCode};
+            object[] operand = new object[] { taskId, state, providerName, opCode };
             ArrayList copyDest = destinations.Clone() as ArrayList;
 
             if (copyDest.Contains(Cluster.LocalAddress))
@@ -5049,8 +5071,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             if (copyDest.Count > 0)
             {
-                Function func = new Function((int) OpCodes.SignalWBTState,
-                    new object[] {taskId, state, providerName, opCode}, true);
+                Function func = new Function((int)OpCodes.SignalWBTState,
+                    new object[] { taskId, state, providerName, opCode }, true);
                 Cluster.SendNoReplyMulticastMessage(copyDest, func, false);
             }
         }
@@ -5058,7 +5080,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         protected void SignalBulkTaskState(ArrayList destinations, string taskId, string providerName, Hashtable table,
             OpCode opCode, WriteBehindAsyncProcessor.TaskState state)
         {
-            object[] operand = new object[] {taskId, state, table, providerName, opCode};
+            object[] operand = new object[] { taskId, state, table, providerName, opCode };
             ArrayList copyDest = destinations.Clone() as ArrayList;
 
             if (copyDest.Contains(Cluster.LocalAddress))
@@ -5069,7 +5091,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             if (copyDest.Count > 0)
             {
-                Function func = new Function((int) OpCodes.SignalWBTState, operand, true);
+                Function func = new Function((int)OpCodes.SignalWBTState, operand, true);
                 Cluster.SendNoReplyMulticastMessage(copyDest, func, false);
             }
         }
@@ -5087,19 +5109,19 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                 if (data.Length == 4)
                 {
-                    taskId = (string) data[0];
-                    state = (WriteBehindAsyncProcessor.TaskState) data[1];
-                    providerName = (string) data[2];
-                    code = (OpCode) data[3];
+                    taskId = (string)data[0];
+                    state = (WriteBehindAsyncProcessor.TaskState)data[1];
+                    providerName = (string)data[2];
+                    code = (OpCode)data[3];
                     _context.DsMgr.SetState(taskId, providerName, code, state);
                 }
                 else if (data.Length == 5)
                 {
-                    taskId = (string) data[0];
-                    state = (WriteBehindAsyncProcessor.TaskState) data[1];
-                    table = (Hashtable) data[2];
-                    providerName = (string) data[3];
-                    code = (OpCode) data[4];
+                    taskId = (string)data[0];
+                    state = (WriteBehindAsyncProcessor.TaskState)data[1];
+                    table = (Hashtable)data[2];
+                    providerName = (string)data[3];
+                    code = (OpCode)data[4];
                     _context.DsMgr.SetState(taskId, providerName, code, state, table);
                 }
             }
@@ -5161,27 +5183,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 case OpCode.Add:
                 case OpCode.Update:
- 
+
                     entries = new CacheEntry[table.Count];
                     foreach (DictionaryEntry de in table)
                     {
                         keys[i] = de.Key as string;
-                        object entry = ((CacheEntry) de.Value).Value;
-                        providerName = ((CacheEntry) de.Value).ProviderName;
-                        entries[i] = (CacheEntry) de.Value;
-                        if (entry is CallbackEntry)
-                            entry = ((CallbackEntry) entry).Value;
+                        providerName = ((CacheEntry)de.Value).ProviderName;
+                        entries[i] = (CacheEntry)de.Value;
 
-                       
-                        CallbackEntry callback = ((CacheEntry) table[keys[i]]).Value as CallbackEntry;
-                        if (callback != null)
-                        {
-                            entries[i] = new CacheEntry(callback, null, null);
-                        }
                         i++;
-                        
 
-                    } 
+
+                    }
                     break;
                 case OpCode.Remove:
                     entries = new CacheEntry[table.Count];
@@ -5203,7 +5216,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         {
                             if (entries[j].Value is CallbackEntry)
                             {
-                                ((CallbackEntry) entries[j].Value).WriteBehindOperationCompletedCallback =
+                                ((CallbackEntry)entries[j].Value).WriteBehindOperationCompletedCallback =
                                     cbEntry.WriteBehindOperationCompletedCallback;
                             }
                             else
@@ -5228,7 +5241,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (_context.DsMgr != null
                     && ((_context.DsMgr.IsWriteThruEnabled && updateOpts == DataSourceUpdateOptions.WriteThru)
                         ||
-                        ( updateOpts == DataSourceUpdateOptions.WriteBehind)))
+                        (updateOpts == DataSourceUpdateOptions.WriteBehind)))
                     return;
 
                 throw new OperationFailedException("Backing source not available. Verify backing source settings");
@@ -5287,7 +5300,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     {
                         //the partition to which clients connected is an active partition.
                         nodeInfo.ActivePartition = ipAddress;
-                        ((ClusterNodeInformation) _nodeInformationTable[address]).ConnectedClients = clientsConnected;
+                        ((ClusterNodeInformation)_nodeInformationTable[address]).ConnectedClients = clientsConnected;
                     }
                 }
             }
@@ -5323,13 +5336,13 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             try
             {
-                Function func = new Function((int) OpCodes.GetClientRequestStatus,
-                    new object[] {clientId, requestId, commandId});
+                Function func = new Function((int)OpCodes.GetClientRequestStatus,
+                    new object[] { clientId, requestId, commandId });
                 object rsp = Cluster.SendMessage(intendedServer, func, GroupRequest.GET_FIRST);
 
                 if (rsp != null)
                 {
-                    requestStatus = (RequestStatus) rsp;
+                    requestStatus = (RequestStatus)rsp;
                 }
 
                 return requestStatus;
@@ -5553,14 +5566,14 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 MapReduceOperation operation = new MapReduceOperation();
                 operation.OpCode = MapReduceOpCodes.GetTaskSequence;
 
-                Function sequenceFunc = new Function((int) OpCodes.MapReduceOperation, operation, false);
+                Function sequenceFunc = new Function((int)OpCodes.MapReduceOperation, operation, false);
                 Object result = this.Cluster.SendMessage(this.Cluster.Coordinator, sequenceFunc, GroupRequest.GET_FIRST);
                 long sequenceID;
                 if (result == null)
                 {
                     throw new GeneralFailureException("Task Submission Failed");
                 }
-                sequenceID = (long) result;
+                sequenceID = (long)result;
 
                 // Now submit the MapReduce Task...
                 MapReduceOperation op = new MapReduceOperation();
@@ -5570,24 +5583,24 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 op.OpCode = MapReduceOpCodes.SubmitMapReduceTask;
                 op.TaskID = taskId;
 
-                Function func = new Function((int) OpCodes.MapReduceOperation, op, false);
+                Function func = new Function((int)OpCodes.MapReduceOperation, op, false);
                 RspList results = Cluster.Multicast(this.ActiveServers, func, GroupRequest.GET_ALL, false);
 
-                ClusterHelper.ValidateResponses(results, typeof (TaskExecutionStatus), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (TaskExecutionStatus));
+                ClusterHelper.ValidateResponses(results, typeof(TaskExecutionStatus), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(TaskExecutionStatus));
 
                 // verify the response
                 IEnumerator ia = rspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
-                    Rsp rsp = (Rsp) ia.Current;
-                    if ((TaskExecutionStatus) rsp.Value == TaskExecutionStatus.Failure)
+                    Rsp rsp = (Rsp)ia.Current;
+                    if ((TaskExecutionStatus)rsp.Value == TaskExecutionStatus.Failure)
                     {
                         MapReduceOperation stopOperation = new MapReduceOperation();
                         stopOperation.OpCode = MapReduceOpCodes.RemoveFromSubmittedList;
                         stopOperation.TaskID = taskId;
 
-                        Function stopFunction = new Function((int) OpCodes.MapReduceOperation, stopOperation, false);
+                        Function stopFunction = new Function((int)OpCodes.MapReduceOperation, stopOperation, false);
                         this.Cluster.Multicast(this.Cluster.ActiveServers, stopFunction, GroupRequest.GET_ALL, false);
                         throw new GeneralFailureException("Task failed during submission on Node : " +
                                                           rsp.Sender.ToString());
@@ -5600,25 +5613,25 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 startingOperation.TaskID = taskId;
                 startingOperation.SequenceID = sequenceID;
 
-                Function taskStartingFunction = new Function((int) OpCodes.MapReduceOperation, startingOperation, false);
+                Function taskStartingFunction = new Function((int)OpCodes.MapReduceOperation, startingOperation, false);
                 RspList runTaskCommandRsps = this.Cluster.Multicast(this.ActiveServers, taskStartingFunction,
                     GroupRequest.GET_ALL, false);
 
-                ClusterHelper.ValidateResponses(runTaskCommandRsps, typeof (TaskExecutionStatus), Name);
-                IList runTaskRspList = ClusterHelper.GetAllNonNullRsp(runTaskCommandRsps, typeof (TaskExecutionStatus));
+                ClusterHelper.ValidateResponses(runTaskCommandRsps, typeof(TaskExecutionStatus), Name);
+                IList runTaskRspList = ClusterHelper.GetAllNonNullRsp(runTaskCommandRsps, typeof(TaskExecutionStatus));
 
                 ia = null;
                 ia = runTaskRspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
-                    Rsp rsp = (Rsp) ia.Current;
-                    if ((TaskExecutionStatus) rsp.Value == TaskExecutionStatus.Failure)
+                    Rsp rsp = (Rsp)ia.Current;
+                    if ((TaskExecutionStatus)rsp.Value == TaskExecutionStatus.Failure)
                     {
                         MapReduceOperation stopRunningOperation = new MapReduceOperation();
                         stopRunningOperation.OpCode = MapReduceOpCodes.RemoveFromRunningList;
                         stopRunningOperation.TaskID = taskId;
 
-                        Function stopRunningFunction = new Function((int) OpCodes.MapReduceOperation,
+                        Function stopRunningFunction = new Function((int)OpCodes.MapReduceOperation,
                             stopRunningOperation, false);
                         this.Cluster.Multicast(this.ActiveServers, stopRunningFunction, GroupRequest.GET_ALL, false);
                         throw new GeneralFailureException("Task failed while starting on Node : " +
@@ -5635,7 +5648,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         protected Object HandleMapReduceOperation(Object argument)
         {
-            return Local_MapReduceOperation((MapReduceOperation) argument);
+            return Local_MapReduceOperation((MapReduceOperation)argument);
         }
 
         Object Local_MapReduceOperation(MapReduceOperation operation)
@@ -5648,7 +5661,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 operation.Source = this.Cluster.LocalAddress;
-                Function func = new Function((int) OpCodes.MapReduceOperation, operation, true);
+                Function func = new Function((int)OpCodes.MapReduceOperation, operation, true);
                 this.Cluster.Multicast(dests, func, GetAllResponses);
             }
             catch (Exception e)
@@ -5662,7 +5675,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 operation.Source = this.Cluster.LocalAddress;
-                Function func = new Function((int) OpCodes.MapReduceOperation, operation, false);
+                Function func = new Function((int)OpCodes.MapReduceOperation, operation, false);
                 this.Cluster.SendMessage(target, func, GroupRequest.GET_NONE);
             }
             catch (Exception e)
@@ -5690,16 +5703,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 op.OpCode = MapReduceOpCodes.RegisterTaskNotification;
                 op.TaskID = taskID;
 
-                Function func = new Function((int) OpCodes.MapReduceOperation, op, false);
+                Function func = new Function((int)OpCodes.MapReduceOperation, op, false);
                 RspList results = this.Cluster.Multicast(this.ActiveServers, func, GroupRequest.GET_ALL, false);
 
-                ClusterHelper.ValidateResponses(results, typeof (Boolean), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (Boolean));
+                ClusterHelper.ValidateResponses(results, typeof(Boolean), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(Boolean));
 
                 IEnumerator ia = rspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
-                    Rsp rsp = (Rsp) ia.Current;
+                    Rsp rsp = (Rsp)ia.Current;
                     if (rsp.Value != null)
                     {
                         //check if all responses are same
@@ -5730,16 +5743,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 op.OpCode = MapReduceOpCodes.UnregisterTaskNotification;
                 op.TaskID = taskID;
 
-                Function func = new Function((int) OpCodes.MapReduceOperation, op, false);
+                Function func = new Function((int)OpCodes.MapReduceOperation, op, false);
                 RspList results = this.Cluster.Multicast(this.ActiveServers, func, GroupRequest.GET_ALL, false);
 
-                ClusterHelper.ValidateResponses(results, typeof (Boolean), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (Boolean));
+                ClusterHelper.ValidateResponses(results, typeof(Boolean), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(Boolean));
 
                 IEnumerator ia = rspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
-                    Rsp rsp = (Rsp) ia.Current;
+                    Rsp rsp = (Rsp)ia.Current;
                     if (rsp.Value != null)
                     {
                         //check if all responses are same
@@ -5769,9 +5782,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         destinations = new ArrayList();
                         for (IEnumerator it = taskCallbackListener.GetEnumerator(); it.MoveNext();)
                         {
-                            TaskCallbackInfo cbInfo = (TaskCallbackInfo) it.Current;
+                            TaskCallbackInfo cbInfo = (TaskCallbackInfo)it.Current;
                             int index = nodes.IndexOf(new NodeInfo(this.Cluster.LocalAddress));
-                            if (index != -1 && ((NodeInfo) nodes[index]).ConnectedClients.Contains(cbInfo.Client))
+                            if (index != -1 && ((NodeInfo)nodes[index]).ConnectedClients.Contains(cbInfo.Client))
                             {
                                 if (!destinations.Contains(Cluster.LocalAddress))
                                 {
@@ -5784,7 +5797,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             {
                                 for (IEnumerator ite = nodes.GetEnumerator(); ite.MoveNext();)
                                 {
-                                    NodeInfo nInfo = (NodeInfo) ite.Current;
+                                    NodeInfo nInfo = (NodeInfo)ite.Current;
                                     if (nInfo.ConnectedClients != null && nInfo.ConnectedClients.Contains(cbInfo.Client))
                                     {
                                         if (!destinations.Contains(nInfo.Address))
@@ -5810,8 +5823,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
                     // If everything went ok!, initiate local and cluster-wide notifications.
                     bool sendLocal = false;
-                    Object[] objs = (Object[]) ((packed is Object[]) ? packed : null);
-                    IList callbackListeners = (IList) ((objs[1] is IList) ? objs[1] : null);
+                    Object[] objs = (Object[])((packed is Object[]) ? packed : null);
+                    IList callbackListeners = (IList)((objs[1] is IList) ? objs[1] : null);
 
                     if (destinations.Contains(this.Cluster.LocalAddress))
                     {
@@ -5822,7 +5835,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     if (ValidMembers.Count > 1)
                     {
                         _cluster.SendNoReplyMcastMessageAsync(destinations,
-                            new Function((int) OpCodes.NotifyTaskCallback, new Object[]
+                            new Function((int)OpCodes.NotifyTaskCallback, new Object[]
                             {
                                 objs[0],
                                 callbackListeners,
@@ -5851,31 +5864,31 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <returns></returns>
         private Object HandleNotifyTaskCallback(Object info)
         {
-            Object[] objs = (Object[]) info;
+            Object[] objs = (Object[])info;
             EventContext eventContext = null;
-            IList callbackListeners = (IList) ((objs[1] is IList) ? objs[1] : null);
-            Hashtable intendedNotifiers = (Hashtable) ((objs[2] is Hashtable) ? objs[2] : null);
+            IList callbackListeners = (IList)((objs[1] is IList) ? objs[1] : null);
+            Hashtable intendedNotifiers = (Hashtable)((objs[2] is Hashtable) ? objs[2] : null);
             if (objs.Length > 3)
             {
-                eventContext = (EventContext) objs[3];
+                eventContext = (EventContext)objs[3];
             }
 
             IEnumerator ide = intendedNotifiers.GetEnumerator();
             DictionaryEntry KeyValue;
             while (ide.MoveNext())
             {
-                KeyValue = (DictionaryEntry) ide.Current;
+                KeyValue = (DictionaryEntry)ide.Current;
                 Object Key = KeyValue.Key;
                 Object Value = KeyValue.Value;
-                CallbackInfo cbinfo = (CallbackInfo) ((Key is CallbackInfo) ? Key : null);
-                Address node = (Address) ((Value is Address) ? Value : null);
+                CallbackInfo cbinfo = (CallbackInfo)((Key is CallbackInfo) ? Key : null);
+                Address node = (Address)((Value is Address) ? Value : null);
 
                 if (node != null && !node.Equals(this.Cluster.LocalAddress))
                 {
                     callbackListeners.Remove(cbinfo);
                 }
             }
-            NotifyTaskCallback((string) objs[0], (IList) objs[1], false, null, eventContext);
+            NotifyTaskCallback((string)objs[0], (IList)objs[1], false, null, eventContext);
             return null;
         }
 
@@ -5899,16 +5912,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
                 operation.TaskID = taskId;
 
-                Function func = new Function((int) OpCodes.MapReduceOperation, operation, false);
+                Function func = new Function((int)OpCodes.MapReduceOperation, operation, false);
                 RspList results = this.Cluster.Multicast(this.ActiveServers, func, GroupRequest.GET_ALL, false);
 
-                ClusterHelper.ValidateResponses(results, typeof (Boolean), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (Boolean));
+                ClusterHelper.ValidateResponses(results, typeof(Boolean), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(Boolean));
 
                 IEnumerator ia = rspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
-                    Rsp rsp = (Rsp) ia.Current;
+                    Rsp rsp = (Rsp)ia.Current;
                     if (rsp.Value != null)
                     {
                         //check if all responses are same
@@ -5934,9 +5947,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 MapReduceOperation operation = new MapReduceOperation();
                 operation.OpCode = MapReduceOpCodes.GetRunningTasks;
 
-                Function func = new Function((int) OpCodes.MapReduceOperation, operation, false);
+                Function func = new Function((int)OpCodes.MapReduceOperation, operation, false);
                 Object result = this.Cluster.SendMessage(this.Cluster.Coordinator, func, GroupRequest.GET_FIRST);
-                runningTasks = (ArrayList) result;
+                runningTasks = (ArrayList)result;
 
             }
             catch (Exception ex)
@@ -5963,7 +5976,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 operation.OpCode = MapReduceOpCodes.GetTaskStatus;
                 operation.TaskID = taskId;
 
-                Function func = new Function((int) OpCodes.MapReduceOperation, operation, false);
+                Function func = new Function((int)OpCodes.MapReduceOperation, operation, false);
                 Object result = this.Cluster.SendMessage(this.Cluster.Coordinator, func, GroupRequest.GET_FIRST);
 
                 if (result == null)
@@ -5971,7 +5984,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     throw new Exception("Task with specified key does not exist.");
                 }
 
-                status = (Runtime.MapReduce.TaskStatus) result;
+                status = (Runtime.MapReduce.TaskStatus)result;
 
             }
             catch (Exception ex)
@@ -6008,7 +6021,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
                 }
-                resultSets.Add((Common.MapReduce.TaskEnumeratorResult) this.Local_MapReduceOperation(operation));
+                resultSets.Add((Common.MapReduce.TaskEnumeratorResult)this.Local_MapReduceOperation(operation));
                 if (IsInStateTransfer())
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
@@ -6025,14 +6038,14 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
 
-                Function func = new Function((byte) OpCodes.MapReduceOperation, operation, false);
+                Function func = new Function((byte)OpCodes.MapReduceOperation, operation, false);
                 RspList results = Cluster.Multicast(destinations, func, GroupRequest.GET_ALL, false);
 
                 if (results == null)
                     return null;
 
-                ClusterHelper.ValidateResponses(results, typeof (Common.MapReduce.TaskEnumeratorResult), this.Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (Common.MapReduce.TaskEnumeratorResult));
+                ClusterHelper.ValidateResponses(results, typeof(Common.MapReduce.TaskEnumeratorResult), this.Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(Common.MapReduce.TaskEnumeratorResult));
                 if (rspList.Count <= 0)
                 {
                     return null;
@@ -6042,9 +6055,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
+                        Rsp rsp = (Rsp)im.Current;
                         Common.MapReduce.TaskEnumeratorResult rResultSet =
-                            (Common.MapReduce.TaskEnumeratorResult) rsp.Value;
+                            (Common.MapReduce.TaskEnumeratorResult)rsp.Value;
                         resultSet.Add(rResultSet);
                     }
                 }
@@ -6066,7 +6079,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         public override Common.MapReduce.TaskEnumeratorResult GetNextRecord(
             Common.MapReduce.TaskEnumeratorPointer pointer, OperationContext operationContext)
         {
-            _statusLatch.WaitForAny((byte) (NodeStatus.Initializing | NodeStatus.Running));
+            _statusLatch.WaitForAny((byte)(NodeStatus.Initializing | NodeStatus.Running));
             if (_internalCache == null)
             {
                 throw new OperationFailedException();
@@ -6088,7 +6101,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 for (int i = 0; i < servers.Count; i++)
                 {
-                    Address server = (Address) servers[i];
+                    Address server = (Address)servers[i];
                     if (server.IpAddress.ToString() == null
                         ? intenededRecepient == null
                         : server.IpAddress.ToString().Equals(intenededRecepient.IpAddress.ToString()))
@@ -6101,7 +6114,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     if (targetNode.Equals(Cluster.LocalAddress))
                     {
-                        reader = (Common.MapReduce.TaskEnumeratorResult) Local_MapReduceOperation(operation);
+                        reader = (Common.MapReduce.TaskEnumeratorResult)Local_MapReduceOperation(operation);
                     }
                     else
                     {
@@ -6121,10 +6134,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                Function func = new Function((byte) OpCodes.MapReduceOperation, operation, false);
+                Function func = new Function((byte)OpCodes.MapReduceOperation, operation, false);
                 Object result = Cluster.SendMessage(targetNode, func, GroupRequest.GET_FIRST, Cluster.Timeout);
 
-                return (Common.MapReduce.TaskEnumeratorResult) result;
+                return (Common.MapReduce.TaskEnumeratorResult)result;
             }
             catch (NGroups.SuspectedException e)
             {
@@ -6142,7 +6155,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         private void HandleDeadClients(object p)
         {
-            InternalCache.DeclareDeadClients((string) p, null);
+            InternalCache.DeclareDeadClients((string)p, null);
         }
 
         public override void DeclareDeadClients(string deadClient, ClientInfo info)
@@ -6156,7 +6169,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
                 if (this.ValidMembers.Count > 1)
                 {
-                    Function func = new Function((byte) OpCodes.DeadClients, deadClient);
+                    Function func = new Function((byte)OpCodes.DeadClients, deadClient);
                     Cluster.Broadcast(func, GroupRequest.GET_NONE, false, Priority.Normal);
                 }
                 else
@@ -6195,12 +6208,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             try
             {
-                Function func = new Function((int) OpCodes.GetContinuousQueryStateInfo, null);
+                Function func = new Function((int)OpCodes.GetContinuousQueryStateInfo, null);
                 ArrayList address = new ArrayList();
                 address.Add(source);
-                RspList results = Cluster.Multicast(address, func, GroupRequest.GET_FIRST, false, Cluster.Timeout*10);
-                ClusterHelper.ValidateResponses(results, typeof (ContinuousQueryStateInfo), Name);
-                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof (ContinuousQueryStateInfo));
+                RspList results = Cluster.Multicast(address, func, GroupRequest.GET_FIRST, false, Cluster.Timeout * 10);
+                ClusterHelper.ValidateResponses(results, typeof(ContinuousQueryStateInfo), Name);
+                IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(ContinuousQueryStateInfo));
 
                 if (rspList.Count <= 0)
                     return null;
@@ -6209,8 +6222,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     if (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        retVal = (ContinuousQueryStateInfo) rsp.Value;
+                        Rsp rsp = (Rsp)im.Current;
+                        retVal = (ContinuousQueryStateInfo)rsp.Value;
                     }
                 }
             }
@@ -6253,9 +6266,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (_internalCache == null) throw new InvalidOperationException();
 
-            
+
             try
-            {                
+            {
                 ClusteredList<ReaderResultSet> recordSets = new ClusteredList<ReaderResultSet>();
                 ArrayList dests = new ArrayList();
 
@@ -6300,10 +6313,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
                 return recordSets;
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 throw;
-            }           
+            }
         }
 
         public override List<ReaderResultSet> ExecuteReaderCQ(string query, IDictionary values, bool getData,
@@ -6323,15 +6336,15 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 operationContext.Add(OperationContextFieldName.IsClusteredOperation, false);
                 try
                 {
-                    recordSets=  Clustered_ExecuteReaderCQ(servers, query, values, getData, chunkSize, clientUniqueId, clientId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters, isInproc, IsRetryOnSuspected);
+                    recordSets = Clustered_ExecuteReaderCQ(servers, query, values, getData, chunkSize, clientUniqueId, clientId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters, isInproc, IsRetryOnSuspected);
                 }
                 catch (Exception)
                 {
-                      if (!IsRetryOnSuspected) throw;
+                    if (!IsRetryOnSuspected) throw;
 
-                        //Sleep is used to be sure that new view applied and node is marked in state transfer...
-                        Thread.Sleep(_onSuspectedWait);
-                        servers = GetServerParticipatingInStateTransfer();
+                    //Sleep is used to be sure that new view applied and node is marked in state transfer...
+                    Thread.Sleep(_onSuspectedWait);
+                    servers = GetServerParticipatingInStateTransfer();
                     recordSets = Clustered_ExecuteReaderCQ(servers, query, values, getData, chunkSize, clientUniqueId, clientId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters, isInproc, IsRetryOnSuspected);
                 }
 
@@ -6352,7 +6365,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     throw new StateTransferInProgressException("Operation could not be completed due to state transfer");
                 }
-               
+
             }
             return recordSets;
         }
@@ -6361,51 +6374,52 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// Retrieve the reader result set from the cache based on the specified query.
         /// </summary>
         protected ClusteredList<ReaderResultSet> Clustered_ExecuteReader(ArrayList dests, string queryText,
-            IDictionary values, bool getData, int chunkSize, OperationContext operationContext,Boolean throwSuspected=false)
+            IDictionary values, bool getData, int chunkSize, OperationContext operationContext, Boolean throwSuspected = false)
         {
             ClusteredList<ReaderResultSet> resultSet = new ClusteredList<ReaderResultSet>();
 
             try
             {
-                Function func = new Function((int) OpCodes.ExecuteReader,
-                    new object[] {queryText, values, getData, chunkSize, operationContext}, false);
-                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout*10);
+                Function func = new Function((int)OpCodes.ExecuteReader,
+                    new object[] { queryText, values, getData, chunkSize, operationContext }, false);
+                func.Cancellable = true;
+                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
 
                 if (results == null)
                     return resultSet;
-                
+
                 if (throwSuspected) ClusterHelper.VerifySuspectedResponses(results);
 
                 IList rspList = ClusterHelper.GetAllNonNullRsp(results, typeof(ReaderResultSet));
                 try
                 {
-                    
+
                     ClusterHelper.ValidateResponses(results, typeof(ReaderResultSet), Name);
                 }
-                catch(Exception e)
-                {                  
-                    if(rspList != null && rspList.Count >0)
+                catch (Exception e)
+                {
+                    if (rspList != null && rspList.Count > 0)
                     {
                         IEnumerator im = rspList.GetEnumerator();
                         while (im.MoveNext())
                         {
                             Rsp rsp = (Rsp)im.Current;
                             ReaderResultSet rResultSet = (ReaderResultSet)rsp.Value;
-                     
+
                             try
                             {
                                 Clustered_DisposeReader(rsp.Sender as Address, rResultSet.ReaderID, operationContext);
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
                             }
                         }
                     }
-                    if ( e is InvalidReaderException || e is Parser.ParserException || e is Parser.TypeIndexNotDefined || e is Parser.AttributeIndexNotDefined) throw;
+                    if (e is InvalidReaderException || e is Parser.ParserException || e is Parser.TypeIndexNotDefined || e is Parser.AttributeIndexNotDefined) throw;
 
                     throw new InvalidReaderException("Reader state has been lost.", e);
                 }
-               
+
 
                 if (rspList.Count <= 0)
                 {
@@ -6416,12 +6430,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     IEnumerator im = rspList.GetEnumerator();
                     while (im.MoveNext())
                     {
-                        Rsp rsp = (Rsp) im.Current;
-                        ReaderResultSet rResultSet = (ReaderResultSet) rsp.Value;
+                        Rsp rsp = (Rsp)im.Current;
+                        ReaderResultSet rResultSet = (ReaderResultSet)rsp.Value;
 
-                        if (rResultSet != null && rResultSet.RecordSet!=null && rResultSet.RecordSet.Rows!=null)
+                        if (rResultSet != null && rResultSet.RecordSet != null && rResultSet.RecordSet.Rows != null)
                         {
-                            if(operationContext.Contains(OperationContextFieldName.IsClusteredOperation))
+                            if (operationContext.Contains(OperationContextFieldName.IsClusteredOperation))
                                 operationContext.RemoveValueByField(OperationContextFieldName.IsClusteredOperation);
 
                             var rowCollection = rResultSet.RecordSet.Rows;
@@ -6446,9 +6460,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                                         if (cmpEntry.Value is CallbackEntry)
                                             cmpEntry.Value = ((CallbackEntry)cmpEntry.Value).Value;
 
-                                        cmpEntry.Flag = ((CacheEntry)entry).Flag;                                       
+                                        cmpEntry.Flag = ((CacheEntry)entry).Flag;
                                     }
-                                    else 
+                                    else
                                     {
                                         toBeRemoved.Add((Int32)pair.Key);
                                     }
@@ -6456,9 +6470,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                             }
 
                             if (toBeRemoved.Count > 0)
-                            { 
+                            {
                                 IEnumerator ienum = toBeRemoved.GetEnumerator();
-                                while(ienum.MoveNext())
+                                while (ienum.MoveNext())
                                 {
                                     rowCollection.RemoveRow((Int32)ienum.Current);
                                 }
@@ -6501,14 +6515,15 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             try
             {
-                Function func = new Function((int) OpCodes.ExecuteReaderCQ,
+                Function func = new Function((int)OpCodes.ExecuteReaderCQ,
                     new object[]
                     {
                         query, values, getData, chunkSize, clientUniqueId, clientId, notifyAdd, notifyUpdate,
                         notifyRemove,
                         operationContext, datafilters, isInproc
                     }, false);
-                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout*10);
+                func.Cancellable = true;
+                RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
 
                 if (results == null)
                     return resultSet;
@@ -6518,7 +6533,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 try
                 {
                     ClusterHelper.ValidateResponses(results, typeof(ReaderResultSet), Name);
-                   
+
                 }
                 catch (Exception e)
                 {
@@ -6543,7 +6558,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     if (e is InvalidReaderException || e is ParserException || e is TypeIndexNotDefined || e is AttributeIndexNotDefined) throw;
                     throw new InvalidReaderException("Reader state has been lost.", e);
                 }
-               
+
 
                 if (rspList.Count <= 0)
                 {
@@ -6631,11 +6646,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             ReaderResultSet reader = null;
 
             Address intenededRecepient = GetReaderRecipient(operationContext);
-            Array servers = Array.CreateInstance(typeof (Address), Cluster.Servers.Count);
+            Array servers = Array.CreateInstance(typeof(Address), Cluster.Servers.Count);
             Cluster.Servers.CopyTo(servers);
             Address targetNode = null;
 
-            if (intenededRecepient!=null)
+            if (intenededRecepient != null)
             {
                 for (int i = 0; i < servers.Length; i++)
                 {
@@ -6663,9 +6678,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         }
                         catch (InvalidReaderException readerException)
                         {
-                           if (! string.IsNullOrEmpty(readerId))
-                               InternalCache.DisposeReader(readerId, operationContext);
-                           throw readerException;
+                            if (!string.IsNullOrEmpty(readerId))
+                                InternalCache.DisposeReader(readerId, operationContext);
+                            throw readerException;
                         }
                     }
                 }
@@ -6680,8 +6695,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                Function func = new Function((int) OpCodes.GetReaderChunk,
-                    new object[] {readerId, nextIndex, operationContext});
+                Function func = new Function((int)OpCodes.GetReaderChunk,
+                    new object[] { readerId, nextIndex, operationContext });
                 object result = Cluster.SendMessage(targetNode, func, GroupRequest.GET_FIRST, Cluster.Timeout);
 
                 ReaderResultSet readerChunk = result as ReaderResultSet;
@@ -6714,12 +6729,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                                     cmpEntry.Value = ((CallbackEntry)cmpEntry.Value).Value;
 
                                 cmpEntry.Flag = ((CacheEntry)entry).Flag;
-                                row.SetColumnValue(QueryKeyWords.ValueColumn, cmpEntry);                              
+                                row.SetColumnValue(QueryKeyWords.ValueColumn, cmpEntry);
                             }
                             else
                             {
                                 toBeRemoved.Add((Int32)pair.Key);
-                            }                       
+                            }
                         }
                     }
 
@@ -6756,7 +6771,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             if (_internalCache == null) throw new InvalidOperationException();
 
             string intenededRecepient = GetIntendedRecipient(operationContext);
-            Array servers = Array.CreateInstance(typeof (Address), Cluster.Servers.Count);
+            Array servers = Array.CreateInstance(typeof(Address), Cluster.Servers.Count);
             Cluster.Servers.CopyTo(servers);
             Address targetNode = null;
 
@@ -6821,13 +6836,13 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         (int)data[3], false, data[4] as OperationContext);
                 }
             }
-            finally 
+            finally
             {
                 watch.Stop();
                 double timeTaken = watch.Elapsed.TotalSeconds;
 
                 if (timeTaken > 5)
-                    Context.NCacheLog.Error("POR.handleExecuteReader() taken " + timeTaken + " seconds");                
+                    Context.NCacheLog.Error("POR.handleExecuteReader() taken " + timeTaken + " seconds");
 
             }
 
@@ -6838,10 +6853,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (_internalCache != null)
             {
-                object[] data = (object[]) arguments;
-                return _internalCache.Local_ExecuteReaderCQ(data[0] as string, data[1] as IDictionary, (bool) data[2],
-                    (int) data[3], data[4] as string, data[5] as string, (bool) data[6], (bool) data[7], (bool) data[8],
-                    data[9] as OperationContext, data[10] as Queries.QueryDataFilters, (bool) data[11]);
+                object[] data = (object[])arguments;
+                return _internalCache.Local_ExecuteReaderCQ(data[0] as string, data[1] as IDictionary, (bool)data[2],
+                    (int)data[3], data[4] as string, data[5] as string, (bool)data[6], (bool)data[7], (bool)data[8],
+                    data[9] as OperationContext, data[10] as Queries.QueryDataFilters, (bool)data[11]);
             }
 
             return null;
@@ -6851,8 +6866,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (_internalCache != null)
             {
-                object[] data = (object[]) arguments;
-                return _internalCache.GetReaderChunk(data[0] as string, (int) data[1], false,
+                object[] data = (object[])arguments;
+                return _internalCache.GetReaderChunk(data[0] as string, (int)data[1], false,
                     data[2] as OperationContext);
             }
 
@@ -6863,7 +6878,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (_internalCache != null)
             {
-                object[] data = (object[]) arguments;
+                object[] data = (object[])arguments;
                 _internalCache.DisposeReader(data[0] as string, data[1] as OperationContext);
             }
         }
@@ -6884,8 +6899,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     if (info != null)
                         InformEveryoneOfClientActivity(Parent.Name, info, ConnectivityStatus.Disconnected, localSendOnly);
-                    CleanDeadClientInfos(deadClient);
-                    handleCleanDeadClientInfos(new object[] { Cluster.LocalAddress, deadClient });
+
                 }
             }
             catch (Exception e)
@@ -6904,7 +6918,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         if (!_registeredClientsForNotification.ContainsKey(clientId))
                             _registeredClientsForNotification.Add(clientId, callback);
                     Cluster.BroadcastToMultiple(Cluster.OtherServers,
-                        new Function((int) OpCodes.RegisterClientActivityListener, clientId), GroupRequest.GET_NONE);
+                        new Function((int)OpCodes.RegisterClientActivityListener, clientId), GroupRequest.GET_NONE);
                 }
                 catch (Exception e)
                 {
@@ -6918,9 +6932,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 try
                 {
                     lock (_registerLock)
-                            _registeredClientsForNotification.Remove(clientId);
+                        _registeredClientsForNotification.Remove(clientId);
                     Cluster.BroadcastToMultiple(Cluster.OtherServers,
-                        new Function((int) OpCodes.UnregisterClientActivityListener, clientId), GroupRequest.GET_NONE);
+                        new Function((int)OpCodes.UnregisterClientActivityListener, clientId), GroupRequest.GET_NONE);
                 }
                 catch (Exception e)
                 {
@@ -6932,9 +6946,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                object[] pair = (object[]) operands;
-                Address source = (Address) pair[0];
-                string clientId = (string) pair[1];
+                object[] pair = (object[])operands;
+                Address source = (Address)pair[0];
+                string clientId = (string)pair[1];
                 HashSet<string> clients;
 
                 if (!source.Equals(_stats.LocalNode.Address))
@@ -6959,9 +6973,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                object[] pair = (object[]) operands;
-                Address source = (Address) pair[0];
-                string clientId = (string) pair[1];
+                object[] pair = (object[])operands;
+                Address source = (Address)pair[0];
+                string clientId = (string)pair[1];
                 HashSet<string> clients;
 
                 if (!source.Equals(_stats.LocalNode.Address))
@@ -7005,8 +7019,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                         foreach (KeyValuePair<Address, HashSet<string>> keyValuePair in othersMap)
                         {
                             Cluster.SendNoReplyMessage(keyValuePair.Key,
-                                new Function((int) OpCodes.InformEveryoneOfClientActivity,
-                                    new object[] {keyValuePair.Value.ToArray(), cacheId, clientInfo, (int) status}));
+                                new Function((int)OpCodes.InformEveryoneOfClientActivity,
+                                    new object[] { keyValuePair.Value.ToArray(), cacheId, clientInfo, (int)status }));
                         }
                     }
 
@@ -7023,20 +7037,20 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             try
             {
-                object[] operands = (object[]) operand;
-                string[] concernedClients = (string[]) operands[0];
-                string cacheId = (string) operands[1];
-                ClientInfo clientInfo = (ClientInfo) operands[2];
-                ConnectivityStatus status = (ConnectivityStatus) operands[3];
+                object[] operands = (object[])operand;
+                string[] concernedClients = (string[])operands[0];
+                string cacheId = (string)operands[1];
+                ClientInfo clientInfo = (ClientInfo)operands[2];
+                ConnectivityStatus status = (ConnectivityStatus)operands[3];
 
                 CacheClientConnectivityChangedCallback callback;
                 lock (_registeredClientsForNotification)
                 {
-                        foreach (string concernedClient in concernedClients)
-                        {
-                            if (_registeredClientsForNotification.TryGetValue(concernedClient, out callback))
-                                callback.Invoke(cacheId, clientInfo, status);
-                        }
+                    foreach (string concernedClient in concernedClients)
+                    {
+                        if (_registeredClientsForNotification.TryGetValue(concernedClient, out callback))
+                            callback.Invoke(cacheId, clientInfo, status);
+                    }
                 }
 
             }
@@ -7074,42 +7088,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             return othersMap;
         }
 
-    
-        internal void CleanDeadClientInfos(string clientId)
-        {
-            try
-            {
-                Cluster.BroadcastToMultiple(Cluster.OtherServers,
-                    new Function((int)OpCodes.RemoveDeadClientInfo, clientId), GroupRequest.GET_NONE);
 
-            }
-            catch (Exception e)
-            {
-                Context.NCacheLog.Error("ClusteredCacheBase.CleanDeadClientInfos()", e.ToString());
-            }
-        }
-
-        internal void handleCleanDeadClientInfos(object operand)
-        {
-            try
-            {
-                object[] operands = (object[])operand;
-                Address sender = (Address)operands[0];
-                string clientIds = (string)operands[1];
-                lock (_stats.LocalNode.ConnectedClients.SyncRoot)
-                {
-                    foreach (NodeInfo node in _stats.Nodes)
-                    {
-                        node.LocalConnectedClientsInfo.Remove(clientIds);
-                    }
-
-                }
-            }
-            catch (Exception e)
-            {
-                Context.NCacheLog.Error("ClusteredCacheBase.handleCleanDeadClientInfos()", e.ToString());
-            }
-        }
 
         public override IEnumerable<ClientInfo> GetConnectedClientsInfo()
         {
@@ -7140,7 +7119,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 _internalCache.Touch(keys, operationContext);
         }
 
-        private object HandleTouch(object info, Address src )
+        private object HandleTouch(object info, Address src)
         {
             try
             {
@@ -7156,7 +7135,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             }
             return null;
         }
-        
+
         protected void Clustered_Touch(Address dest, List<string> keys, OperationContext operationContext)
         {
             if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("ClustCacheBase.Clustered_Touch", "");
@@ -7189,8 +7168,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         #region pub-sub
 
-          
-      
+
+
         private ArrayList HandleGetTopicsState()
         {
             if (InternalCache != null)
@@ -7203,7 +7182,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             bool result = false;
             if (InternalCache != null)
             {
-                result = InternalCache.AssignmentOperation(operation.MessageInfo, operation.SubscriptionInfo, operation.Type,operation.Context);
+                result = InternalCache.AssignmentOperation(operation.MessageInfo, operation.SubscriptionInfo, operation.Type, operation.Context);
             }
             return result;
         }
@@ -7219,18 +7198,18 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             if (InternalCache != null)
             {
-                InternalCache.AcknowledgeMessageReceipt(operation.ClientId, operation.Topic,operation.MessageId, operation.OperationContext);
+                InternalCache.AcknowledgeMessageReceipt(operation.ClientId, operation.Topic, operation.MessageId, operation.OperationContext);
             }
         }
-        
+
         protected virtual void HandleRemoveMessages(RemoveMessagesOperation operation)
         {
-            if (InternalCache != null) InternalCache.RemoveMessages(operation.MessagesToRemove, operation.Reason,operation.Context);
+            if (InternalCache != null) InternalCache.RemoveMessages(operation.MessagesToRemove, operation.Reason, operation.Context);
         }
 
         protected virtual void HandleRemoveMessages(AtomicRemoveMessageOperation operation)
         {
-            if (InternalCache != null) InternalCache.RemoveMessages(operation.MessagesToRemove, operation.Reason,operation.Context);
+            if (InternalCache != null) InternalCache.RemoveMessages(operation.MessagesToRemove, operation.Reason, operation.Context);
         }
 
         protected virtual void HandleStoreMessage(StoreMessageOperation operation)
@@ -7330,7 +7309,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             return result.AssignedMessages;
         }
 
-        protected GetAssignedMessagesResponse Clustered_GetAssignedMessage(ArrayList dests, SubscriptionInfo subscriptionInfo, 
+        protected GetAssignedMessagesResponse Clustered_GetAssignedMessage(ArrayList dests, SubscriptionInfo subscriptionInfo,
             OperationContext operationContext, bool throwSuspected = false)
         {
             GetAssignedMessagesResponse response = new GetAssignedMessagesResponse();
@@ -7434,17 +7413,17 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
         public void ApplyMessageOperation(object operation)
         {
-            if(operation !=null)
+            if (operation != null)
             {
-                if(operation is StoreMessageOperation)
+                if (operation is StoreMessageOperation)
                 {
                     HandleStoreMessage(operation as StoreMessageOperation);
                 }
-                else if(operation is AtomicRemoveMessageOperation)
+                else if (operation is AtomicRemoveMessageOperation)
                 {
                     HandleRemoveMessages(operation as RemoveMessagesOperation);
                 }
-                else if(operation is AtomicAcknowledgeMessageOperation)
+                else if (operation is AtomicAcknowledgeMessageOperation)
                 {
                     HandleAcknowledgeMessageReceipt(operation as AtomicAcknowledgeMessageOperation);
                 }
@@ -7466,7 +7445,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 try
                 {
                     error = null;
-                    Function func = new Function((int)OpCodes.GetTransferrableMessage, new GetTransferrableMessageOperation(topic,messageId));
+                    Function func = new Function((int)OpCodes.GetTransferrableMessage, new GetTransferrableMessageOperation(topic, messageId));
                     retVal = Cluster.SendMessage(Cluster.Coordinator, func, GroupRequest.GET_FIRST, false) as TransferrableMessage;
 
                     return retVal;
@@ -7514,16 +7493,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         #endregion
-    
+
         internal void StopBucketLoggingOnReplica(Address replicaAddress, ArrayList buckets)
         {
             Function func = new Function((int)OpCodes.StopBucketLogging, buckets, true);
-            Cluster.SendMessage(replicaAddress,func, GroupRequest.GET_FIRST, false, Priority.Normal);
+            Cluster.SendMessage(replicaAddress, func, GroupRequest.GET_FIRST, false, Priority.Normal);
         }
-        
+
         internal override void SetClusterInactive(string reason)
         {
-            if (_cluster != null) _cluster.SetAsNonFunctional(reason);            
+            if (_cluster != null) _cluster.SetAsNonFunctional(reason);
         }
     }
 }

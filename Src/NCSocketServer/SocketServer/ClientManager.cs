@@ -105,7 +105,7 @@ namespace Alachisoft.NCache.SocketServer
         private string _slaveId;
         private bool _raiseClientDisconnectedEvent = true;
         private ConnectionManager _connectionManager;
-
+        private long _requestTimeout = 90 * 1000;
         #region Aync response to client stuff
 
         private bool _isSending;
@@ -163,7 +163,12 @@ namespace Alachisoft.NCache.SocketServer
 
         public bool IsMarkedAsClient { get; set; }
 
-        ///<summary>This Property returns 'true' if the current instance of ClientManager has a secure-connection with its client.</summary>
+	public long RequestTimeout
+        {
+            set { _requestTimeout = value; }
+            get { return _requestTimeout; }
+        }        
+	///<summary>This Property returns 'true' if the current instance of ClientManager has a secure-connection with its client.</summary>
         internal bool HasSecureConnection { get; private set; }
         
         private IPAddress _clientAddress = null;

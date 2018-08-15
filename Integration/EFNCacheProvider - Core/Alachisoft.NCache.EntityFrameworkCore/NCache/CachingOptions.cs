@@ -13,7 +13,11 @@
 // limitations under the License.
 
 using Alachisoft.NCache.Runtime.Caching;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Alachisoft.NCache.EntityFrameworkCore
 {
@@ -25,10 +29,12 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         private TimeSpan _SlidingExpTime;
         private DateTime _absoluteExpTime;
         private ExpirationType _expirationType;
-        private Tag _queryIdentifier;
+        private string _queryIdentifier;
         private StoreAs _storeAs;
         private Alachisoft.NCache.Runtime.CacheItemPriority _priority;
         private bool _createDbDependency;
+        private bool _isResyncExpiredItems;
+        private string _resyncProviderName;
 
         /// <summary>
         /// Returns the absolute time when the item will expire.
@@ -64,7 +70,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         /// next time the same query is executed, the query string is searched as a tag within cache and 
         /// if it exists, the result set against it will be returned.
         /// </summary>
-        public Tag QueryIdentifier
+        public string QueryIdentifier
         {
             get => _queryIdentifier;
             set => _queryIdentifier = value;
@@ -97,6 +103,18 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             get => _createDbDependency;
             set => _createDbDependency = value;
         }
+
+
+        /// <summary>
+        /// Returns that CacheSync Option is Enabled or Disabled
+        /// </summary>
+        public bool IsSyncEnabled { get { return _isResyncExpiredItems; } }
+
+        /// <summary>
+        /// Returns ReadThru Provider name that is configured for Cache Synchronization 
+        /// </summary>
+        public string ReadThruProvider { get { return _resyncProviderName; } }
+
 
         /// <summary>
         /// Creates an instance of <see cref="CachingOptions"/> with default values.
@@ -135,6 +153,21 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="readThruProviderName"></param>
+        public void SetResyncProviderName(string resyncProviderName)
+        {
+            _resyncProviderName = resyncProviderName;
+            _isResyncExpiredItems = true;
+        }
+        internal void RemoveResync()
+        {
+            _resyncProviderName = "";
+            _isResyncExpiredItems = false;
+        }
+
+        /// <summary>
         /// Creates a shallow copy of this instance.
         /// </summary>
         /// <returns></returns>
@@ -149,7 +182,9 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             cachingOptions._SlidingExpTime = this._SlidingExpTime;
             cachingOptions._storeAs = this._storeAs;
             if (this._queryIdentifier != null)
-                cachingOptions._queryIdentifier = new Tag(this._queryIdentifier.ToString());
+                cachingOptions._queryIdentifier = this._queryIdentifier;
+            if (this.IsSyncEnabled)
+                cachingOptions.SetResyncProviderName(this.ReadThruProvider);
 
             return cachingOptions;
         }

@@ -48,7 +48,7 @@ namespace Alachisoft.NCache.Caching.Statistics
         /// <summary> The maximum capacity of the cache. </summary>
         private long _maxSize;
 
-        /// <summary> The number of objects fetched successfuly. </summary>
+        /// <summary> The number of objects fetched successfully. </summary>
         private long _hitCount;
 
         /// <summary> The number of objects fetch failures. </summary>
@@ -232,7 +232,7 @@ namespace Alachisoft.NCache.Caching.Statistics
         }
 
         /// <summary>
-        /// The number of objects fetched successfuly.
+        /// The number of objects fetched successfully.
         /// </summary>
         public long HitCount
         {

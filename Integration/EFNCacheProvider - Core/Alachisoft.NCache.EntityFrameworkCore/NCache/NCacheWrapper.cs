@@ -17,7 +17,11 @@ using Alachisoft.NCache.Runtime.Caching;
 using Alachisoft.NCache.Web.Caching;
 using Microsoft.Extensions.Caching.Memory;
 using System;
+using Alachisoft.NCache.Web.Caching;
+using Alachisoft.NCache.Runtime.Caching;
 using System.Collections;
+using Alachisoft.NCache.EntityFrameworkCore.NCache;
+using System.Collections.Generic;
 
 namespace Alachisoft.NCache.EntityFrameworkCore
 {
@@ -115,6 +119,40 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             Hashtable resultSet = _nCache.GetByTag(tag);
             value = resultSet;
             return resultSet.Count > 0;
+        }
+        public bool GetByKey(string key, out IDictionary value)
+        {
+            Logger.Log(
+                "Trying to get item against Key '" + key + "'",
+                Microsoft.Extensions.Logging.LogLevel.Trace
+            );
+            IDictionary resultSet = new Hashtable();
+            object listKeys =_nCache.Get(key);
+            try
+            {
+                if (listKeys != null)
+                {
+                    var keys = listKeys as string[];
+                    if(keys==null)
+                    {
+                        CacheEntry entry = listKeys as CacheEntry;
+                       
+                        resultSet.Add(key, listKeys);
+                    }
+                    else
+                    {
+                        resultSet = _nCache.GetBulk(keys);
+                    }
+
+                }
+            }
+            catch(Exception e)
+            {
+                //casting exception
+            }
+            value = resultSet;
+            return resultSet.Count > 0;
+
         }
 
         public void Dispose()

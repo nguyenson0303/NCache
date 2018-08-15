@@ -119,7 +119,7 @@ namespace Alachisoft.NCache.MapReduce
             }
 #endif
 
-            //Queue itialization and synchronization
+            //Queue initialization and synchronization
             Queue syncQueue = Queue.Synchronized(reducerDataQueue);
             this.reducerDataQueue = syncQueue;
 

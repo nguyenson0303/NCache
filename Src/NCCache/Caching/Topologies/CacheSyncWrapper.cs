@@ -39,8 +39,10 @@ using Alachisoft.NCache.Common.DataReader;
 using Alachisoft.NCache.Common.Queries;
 
 using Alachisoft.NCache.Caching.Messaging;
+using Alachisoft.NCache.Common.Resources;
 #if !CLIENT
 using Alachisoft.NCache.Caching.Topologies.Clustered.Operations;
+using Alachisoft.NCache.Common.Resources;
 #endif
 namespace Alachisoft.NCache.Caching.Topologies
 {
@@ -777,6 +779,10 @@ namespace Alachisoft.NCache.Caching.Topologies
             return Internal.Poll(operationContext);
         }
 
+        public virtual void LogBackingSource()
+        {
+            Internal.LogBackingSource();
+        }
         public override void RegisterPollingNotification(short callbackId, OperationContext operationContext)
         {
             Internal.RegisterPollingNotification(callbackId, operationContext);
@@ -1020,8 +1026,13 @@ namespace Alachisoft.NCache.Caching.Topologies
             if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("CacheSyncWrp.AddBlk", "enter");
             try
             {
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                 result = Internal.Add(keys, cacheEntries, notify, operationContext);
 
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
             }
             finally
             {
@@ -1046,7 +1057,7 @@ namespace Alachisoft.NCache.Caching.Topologies
         public override CacheInsResultWithEntry Insert(object key, CacheEntry cacheEntry, bool notify, string taskId, object lockId, ulong version, LockAccessType access, OperationContext operationContext)
         {
 
-            
+
             if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("CacheSyncWrp.Insert_1", "enter");
 
             KeyLocker.GetWriterLock(key);
@@ -1111,13 +1122,15 @@ namespace Alachisoft.NCache.Caching.Topologies
         {
             Hashtable result = null;
 
-   
+
 
             if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("CacheSyncWrp.InsertBlk", "enter");
 
             try
             {
                 result = Internal.Insert(keys, cacheEntries, notify, operationContext);
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
 
             }
             finally
@@ -1196,6 +1209,8 @@ namespace Alachisoft.NCache.Caching.Topologies
             {
 
                 result = Internal.Remove(keys, ir, notify, operationContext);
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
             }
             finally
             {
@@ -1556,6 +1571,8 @@ namespace Alachisoft.NCache.Caching.Topologies
             {
                 result = Internal.DeleteQuery(query, values, notify, isUserOperation, reason, operationContext);
 
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 result.KeysEffected = null;
             }
             finally
@@ -1625,6 +1642,8 @@ namespace Alachisoft.NCache.Caching.Topologies
         {
 
             Internal.RegisterKeyNotification(keys, updateCallback, removeCallback, operationContext);
+            if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
 
         }
 
@@ -1650,6 +1669,8 @@ namespace Alachisoft.NCache.Caching.Topologies
             CallbackInfo removeCallback, OperationContext operationContext)
         {
 
+            if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                throw new OperationCanceledException(ExceptionsResource.OperationFailed);
 
             Internal.UnregisterKeyNotification(keys, updateCallback, removeCallback, operationContext);
         }
@@ -1743,7 +1764,7 @@ namespace Alachisoft.NCache.Caching.Topologies
 
             }
             finally
-            {  
+            {
                 KeyLocker.ReleaseWriterLock(key);
             }
         }
@@ -1815,7 +1836,7 @@ namespace Alachisoft.NCache.Caching.Topologies
             if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("CacheSyncWrp.Touch", "enter");
             try
             {
-               Internal.Touch(keys, operationContext);
+                Internal.Touch(keys, operationContext);
             }
             finally
             {
@@ -1823,7 +1844,7 @@ namespace Alachisoft.NCache.Caching.Topologies
             }
         }
 
-      
+
         #region ---------------------- IMessageStore Implementation ----------------
 
         public override MessageInfo GetNextUnassignedMessage(TimeSpan timeout, OperationContext context)
@@ -1888,7 +1909,7 @@ namespace Alachisoft.NCache.Caching.Topologies
             try
             {
                 KeyLocker.GetWriterLock(message.MessageId);
-                Internal.RevokeAssignment(message,subscription,context);
+                Internal.RevokeAssignment(message, subscription, context);
             }
             finally
             {
@@ -1902,7 +1923,7 @@ namespace Alachisoft.NCache.Caching.Topologies
         {
             if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("CacheSyncWrp.GetNotifiableClients", "enter");
 
-            
+
             try
             {
                 return Internal.GetNotifiableClients();
@@ -2029,7 +2050,7 @@ namespace Alachisoft.NCache.Caching.Topologies
             {
                 KeyLocker.GetWriterLock(message.MessageId);
 
-                 stored = Internal.StoreMessage(topic, message, context);
+                stored = Internal.StoreMessage(topic, message, context);
 
             }
             finally
@@ -2051,7 +2072,7 @@ namespace Alachisoft.NCache.Caching.Topologies
             {
                 KeyLocker.GetWriterLock(messageInfo.MessageId);
 
-                result = Internal.AssignmentOperation(messageInfo, subscriptionInfo, type,context);
+                result = Internal.AssignmentOperation(messageInfo, subscriptionInfo, type, context);
 
             }
             finally
@@ -2086,7 +2107,7 @@ namespace Alachisoft.NCache.Caching.Topologies
 
             try
             {
-                Internal.RemoveMessages(messagesTobeRemoved, reason,context);
+                Internal.RemoveMessages(messagesTobeRemoved, reason, context);
 
             }
             finally
@@ -2117,7 +2138,7 @@ namespace Alachisoft.NCache.Caching.Topologies
         {
             if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("CacheSyncWrp.RegiserTopicEventListener", "enter");
 
-            
+
             try
             {
                 Internal.RegiserTopicEventListener(listener);
@@ -2127,7 +2148,7 @@ namespace Alachisoft.NCache.Caching.Topologies
                 if (ServerMonitor.MonitorActivity) ServerMonitor.LogClientActivity("CacheSyncWrp.RegiserTopicEventListener", "exit");
 
             }
-            
+
         }
 
         public override OrderedDictionary GetMessageList(int bucketId)

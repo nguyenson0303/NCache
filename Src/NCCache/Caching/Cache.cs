@@ -22,8 +22,6 @@ using System.Runtime.Remoting.Lifetime;
 using Alachisoft.NCache.Common.Remoting;
 #endif
 using System.Diagnostics;
-using System.Net;
-
 using Alachisoft.NCache.Common;
 using Alachisoft.NCache.Common.Threading;
 using Alachisoft.NCache.Common.Util;
@@ -39,16 +37,9 @@ using Alachisoft.NCache.Config;
 using Alachisoft.NCache.Caching.Topologies.Local;
 using Alachisoft.NCache.Caching.DataGrouping;
 using Alachisoft.NCache.Caching.Util;
-
 using Alachisoft.NCache.Caching.Queries;
 using System.Collections.Generic;
-
 using Alachisoft.NCache.Runtime.Exceptions;
-
-using Alachisoft.NCache.Parser;
-using Alachisoft.NCache.Caching.Queries.Filters;
-
-
 #if !CLIENT
 using Alachisoft.NCache.Caching.Topologies.Clustered;
 #endif
@@ -58,28 +49,24 @@ using Alachisoft.NCache.Config.Dom;
 using Alachisoft.NCache.Common.Enum;
 using Alachisoft.NCache.Common.Net;
 using Alachisoft.NCache.Runtime;
-
 using Alachisoft.NCache.Common.Logger;
 using Alachisoft.NCache.Caching.Enumeration;
-
 using Alachisoft.NCache.Persistence;
 using EnumerationPointer = Alachisoft.NCache.Common.DataStructures.EnumerationPointer;
 using Exception = System.Exception;
 using QueryResultSet = Alachisoft.NCache.Caching.Queries.QueryResultSet;
 using Alachisoft.NCache.Runtime.DatasourceProviders;
 using Alachisoft.NCache.Runtime.Events;
-
 using Alachisoft.NCache.Common.DataStructures.Clustered;
-
 using Alachisoft.NCache.MapReduce;
 using Alachisoft.NCache.MapReduce.Notifications;
 using Alachisoft.NCache.Runtime.Processor;
 using Alachisoft.NCache.Processor;
-
 using Alachisoft.NCache.Common.Events;
 using Alachisoft.NCache.Runtime.Caching;
 using ClientInfo = Alachisoft.NCache.Runtime.Caching.ClientInfo;
 using Alachisoft.NCache.Caching.Messaging;
+using Alachisoft.NCache.Common.Resources;
 using System.Threading.Tasks;
 
 namespace Alachisoft.NCache.Caching
@@ -177,10 +164,6 @@ namespace Alachisoft.NCache.Caching
 
         private object _shutdownMutex = new object();
 
-
-
-
-
         private bool _isPersistEnabled = false;
 
         private bool _isDeathDeductionEnabled = false;
@@ -194,11 +177,10 @@ namespace Alachisoft.NCache.Caching
         private Latch _shutDownStatusLatch = new Latch(ShutDownStatus.NONE);
         private bool isClustered;
         public AsyncProcessor _asyncProcessor;
-        // created separately for async clear, add, insert and remove operations from client for graceful shutdown.
 
         private string _cacheserver = "NCache";
 		
-        public bool _isClustered
+        public bool IsClustered
         {
             get { return isClustered; }
             set { isClustered = value; }
@@ -1788,7 +1770,7 @@ namespace Alachisoft.NCache.Caching
                 }
 
                 _cacheType = _cacheInfo.ClassName;
-                _isClustered = _cacheInfo.IsClusteredCache;
+                IsClustered = _cacheInfo.IsClusteredCache;
                 // Start the expiration manager if the cache was created sucessfully!
                 if (_context.CacheImpl != null)
                 {
@@ -2381,6 +2363,11 @@ namespace Alachisoft.NCache.Caching
                     }
                 }
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.GetByTag()", inner.ToString());
+                throw;
+            }            
             catch (OperationFailedException inner)
             {
                 if (inner.IsTracable) _context.NCacheLog.Error("Cache.GetByTag()", inner.ToString());
@@ -2429,6 +2416,11 @@ namespace Alachisoft.NCache.Caching
 
                 return result;
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.GetKeysByTag()", inner.ToString());
+                throw;
+            }            
             catch (OperationFailedException inner)
             {
                 if (inner.IsTracable) _context.NCacheLog.Error("Cache.GetKeysByTag()", inner.ToString());
@@ -2457,7 +2449,12 @@ namespace Alachisoft.NCache.Caching
             {
                 CascadedRemove(sTags, comparisonType, true, operationContext);
             }
-            catch (StateTransferInProgressException se)
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.RemoveByTag()", inner.ToString());
+                throw;
+            }           
+             catch (StateTransferInProgressException se)
             {
                 throw se;
             }
@@ -2757,6 +2754,11 @@ namespace Alachisoft.NCache.Caching
                 }
                 return result;
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.GetGroupKeys()", inner.ToString());
+                throw;
+            }            
             catch (OperationFailedException inner)
             {
                 if (inner.IsTracable)
@@ -2834,7 +2836,12 @@ namespace Alachisoft.NCache.Caching
 
                 return table;
             }
-            catch (OperationFailedException inner)
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.GetGroupData()", inner.ToString());
+                throw;
+            }           
+             catch (OperationFailedException inner)
             {
                 if (inner.IsTracable)
                     _context.NCacheLog.Error("Cache.Get()", "Get operation failed. Error : " + inner.ToString());
@@ -2913,6 +2920,8 @@ namespace Alachisoft.NCache.Caching
 
                     if (readThruEnabled) resyncIndexes = new int[keys.Length];
 
+                    if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                     for (int i = 0; i < keys.Length; i++)
                     {
                         if (table.ContainsKey(keys[i]))
@@ -2968,6 +2977,11 @@ namespace Alachisoft.NCache.Caching
                 }
 
                 _context.PerfStatsColl.MsecPerGetEndSample();
+            }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.Get()", inner.ToString());
+                throw;
             }
             catch (OperationFailedException inner)
             {
@@ -3756,7 +3770,9 @@ namespace Alachisoft.NCache.Caching
                 result = Add(keys, enteries, operationContext);
                 addTime.EndSample();
 
-
+		        if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                   throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                        
                 if (updateOpts != DataSourceUpdateOptions.None && keys.Length > result.Count)
                 {
                     OperationResult[] dsResults = null;
@@ -3839,6 +3855,9 @@ namespace Alachisoft.NCache.Caching
                     IDictionaryEnumerator ide = tmp.GetEnumerator();
                     while (ide.MoveNext())
                     {
+			if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                            throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                         CacheAddResult addResult = CacheAddResult.Failure;
                         if (ide.Value is CacheAddResult)
                         {
@@ -3880,6 +3899,11 @@ namespace Alachisoft.NCache.Caching
                 if (inner.IsTracable) _context.NCacheLog.Error("Cache.Add():", inner.ToString());
                 throw;
             }
+            catch (OperationCanceledException ex)
+            {
+                _context.NCacheLog.Error("Cache.Add():", ex.ToString());
+                throw;
+            } 
             catch (Exception inner)
             {
                 _context.NCacheLog.Error("Cache.Add():", inner.ToString());
@@ -3921,7 +3945,7 @@ namespace Alachisoft.NCache.Caching
                 subgroup = e.GroupInfo.SubGroup;
             }
             return Insert(cce.Key, e.Value, e.ExpirationHint, e.SyncDependency, e.EvictionHint, group, subgroup,
-                e.QueryInfo, e.Flag, e.LockId, e.Version, e.LockAccessType, null, e.ResyncProviderName, operationContext);
+                e.QueryInfo, e.Flag, e.LockId, e.Version, e.LockAccessType, null, e.ResyncProviderName, operationContext);          
         }
 
 
@@ -4057,7 +4081,7 @@ namespace Alachisoft.NCache.Caching
 
                 OperationResult dsResult = null;
                 string taskId = System.Guid.NewGuid().ToString();
-                if (updateOpts == DataSourceUpdateOptions.WriteThru)
+                if (updateOpts == DataSourceUpdateOptions.WriteThru )
                 {
                     dsResult = this._context.DsMgr.WriteThru(key as string, clone, OpCode.Update, null, operationContext);
                     if (dsResult != null && dsResult.DSOperationStatus == OperationResult.Status.FailureRetry)
@@ -4078,15 +4102,16 @@ namespace Alachisoft.NCache.Caching
 
                     }
                 }
-                else if (!_context.IsClusteredImpl && updateOpts == DataSourceUpdateOptions.WriteBehind)
+                else if (!_context.IsClusteredImpl && updateOpts == DataSourceUpdateOptions.WriteBehind )
                 {
                     this._context.DsMgr.WriteBehind(_context.CacheImpl, key, clone, null, taskId, null,
                         OpCode.Update, WriteBehindAsyncProcessor.TaskState.Execute);
                 }
 
             }
-            catch (Exception)
+            catch (Exception inner)
             {
+                //NCacheLog.Error(_context.CacheName, "Cache.Insert()", inner.ToString());
                 throw;
             }
 
@@ -4196,8 +4221,9 @@ namespace Alachisoft.NCache.Caching
                 }
 
             }
-            catch (Exception )
+            catch (Exception inner)
             {
+                //NCacheLog.Error(_context.CacheName, "Cache.Insert()", inner.ToString());
                 throw;
             }
 
@@ -4255,7 +4281,7 @@ namespace Alachisoft.NCache.Caching
             object dataSize = operationContext.GetValueByField(OperationContextFieldName.ValueDataSize);
             if (dataSize != null)
                 e.DataSize = Convert.ToInt64(dataSize);
-
+           
             /// update the counters for various statistics
             ulong itemVersion = 0;
             try
@@ -4276,7 +4302,7 @@ namespace Alachisoft.NCache.Caching
 
                 OperationResult dsResult = null;
                 string taskId = System.Guid.NewGuid().ToString();
-                if (updateOpts == DataSourceUpdateOptions.WriteThru)
+                if (updateOpts == DataSourceUpdateOptions.WriteThru )
                 {
                     dsResult = this._context.DsMgr.WriteThru(key as string, clone, OpCode.Update, providerName,
                         operationContext);
@@ -4306,6 +4332,7 @@ namespace Alachisoft.NCache.Caching
             }
             catch (Exception inner)
             {
+                //NCacheLog.Error(_context.CacheName, "Cache.Insert()", inner.ToString());
                 throw;
             }
 
@@ -4390,7 +4417,7 @@ namespace Alachisoft.NCache.Caching
             if (value == null) throw new ArgumentNullException("value");
 
             if (!key.GetType().IsSerializable)
-                throw new ArgumentException("key is not serializable");
+                throw new ArgumentException("key is not serializable");          
             if ((expiryHint != null) && !expiryHint.GetType().IsSerializable)
                 throw new ArgumentException("expiryHint is not not serializable");
             if ((evictionHint != null) && !evictionHint.GetType().IsSerializable)
@@ -4466,10 +4493,10 @@ namespace Alachisoft.NCache.Caching
         }
 
 
-        #endregion
+#endregion
 
 
-        #region	/                 --- Bulk Insert ---           /
+#region	/                 --- Bulk Insert ---           /
 
 
         /// <summary>
@@ -4485,7 +4512,7 @@ namespace Alachisoft.NCache.Caching
             string[] keys = new string[entries.Length];
             object[] values = new object[entries.Length];
 
-            CallbackEntry[] callbackEnteries = new CallbackEntry[entries.Length];
+            CallbackEntry[] callbackEnteries = new CallbackEntry[entries.Length]; 
             ExpirationHint[] exp = new ExpirationHint[entries.Length];
             EvictionHint[] evc = new EvictionHint[entries.Length];
             CacheSyncDependency[] csd = new CacheSyncDependency[entries.Length];
@@ -4583,6 +4610,8 @@ namespace Alachisoft.NCache.Caching
 
                 if (!key.GetType().IsSerializable)
                     throw new ArgumentException("key is not serializable");
+                //if (!value.GetType().IsSerializable)
+                //    throw new ArgumentException("value is not serializable");
                 if ((expiryHint != null) && !expiryHint.GetType().IsSerializable)
                     throw new ArgumentException("expiryHint is not not serializable");
                 if ((evictionHint != null) && !evictionHint.GetType().IsSerializable)
@@ -4603,12 +4632,15 @@ namespace Alachisoft.NCache.Caching
             /// update the counters for various statistics
             try
             {
+                //_context.PerfStatsColl.MsecPerUpdBeginSample();
                 IDictionary itemVersions = new Hashtable();
 
                 return Insert(keys, ce, out itemVersions, operationContext);
+                //_context.PerfStatsColl.MsecPerUpdEndSample();
             }
             catch (Exception inner)
             {
+                //NCacheLog.Error(_context.CacheName, "Cache.Insert()", inner.ToString());
                 throw;
             }
         }
@@ -4626,7 +4658,7 @@ namespace Alachisoft.NCache.Caching
             if (keys == null) throw new ArgumentNullException("keys");
             if (values == null) throw new ArgumentNullException("items");
             if (keys.Length != values.Length) throw new ArgumentException("keys count is not equals to values count");
-
+           
             itemVersions = new Hashtable();
 
             DataSourceUpdateOptions updateOpts = this.UpdateOption(flags[0]);
@@ -4634,7 +4666,7 @@ namespace Alachisoft.NCache.Caching
             this.CheckDataSourceAvailabilityAndOptions(updateOpts);
 
             CacheEntry[] ce = new CacheEntry[values.Length];
-
+           
             long[] sizes = null;
             object dataSize = operationContext.GetValueByField(OperationContextFieldName.ValueDataSize);
             if (dataSize != null)
@@ -4648,7 +4680,7 @@ namespace Alachisoft.NCache.Caching
                 if (values[i] == null) throw new ArgumentNullException("value");
 
                 if (!keys[i].GetType().IsSerializable)
-                    throw new ArgumentException("key is not serializable");
+                    throw new ArgumentException("key is not serializable");                
                 if ((expirations[i] != null) && !expirations[i].GetType().IsSerializable)
                     throw new ArgumentException("expiryHint is not not serializable");
                 if ((evictions[i] != null) && !evictions[i].GetType().IsSerializable)
@@ -4664,7 +4696,7 @@ namespace Alachisoft.NCache.Caching
                 //No Need to insert GroupInfo if its group property is null/empty it will only reduce cache-entry overhead
                 if (groupInfos[i] != null && !String.IsNullOrEmpty(groupInfos[i].Group))
                     ce[i].GroupInfo = groupInfos[i];
-
+        
                 ce[i].QueryInfo = queryInfos[i];
                 ce[i].Flag.Data |= flags[i].Data;
                 ce[i].ProviderName = providername;
@@ -4695,7 +4727,7 @@ namespace Alachisoft.NCache.Caching
                     }
                 }
 
-
+                
                 HPTimeStats insertTime = new HPTimeStats();
                 insertTime.BeginSample();
 
@@ -4704,7 +4736,9 @@ namespace Alachisoft.NCache.Caching
                 insertTime.EndSample();
 
                 string[] filteredKeys = null;
-
+                
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
 
                 if (updateOpts != DataSourceUpdateOptions.None && keys.Length > result.Count)
                 {
@@ -4819,7 +4853,12 @@ namespace Alachisoft.NCache.Caching
                 }
                 return result;
             }
-            catch (OperationFailedException inner)
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.Insert()", inner.ToString());
+                throw;
+            }           
+             catch (OperationFailedException inner)
             {
                 if (inner.IsTracable) _context.NCacheLog.Error("Cache.Insert()", inner.ToString());
                 throw;
@@ -4876,6 +4915,8 @@ namespace Alachisoft.NCache.Caching
                 insertTime.EndSample();
 
                 string[] filteredKeys = null;
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
 
                 if (updateOpts != DataSourceUpdateOptions.None && keys.Length > result.Count)
                 {
@@ -4954,15 +4995,11 @@ namespace Alachisoft.NCache.Caching
 
                 removeTime.EndSample();
 
-                if (removed == null)
-                {
-                }
-                else
-                {
-
-                }
-
-
+            }
+	    catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.RemoveByTag()", inner.ToString());
+                throw;
             }
             catch (StateTransferInProgressException se)
             {
@@ -5261,6 +5298,8 @@ namespace Alachisoft.NCache.Caching
 
                 removeTime.EndSample();
 
+                if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 if (updateOpts != DataSourceUpdateOptions.None && removed != null && removed.Count > 0
                     && !(_context.IsClusteredImpl && updateOpts == DataSourceUpdateOptions.WriteBehind))
                 {
@@ -5345,6 +5384,11 @@ namespace Alachisoft.NCache.Caching
 
                 return removed;
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.Remove()", inner.ToString());
+                throw;
+            }
             catch (Exception inner)
             {
                 _context.NCacheLog.Error("Cache.Remove()", inner.ToString());
@@ -5396,6 +5440,8 @@ namespace Alachisoft.NCache.Caching
                 }
 
                 removeTime.EndSample();
+                if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                   throw new OperationCanceledException(ExceptionsResource.OperationFailed);
 
                 if (updateOpts != DataSourceUpdateOptions.None && removed != null && removed.Count > 0
                     && !(_context.IsClusteredImpl && updateOpts == DataSourceUpdateOptions.WriteBehind))
@@ -5425,7 +5471,9 @@ namespace Alachisoft.NCache.Caching
 
                     OperationResult[] dsResults = null;
                     string taskId = System.Guid.NewGuid().ToString();
-                    if (updateOpts == DataSourceUpdateOptions.WriteThru)
+                    if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                    if (updateOpts == DataSourceUpdateOptions.WriteThru )
                     {
                         Hashtable returnset = new Hashtable();
                         dsResults = this._context.DsMgr.WriteThru(filteredKeys, filteredEntries,
@@ -5441,6 +5489,8 @@ namespace Alachisoft.NCache.Caching
                         {
                             for (int i = 0; i < filteredEntries.Length; i++)
                             {
+                                if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                                 if (filteredEntries[i].Value is CallbackEntry)
                                 {
                                     ((CallbackEntry)filteredEntries[i].Value).WriteBehindOperationCompletedCallback =
@@ -5460,6 +5510,11 @@ namespace Alachisoft.NCache.Caching
                 }
 
             }
+            catch (OperationCanceledException ex)
+            {
+                _context.NCacheLog.Error("Cache.Delete()", ex.ToString());
+                throw;
+            }            
             catch (Exception inner)
             {
                 _context.NCacheLog.Error("Cache.Delete()", inner.ToString());
@@ -6442,6 +6497,11 @@ namespace Alachisoft.NCache.Caching
                 }
                 throw;
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.Search()", inner.ToString());
+                throw;
+            }            
             catch (StateTransferInProgressException inner)
             {
                 throw;
@@ -6492,7 +6552,12 @@ namespace Alachisoft.NCache.Caching
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.SearchEnteries()", inner.ToString());
+                throw;
+            }           
+	     catch (Exception ex)
             {
                 if (_context.NCacheLog.IsErrorEnabled)
                     _context.NCacheLog.Error("search operation failed. Error: " + ex.ToString());
@@ -6541,6 +6606,11 @@ namespace Alachisoft.NCache.Caching
             {
                 throw;
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.SearchCQ()", inner.ToString());
+                throw;
+            }            
             catch (Exception ex)
             {
                 if (_context.NCacheLog.IsErrorEnabled)
@@ -6578,6 +6648,11 @@ namespace Alachisoft.NCache.Caching
                 }
                 throw;
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.SearchCQEnteries()", inner.ToString());
+                throw;
+            }            
             catch (StateTransferInProgressException inner)
             {
                 throw;
@@ -6615,6 +6690,11 @@ namespace Alachisoft.NCache.Caching
                 }
                 return _context.CacheImpl.ExecuteReader(query, values, getData, chunkSize, isInproc, operationContext);
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.ExecuteReader()", inner.ToString());
+                throw;
+            }     
             catch (OperationFailedException ex)
             {
                 if (ex.IsTracable)
@@ -6713,6 +6793,12 @@ namespace Alachisoft.NCache.Caching
                 }
                 return _context.CacheImpl.ExecuteReaderCQ(query, values, getData, chunkSize, clientUniqueId, clientId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters, IsInProc);
             }
+            
+ 	    catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.ExecuteReaderCQ()", inner.ToString());
+                throw;
+            }
             catch (OperationFailedException ex)
             {
                 if (ex.IsTracable)
@@ -6770,6 +6856,11 @@ namespace Alachisoft.NCache.Caching
                 }
 
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.DeleteQuery()", inner.ToString());
+                throw;
+            }            
             catch (StateTransferInProgressException ex)
             {
                 throw;
@@ -6832,7 +6923,12 @@ namespace Alachisoft.NCache.Caching
                     return 0;
 
             }
-            catch (StateTransferInProgressException ex)
+           catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.RemoveQuery()", inner.ToString());
+                throw;
+            }          
+             catch (StateTransferInProgressException ex)
             {
                 throw;
             }
@@ -7295,6 +7391,11 @@ namespace Alachisoft.NCache.Caching
             {
                 _context.CacheImpl.RegisterKeyNotification(keys, updateCallback, removeCallback, operationContext);
             }
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.RegisterKeyNotificationCallback()", inner.ToString());
+                throw;
+            }
             catch (OperationFailedException inner)
             {
                 if (inner.IsTracable)
@@ -7357,7 +7458,12 @@ namespace Alachisoft.NCache.Caching
             {
                 _context.CacheImpl.UnregisterKeyNotification(keys, updateCallback, removeCallback, operationContext);
             }
-            catch (OperationFailedException inner)
+            catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.UnregisterKeyNotificationCallback()", inner.ToString());
+                throw;
+            }
+	     catch (OperationFailedException inner)
             {
                 if (inner.IsTracable)
                     _context.NCacheLog.Error("Cache.UnregisterKeyNotificationCallback() ", inner.ToString());
@@ -7786,7 +7892,12 @@ namespace Alachisoft.NCache.Caching
                 return _context.CacheImpl.RegisterCQ(query, values, clientUniqueId, clientId, notifyAdd, notifyUpdate,
                     notifyRemove, operationContext, datafilters);
             }
-            catch (OperationFailedException inner)
+  	     catch (OperationCanceledException inner)
+            {
+                _context.NCacheLog.Error("Cache.RegisterContinuousQuery()", inner.ToString());
+                throw;
+            }
+	    catch (OperationFailedException inner)
             {
                 if (inner.IsTracable) _context.NCacheLog.Error("Cache.RegisterContinuousQuery()", inner.ToString());
                 throw;
@@ -8111,5 +8222,22 @@ namespace Alachisoft.NCache.Caching
 
         #endregion
 
+        public void LogCacnelCommand (string commandType , long requestID, string clientID )
+        {
+            if (_context.NCacheLog !=null)
+                _context.NCacheLog.CriticalInfo ("Cache.CacnelExecution()", "Command : " + commandType + " Request ID : " + requestID + " has been cancelled for client : " + clientID );
+        }
+
+        public void LogBackingSourceStatus()
+        {
+
+            if (_context != null && _context.DsMgr != null)
+            {
+
+                _context.CacheImpl.LogBackingSource();
+            }
+        }
     }
+
+  
 }

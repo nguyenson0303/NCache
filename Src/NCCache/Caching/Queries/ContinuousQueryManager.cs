@@ -27,7 +27,7 @@ namespace Alachisoft.NCache.Caching.Queries
         /// is not executed again and again.
         /// 2. client id 
         /// 3. client side generated ids for each instance of ContinuousQuery. This helps
-        /// determine if registeration is required or not.
+        /// determine if registration is required or not.
         /// </summary>
         private HashVector clientRefs;
 

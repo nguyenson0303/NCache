@@ -451,7 +451,7 @@ namespace Alachisoft.NCache.Web.Caching
 
                 if (_notifyAsync)
                     System.Threading.ThreadPool.QueueUserWorkItem(waitC,
-                        new object[] {callback, key, arg}); //Faster and better
+                        new object[] {callback, key, arg}); 
                 else
                     callback.Invoke(key, arg);
             }

@@ -73,7 +73,7 @@ namespace Alachisoft.NCache.Caching.CacheSynchronization
         private CacheRuntimeContext _context;
         /// <summary>
         /// Contains all the inactive dependencies. These dependencies are activated when this node 
-        /// becoms coordinator or sub-coordinator(incase of POR).
+        /// becomes coordinator or sub-coordinator(in case of POR).
         /// </summary>
         private HashVector _inactiveDependencies = HashVector.Synchronized(new HashVector());
 
@@ -359,7 +359,7 @@ namespace Alachisoft.NCache.Caching.CacheSynchronization
                         }
                         else
                         {
-                            //// Only the cordinator or sub-coordinator(inacse of POR) can initialize
+                            //// Only the coordinator or sub-coordinator(inacse of POR) can initialize
                             //// SyncCache.
                           syncCache.Initialize();
                             
@@ -620,7 +620,7 @@ namespace Alachisoft.NCache.Caching.CacheSynchronization
                                     {
                                         foreach (object key in dependentKeys)
                                         {
-                                            //TODO :Need to add expiration with itme
+                                            //TODO :Need to add expiration with time
                                             OperationContext context = new OperationContext(OperationContextFieldName.OperationType, OperationContextOperationType.CacheOperation);
                                             context.Add(OperationContextFieldName.ValueDataSize, size);
 

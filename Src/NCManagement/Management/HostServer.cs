@@ -152,13 +152,13 @@ namespace Alachisoft.NCache.Management
 
 
         /// <summary>
-        
+
 
         public void OnLicenseExpiration()
         {
             StopCache(CacheStopReason.Expired);
         }
-        
+
         [TargetMethod(ManagementUtil.MethodName.GetCacheInfo, 1)]
         public override CacheInfo GetCacheInfo(string cacheId)
         {
@@ -175,8 +175,8 @@ namespace Alachisoft.NCache.Management
             }
         }
 
-      
-      
+
+
 
         /// <summary>
         /// Gets or sets the socket server port.
@@ -391,10 +391,10 @@ namespace Alachisoft.NCache.Management
 
                     //instrumentation Code
 #if COMMUNITY
-                    
-                        if (InstrumentCache.OnCacheStopped != null)
-                            InstrumentCache.OnCacheStopped(cache.Name);
-                   
+
+                    if (InstrumentCache.OnCacheStopped != null)
+                        InstrumentCache.OnCacheStopped(cache.Name);
+
 #endif
                 }
             }
@@ -811,6 +811,26 @@ namespace Alachisoft.NCache.Management
                 return Process.GetCurrentProcess().Id;
             else
                 return 0;
+        }
+
+        [TargetMethod(ManagementUtil.MethodName.LogBackingSourceStatus)]
+        public override void LogBackingSourceStatus(string cacheId)
+        {
+            try
+            {
+                _rwLock.AcquireReaderLock(Timeout.Infinite);
+
+                CacheInfo cacheInfo = GetCacheInfo(cacheId.ToLower());
+                if (cacheInfo != null)
+                {
+                    cacheInfo.Cache.LogBackingSourceStatus();
+                }
+
+            }
+            finally
+            {
+                _rwLock.ReleaseReaderLock();
+            }
         }
     }
 }

@@ -662,7 +662,9 @@ namespace Alachisoft.NCache.Web.Communication
 
         internal void InitializeCache(Connection connection, IPAddress address, int port, bool balanceNodes)
         {
-            _command = new InitCommand(_cache.ClientID, _cacheId, connection.GetClientLocalIP(), connection.Address, _clientInfo);
+                       _command = new InitCommand(_cache.ClientID, _cacheId,
+                    connection.GetClientLocalIP(), connection.Address, _clientInfo,_operationTimeout);
+
 
             Request request = new Request(false, _operationTimeout);
             request.AddCommand(connection.ServerAddress, _command);
@@ -815,6 +817,27 @@ namespace Alachisoft.NCache.Web.Communication
             {
                 lock (_hashmapUpdateMutex)
                 {
+                    if (!_pool.FullyDisConnnected)
+                    {
+                        if (_pool.Connections != null)
+                        {
+                            try
+                            {
+                                //as pool is fully disconnected,let's start reconnection task
+                                foreach (Connection connection in _pool.Connections.Values)
+                                {
+                                    if (connection != null && !connection.IsReconnecting)
+                                    {
+                                        this._processor.Enqueue(new ReconnectTask(this, connection));
+                                    }
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                //enumeration exception can occur
+                            }
+                        }
+                    }
                     if (_shutdownServers.Count > 1)
                         return false;
                     return _pool.FullyConnnected;
@@ -1926,7 +1949,7 @@ namespace Alachisoft.NCache.Web.Communication
         /// New hashmap recieved. Depending on new and old hashmap, some connections are
         /// disposed and some new connections are formed(not always as in some cases only buckets have
         /// transfered between servers). This method should be called asynchronously so the recieve thread
-        /// will be free to recieve other command responces.
+        /// will be free to recieve other command responses.
         /// </summary>
         /// <param name="newHashmap">new hashmap returned from primary server</param>
         /// <param name="bucketSize">bucket size</param>
@@ -1950,7 +1973,7 @@ namespace Alachisoft.NCache.Web.Communication
         /// New hashmap recieved. Depending on new and old hashmap, some connections are
         /// disposed and some new connections are formed(not always as in some cases only buckets have
         /// transfered between servers). This method should be called asynchronously so the recieve thread
-        /// will be free to recieve other command responces.
+        /// will be free to recieve other command responses.
         /// </summary>
         /// <param name="newHashmap">new hashmap returned from primary server</param>
         private void NewHashmapRecieved(NewHashmap newHashmap)
@@ -2631,8 +2654,6 @@ namespace Alachisoft.NCache.Web.Communication
 
                     try
                     {
-                        lock (request)
-                        {
                             while (timeout > 0)
                             {
                                 if (request.IsAsync)
@@ -2664,6 +2685,8 @@ namespace Alachisoft.NCache.Web.Communication
                                     else
                                         break;
                                 }
+                            lock (request)
+                            {
 
                                 timeout = Convert.ToInt32(request.RequestTimeout) -
                                           (int)((System.DateTime.Now.Ticks - 621355968000000000) / 10000 - startTime);
@@ -2978,8 +3001,6 @@ namespace Alachisoft.NCache.Web.Communication
                     acknowledgement = requestModerator.RegisterRequest(connection.IpAddress, command.RequestId);
                 }
 
-                //Following code is to be refactored, it's written poorly for the reason, to keep the newly introduced
-                //secure-communication path as isolated it can be from the old communication path.
                 if (!connection.Optimized)
                 {
                     connection.AssureSend(command.ToByte(acknowledgement, connection.RequestInquiryEnabled), connection.PrimaryClientSocket, checkConnected);
@@ -3628,6 +3649,10 @@ namespace Alachisoft.NCache.Web.Communication
                     connection = this._pool[new Address(nextServer.IP.ToString(), nextServer.Port)];
 
                     if (connection != null && connection.IsConnected) break;
+                    else if (connection != null && !connection.IsReconnecting)
+                    {
+                        _processor.Enqueue(new ReconnectTask(this, connection));
+                    }
                     else
                     {
                         nextServer = _clientConfig.NextServer;
@@ -4028,7 +4053,7 @@ namespace Alachisoft.NCache.Web.Communication
         }
 
         /// <summary>
-        /// Mehreen: testing to write code of getcachemangementport() 
+        ///code of getcachemangementport() 
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="connectedServerAddress"></param>

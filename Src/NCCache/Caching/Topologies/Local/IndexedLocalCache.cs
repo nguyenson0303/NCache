@@ -27,6 +27,7 @@ using Alachisoft.NCache.Caching.Exceptions;
 using Alachisoft.NCache.Caching.Enumeration;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
 using Alachisoft.NCache.Common.Queries.Filters;
+using System.Threading;
 
 namespace Alachisoft.NCache.Caching.Topologies.Local
 {
@@ -166,12 +167,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
         /// </summary>
         /// <param name="queryString">a string describing the search criteria.</param>
         /// <returns>a list of keys.</returns>
-        internal override QueryContext SearchInternal(Predicate pred, IDictionary values, Boolean includeFilters = false)
+        internal override QueryContext SearchInternal(Predicate pred, IDictionary values, CancellationToken token, Boolean includeFilters = false)
         {
             QueryContext queryContext = new QueryContext(this);
             queryContext.AttributeValues = values;
             queryContext.CacheContext = _context.CacheRoot.Name;
-
+            queryContext.CancellationToken = token;
             try
             {
                 if (includeFilters)
@@ -204,12 +205,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
         /// </summary>
         /// <param name="queryString">a string describing the search criteria.</param>
         /// <returns>a list of keys.</returns>
-        internal override QueryContext DeleteQueryInternal(Predicate pred, IDictionary values)
+        internal override QueryContext DeleteQueryInternal(Predicate pred, IDictionary values, CancellationToken token)
         {
             QueryContext queryContext = new QueryContext(this);
             queryContext.AttributeValues = values;
             queryContext.CacheContext = _context.CacheRoot.Name;
-
+	        queryContext.CancellationToken = token;
             try
             {
                 pred.Execute(queryContext, null);
@@ -351,13 +352,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             switch (comparisonType)
             {
                 case TagComparisonType.BY_TAG:
-                    return ((NamedTagIndexManager)_queryIndexManager).GetByTag(tags[0]);
+                    return ((NamedTagIndexManager)_queryIndexManager).GetByTag(tags[0],operationContext.CancellationToken);
 
                 case TagComparisonType.ANY_MATCHING_TAG:
-                    return ((NamedTagIndexManager)_queryIndexManager).GetAnyMatchingTag(tags);
+                    return ((NamedTagIndexManager)_queryIndexManager).GetAnyMatchingTag(tags,operationContext.CancellationToken);
 
                 case TagComparisonType.ALL_MATCHING_TAGS:
-                    return ((NamedTagIndexManager)_queryIndexManager).GetAllMatchingTags(tags);
+                    return ((NamedTagIndexManager)_queryIndexManager).GetAllMatchingTags(tags,operationContext.CancellationToken);
+                case TagComparisonType.BY_WILDCARDTAG:
+                    return ((NamedTagIndexManager)_queryIndexManager).GetByWildCardTag(tags[0], operationContext.CancellationToken);
+
             }
             return null;
         }

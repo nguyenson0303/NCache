@@ -21,12 +21,9 @@ using Alachisoft.NCache.Common.Util;
 namespace Alachisoft.NCache.Caching.Enumeration
 {
     /// <summary>
-    /// A singleton Class that is responsible for all the management of snaphot pool for Enumeration.
-    /// This class can be used to get snaphot from snaphot pool for enumeration based on size of data that snaphot will return and is configurable in service config.
+    /// A singleton Class that is responsible for all the management of snapshot pool for Enumeration.
+    /// This class can be used to get snapshot from snapshot pool for enumeration based on size of data that snapshot will return and is configurable in service config.
     /// </summary>
-    ///
-
-
     internal class CacheSnapshotPool
     {
         static readonly CacheSnapshotPool instance = new CacheSnapshotPool();
@@ -55,7 +52,7 @@ namespace Alachisoft.NCache.Caching.Enumeration
         }
 
         /// <summary>
-        /// Get a snaphot from the pool 
+        /// Get a snapshot from the pool 
         /// </summary>
         /// <param name="pointerID"></param>
         /// <param name="cache"></param>
@@ -79,7 +76,7 @@ namespace Alachisoft.NCache.Caching.Enumeration
         }
 
         /// <summary>
-        /// Get a snaphot from the pool for a particular cache.
+        /// Get a snapshot from the pool for a particular cache.
         /// </summary>        
         public void DiposeSnapshot(string pointerID, CacheBase cache)
         {
@@ -106,33 +103,33 @@ namespace Alachisoft.NCache.Caching.Enumeration
         class CachePool
         {
             /// <summary>
-            /// The time on which a new snapshot was created and added to Snaphot Pool
+            /// The time on which a new snapshot was created and added to Snapshot Pool
             /// </summary>
             private DateTime _lastSnaphotCreationTime = DateTime.MinValue;
 
             /// <summary>
-            /// The pool containing all the available snaphots.
+            /// The pool containing all the available snapshots.
             /// </summary>
             private Dictionary<string, Array> _pool = new Dictionary<string, Array>();
 
             /// <summary>
-            /// Contains the mapping between pointer and its snaphot. tells which pointer is using which snapshot in pool.
+            /// Contains the mapping between pointer and its snapshot. tells which pointer is using which snapshot in pool.
             /// </summary>
             private Dictionary<string, string> _enumeratorSnaphotMap = new Dictionary<string, string>();
 
             /// <summary>
-            /// Contains the map for each snapshot and number of enumerators on it. Tells how many emumerators a references
-            /// a particluar snaphot.
+            /// Contains the map for each snapshot and number of enumerators on it. Tells how many enumerators a references
+            /// a particular snapshot.
             /// </summary>
             private Dictionary<string, int> _snapshotRefCountMap = new Dictionary<string, int>();
 
             /// <summary>
-            /// holds the id of current usable snaphot of the pool
+            /// holds the id of current usable snapshot of the pool
             /// </summary>
             private string _currentUsableSnapshot;
 
             /// <summary>
-            /// Returns a unique GUID that is assigned to the new snaphot added to the pool
+            /// Returns a unique GUID that is assigned to the new snapshot added to the pool
             /// </summary>
             /// <returns></returns>
             private string GetNewUniqueID()
@@ -146,11 +143,11 @@ namespace Alachisoft.NCache.Caching.Enumeration
             }
 
             /// <summary>
-            /// Return a snaphot from the snaphot pool to be used by current enumerator
+            /// Return a snapshot from the snapshot pool to be used by current enumerator
             /// </summary>
-            /// <param name="pointerID">unque id of the enumeration pointer being used by current enumerator.</param>
+            /// <param name="pointerID">unique id of the enumeration pointer being used by current enumerator.</param>
             /// <param name="cache">underlying cache from which snapshot has to be taken.</param>
-            /// <returns>snaphot as an array.</returns>
+            /// <returns>snapshot as an array.</returns>
             public Array GetSnaphotInPool(string pointerID, CacheBase cache)
             {
                 string uniqueID = string.Empty;
@@ -201,9 +198,9 @@ namespace Alachisoft.NCache.Caching.Enumeration
             }
 
             /// <summary>
-            /// Dispose a snaphot from the pool that is not being used by any emumerator.
+            /// Dispose a snapshot from the pool that is not being used by any enumerator.
             /// </summary>
-            /// <param name="pointerID">unque id of the enumeration pointer being used by current enumerator.</param>
+            /// <param name="pointerID">unique id of the enumeration pointer being used by current enumerator.</param>
             public void DiposeSnapshotInPool(string pointerID)
             {
                 if (_enumeratorSnaphotMap.ContainsKey(pointerID))

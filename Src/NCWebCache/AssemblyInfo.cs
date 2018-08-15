@@ -55,6 +55,9 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 
 [assembly: AssemblyVersion("4.9.0")]
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyName("")]
+
 [assembly: AssemblyDescriptionAttribute("Web API")]
-[assembly: AssemblyFileVersionAttribute("4.9.0.0")]
+[assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

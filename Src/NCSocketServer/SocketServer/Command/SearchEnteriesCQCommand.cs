@@ -21,6 +21,7 @@ using Alachisoft.NCache.SocketServer.Command.ResponseBuilders;
 using Alachisoft.NCache.SocketServer.RuntimeLogging;
 using System.Diagnostics;
 using Alachisoft.NCache.Common.Monitoring;
+using Alachisoft.NCache.Caching;
 
 namespace Alachisoft.NCache.SocketServer.Command
 {
@@ -76,10 +77,18 @@ namespace Alachisoft.NCache.SocketServer.Command
 
                 Alachisoft.NCache.Caching.OperationContext operationContext = new Alachisoft.NCache.Caching.OperationContext(Alachisoft.NCache.Caching.OperationContextFieldName.OperationType, Alachisoft.NCache.Caching.OperationContextOperationType.CacheOperation);
                 if (Convert.ToInt64(cmdInfo.ClientLastViewId) != -1)
-                    operationContext.Add(Alachisoft.NCache.Caching.OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                    operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
                 resultSet = nCache.Cache.SearchEntriesCQ(cmdInfo.Query, cmdInfo.Values, cmdInfo.clientUniqueId, clientManager.ClientID, cmdInfo.notifyAdd, cmdInfo.notifyUpdate, cmdInfo.notifyRemove, operationContext, datafilters);
                 stopWatch.Stop();
                 SearchEnteriesCQResponseBuilder.BuildResponse(resultSet, cmdInfo.RequestId, _serializedResponsePackets, command.commandID, nCache.Cache, out resultCount);
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

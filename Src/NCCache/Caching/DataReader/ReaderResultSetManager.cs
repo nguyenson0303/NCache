@@ -25,6 +25,7 @@ using Alachisoft.NCache.Caching.Statistics;
 using Alachisoft.NCache.Common.Net;
 using Alachisoft.NCache.Common.Util;
 using Alachisoft.NCache.Common;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.DataReader
 {
@@ -37,13 +38,13 @@ namespace Alachisoft.NCache.Caching.DataReader
         int _utcReaderExpiry = -1;
         long _readerExpiry = -1;
         long _initialreaderExpirySecond = 0;
-        const int ConvertValue= 60000;
+        const int ConvertValue = 60000;
 
         public ReaderResultSetManager(CacheRuntimeContext context)
         {
             _context = context;
         }
-        
+
         public string RegisterReader(string clientId, ReaderResultSet resultset)
         {
             string readerId = Guid.NewGuid().ToString();
@@ -73,8 +74,8 @@ namespace Alachisoft.NCache.Caching.DataReader
 
             return readerId;
         }
-        
-        public ReaderResultSet GetRecordSet(string readerId, int nextIndex, bool inproc,OperationContext context)
+
+        public ReaderResultSet GetRecordSet(string readerId, int nextIndex, bool inproc, OperationContext context)
         {
             ReaderResultSet readerChunk = null;
             IRecordSet partialRecordSet = null;
@@ -112,9 +113,13 @@ namespace Alachisoft.NCache.Caching.DataReader
                             row = row.Clone() as RecordRow;
                             if (reader.GetData && !reader.IsGrouped)
                             {
+
+                                if (context.CancellationToken != null && context.CancellationToken.IsCancellationRequested)
+                                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                                 entry = _context.CacheImpl.Get(row.GetColumnValue(QueryKeyWords.KeyColumn), context);
                                 row.IsSurrogate = entry != null && entry.IsSurrogate;
-                        
+
                                 if (entry != null && !entry.IsSurrogate)
                                 {
                                     if (inproc) row.SetColumnValue(QueryKeyWords.ValueColumn, entry.Value);
@@ -126,13 +131,13 @@ namespace Alachisoft.NCache.Caching.DataReader
                                             cmpEntry.Value = ((CallbackEntry)cmpEntry.Value).Value;
 
                                         cmpEntry.Flag = ((CacheEntry)entry).Flag;
-                                        row.SetColumnValue(QueryKeyWords.ValueColumn, cmpEntry);                             
+                                        row.SetColumnValue(QueryKeyWords.ValueColumn, cmpEntry);
                                     }
 
                                     size += entry.Size;
                                 }
-                                
-                                
+
+
 
                                 if (entry != null)
                                 {
@@ -147,7 +152,7 @@ namespace Alachisoft.NCache.Caching.DataReader
                             else
                             {
                                 partialRecordSet.AddRow(row);
-                                size += row.GetSize();                             
+                                size += row.GetSize();
                             }
                         }
 
@@ -160,7 +165,7 @@ namespace Alachisoft.NCache.Caching.DataReader
                         reader.RecordSet.SubsetInfo.LastAccessedRowID += partialRecordSet.RowCount;
                         readerChunk.RecordSet = partialRecordSet;
                         readerChunk.NextIndex = reader.RecordSet.SubsetInfo.LastAccessedRowID;
-                       
+
                         if (!inproc)
                         {
                             readerChunk.NodeAddress = GetReciepent();
@@ -173,12 +178,12 @@ namespace Alachisoft.NCache.Caching.DataReader
                     else
                         DisposeReader(reader.ReaderID);
                 }
-            
+
                 return readerChunk;
             }
             catch (Exception ex)
             {
-               if (ex is InvalidReaderException)
+                if (ex is InvalidReaderException)
                 {
                     DisposeReader(reader.ReaderID);
                 }
@@ -186,7 +191,7 @@ namespace Alachisoft.NCache.Caching.DataReader
             }
         }
 
-        private String GetReciepent() 
+        private String GetReciepent()
         {
             string ipAddress = String.Empty;
             int port = 0;
@@ -197,7 +202,7 @@ namespace Alachisoft.NCache.Caching.DataReader
             if (_context.IsClusteredImpl)
             {
                 ClusterCacheBase clusterCache = ((ClusterCacheBase)_context.CacheImpl);
-               
+
                 if (clusterCache.Cluster != null && clusterCache.Cluster.LocalAddress != null)
                 {
                     Address localAddress = clusterCache.Cluster.LocalAddress;
@@ -205,10 +210,10 @@ namespace Alachisoft.NCache.Caching.DataReader
 
                     if (String.IsNullOrEmpty(ipAddress))
                     {
-                       var clusterStat= clusterCache.Statistics as ClusterCacheStatistics;
-                        if(clusterStat!=null)
+                        var clusterStat = clusterCache.Statistics as ClusterCacheStatistics;
+                        if (clusterStat != null)
                         {
-                         ArrayList nodes = clusterStat.Nodes;
+                            ArrayList nodes = clusterStat.Nodes;
                             if (nodes != null)
                             {
                                 foreach (NodeInfo node in nodes)
@@ -219,7 +224,7 @@ namespace Alachisoft.NCache.Caching.DataReader
                                     }
                                 }
                             }
-                        }                       
+                        }
                     }
                 }
             }
@@ -237,7 +242,7 @@ namespace Alachisoft.NCache.Caching.DataReader
                     int count = _readers.Count;
                     ReaderResultSet resultset = _readers[readerId];
                     _readers.Remove(readerId);
-                    if(resultset != null)
+                    if (resultset != null)
                     {
                         if (_readersList.Count > 0 && resultset.ClientID != null)
                         {
@@ -292,11 +297,11 @@ namespace Alachisoft.NCache.Caching.DataReader
         {
             if (_readers.Count > 0 && ServiceConfiguration.ReaderExpiration > -1)
             {
-                if(_utcReaderExpiry  <= -1 )
+                if (_utcReaderExpiry <= -1)
                     _utcReaderExpiry = AppUtil.DiffMinutes(DateTime.Now.AddMinutes(ServiceConfiguration.ReaderExpiration));
                 if (_readerExpiry <= -1)
                     _readerExpiry = ServiceConfiguration.ReaderExpiration * ConvertValue;
-               
+
                 _initialreaderExpirySecond += interval;
 
                 if (_initialreaderExpirySecond >= _readerExpiry)

@@ -17,6 +17,9 @@ using System.Reflection;
 using System.IO;
 using System.Diagnostics;
 
+#if NETCORE
+using System.Runtime.InteropServices;
+#endif
 
 namespace Alachisoft.NCache.CacheHost
 {
@@ -25,20 +28,59 @@ namespace Alachisoft.NCache.CacheHost
         public static int Main(string[] args)
         {
 #if NETCORE
-            AppDomain currentDomain = AppDomain.CurrentDomain;
-            currentDomain.AssemblyResolve += new ResolveEventHandler(GetAssembly); 
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                AppDomain currentDomain = AppDomain.CurrentDomain;
+                currentDomain.AssemblyResolve += new ResolveEventHandler(GetAssembly);
+            }
+
 #endif
             return SeperateHost(args);
         }
 
+#if NETCORE
         private static Assembly GetAssembly(object sender, ResolveEventArgs args)
         {
             try
             {
-                string location = Assembly.GetExecutingAssembly().Location;
-                DirectoryInfo directoryInfo = Directory.GetParent(location);
-                string installDir = directoryInfo.Parent.Parent.FullName;
-                return Assembly.LoadFrom(Path.Combine(Path.Combine(installDir, "lib"), new AssemblyName(args.Name).Name + ".dll"));
+                
+                string final = "";
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    if (args.RequestingAssembly.Location.Contains("NCache" + Path.DirectorySeparatorChar + "deploy"))
+                    {
+                        final = Path.GetDirectoryName(args.RequestingAssembly.Location);
+                    }
+                    else
+                    {
+                        string location = Assembly.GetExecutingAssembly().Location;
+                        DirectoryInfo directoryInfo = Directory.GetParent(location);
+                        string bin = directoryInfo.Parent.FullName; /// in bin folder
+                        string assembly = Path.Combine(bin, "assembly"); /// in assembly folder 
+                        final = Path.Combine(assembly, "netcore20"); /// from where you need the assemblies
+                    }
+                }
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    if (args.RequestingAssembly.Location.Contains("ncache" + Path.DirectorySeparatorChar + "deploy"))
+                    {
+                        final = Path.GetDirectoryName(args.RequestingAssembly.Location);
+                    }
+                    else
+                    {
+                        string location = Assembly.GetExecutingAssembly().Location;
+                        DirectoryInfo directoryInfo = Directory.GetParent(location);
+                        string installDir = directoryInfo.Parent.Parent.FullName; /// in installdir of linux
+                        final = Path.Combine(installDir, "lib");
+                        string assemblyPath = Path.Combine(final, new AssemblyName(args.Name).Name + ".dll");
+                        if(!File.Exists(assemblyPath))
+                        {
+                            final = Path.Combine(installDir, "deploy"+Path.DirectorySeparatorChar+ CacheSeperateHostUtil.CacheName);
+                        }
+                    }
+                    
+                }
+                return Assembly.LoadFrom(Path.Combine(final, new AssemblyName(args.Name).Name + ".dll"));
             }
             catch (Exception ex)
             {
@@ -46,6 +88,7 @@ namespace Alachisoft.NCache.CacheHost
             }
 
         }
+#endif
 
         static int SeperateHost(string[] args)
         {
@@ -55,8 +98,8 @@ namespace Alachisoft.NCache.CacheHost
                 {
 
                     CacheSeperateHostUtil.StartCacheHost();
-                    System.Console.WriteLine("Started");
-                    Alachisoft.NCache.Management.CacheServer.SetWaitOnServiceObject();
+                    Console.WriteLine("Started");
+                    Management.CacheServer.SetWaitOnServiceObject();
                     return CacheSeperateHostUtil.ErrorCode;
                 }
                 return CacheSeperateHostUtil.ErrorCode;
@@ -65,8 +108,8 @@ namespace Alachisoft.NCache.CacheHost
             catch (Exception ex)
             {
                 CacheSeperateHostUtil.close();
-                Alachisoft.NCache.Common.AppUtil.LogEvent(CacheSeperateHostUtil.ApplicationName, "Cache [ " + CacheSeperateHostUtil.CacheName + " ] Error:" + ex.ToString(), EventLogEntryType.Error, Alachisoft.NCache.Common.EventCategories.Error, Alachisoft.NCache.Common.EventID.GeneralError);
-                System.Console.Error.WriteLine(ex.ToString());
+                Common.AppUtil.LogEvent(CacheSeperateHostUtil.ApplicationName, "Cache [ " + CacheSeperateHostUtil.CacheName + " ] Error:" + ex.ToString(), EventLogEntryType.Error, Alachisoft.NCache.Common.EventCategories.Error, Alachisoft.NCache.Common.EventID.GeneralError);
+                Console.Error.WriteLine(ex.ToString());
                 return CacheSeperateHostUtil.ErrorCode;
             }
         }

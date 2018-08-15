@@ -22,6 +22,7 @@ namespace Alachisoft.NCache.Caching
         BY_TAG = 1,
         ALL_MATCHING_TAGS,
         ANY_MATCHING_TAG,
+        BY_WILDCARDTAG,
         DEFAULT
     }
 }

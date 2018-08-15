@@ -34,6 +34,7 @@ namespace Alachisoft.NCache.SocketServer.Command
             public string clientIP;
             public bool isAzureClient;
             public int CommandVersion;
+            public int operationTimeout;
 
         }
         private bool requestLoggingEnabled;
@@ -71,6 +72,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 clientManager.IsDotNetClient = cmdInfo.IsDotNetClient;
                 clientManager.SupportAcknowledgement = cmdInfo.CommandVersion >= 2 && requestLoggingEnabled;
                 clientManager.ClientVersion = cmdInfo.clientVersion;
+                //Older client do not send operation timeout
+                clientManager.RequestTimeout = cmdInfo.operationTimeout != -1 ? cmdInfo.operationTimeout : 90 * 1000;
 
 #if ( CLIENT)
                 if (((IPEndPoint)clientManager.ClientSocket.LocalEndPoint).Address.Address != ((IPEndPoint)clientManager.ClientSocket.RemoteEndPoint).Address.Address)
@@ -83,6 +86,7 @@ namespace Alachisoft.NCache.SocketServer.Command
                 // we dont need license logging in express edition.
                 // and all our server components are in VS2005.
 
+             
                 ClientManager cmgr = null;
                 lock (ConnectionManager.ConnectionTable)
                 {
@@ -168,6 +172,7 @@ namespace Alachisoft.NCache.SocketServer.Command
             
 
             cmdInfo.RequestId = initCommand.requestId.ToString();
+            cmdInfo.operationTimeout = initCommand.operationTimeout;
 
             cmdInfo.clientVersion = initCommand.clientVersion;
             cmdInfo.clientIP = initCommand.clientIP;

@@ -94,11 +94,20 @@ namespace Alachisoft.NCache.SocketServer.Command
                 if (!string.IsNullOrEmpty(cmdInfo.IntendedRecipient))
                     operationContext.Add(OperationContextFieldName.IntendedRecipient, cmdInfo.IntendedRecipient);
                 operationContext.Add(OperationContextFieldName.ReadThru, cmdInfo.FlagMap.IsBitSet(BitSetConstants.ReadThru));
-                
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
+
+ 
                 HashVector getResult = (HashVector)nCache.Cache.GetBulk(cmdInfo.Keys, cmdInfo.FlagMap, cmdInfo.providerName, operationContext);
                 stopWatch.Stop();
                 count = getResult.Count;
                 BulkGetResponseBuilder.BuildResponse(getResult, cmdInfo.CommandVersion, cmdInfo.RequestId, _serializedResponsePackets, cmdInfo.IntendedRecipient, command.commandID, nCache.Cache);
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

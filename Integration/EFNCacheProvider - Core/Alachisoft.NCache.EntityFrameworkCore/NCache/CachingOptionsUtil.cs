@@ -14,6 +14,7 @@
 
 using Alachisoft.NCache.Runtime.Caching;
 using Alachisoft.NCache.Runtime.Dependencies;
+using System;
 
 namespace Alachisoft.NCache.EntityFrameworkCore.NCache
 {
@@ -46,11 +47,23 @@ namespace Alachisoft.NCache.EntityFrameworkCore.NCache
                 cacheItem.Dependency = cacheDependency;
             }
 
-            // Set Tags
-            if (options.QueryIdentifier != null)
+            //Set ReadThruProvider
+            if(options.IsSyncEnabled)
             {
-                cacheItem.Tags = new Tag[] { options.QueryIdentifier };
+                if(!string.IsNullOrEmpty(options.ReadThruProvider))
+                {
+                    cacheItem.IsResyncExpiredItems = true;
+                    cacheItem.ResyncProviderName = options.ReadThruProvider;
+                }
             }
+        }
+
+        internal static CachingOptions ExtractKeyListOptions(CachingOptions options)
+        {
+            CachingOptions nOptions =(CachingOptions)options.Clone();
+            nOptions.QueryIdentifier = null;
+            nOptions.RemoveResync();
+            return nOptions;
         }
 
         internal static Tag[] GetTags(string[] stringTags)

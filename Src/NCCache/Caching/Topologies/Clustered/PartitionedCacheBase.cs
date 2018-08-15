@@ -30,6 +30,7 @@ using Alachisoft.NGroups.Blocks;
 using Alachisoft.NGroups.Util;
 using Alachisoft.NGroups;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Topologies.Clustered
 {
@@ -160,7 +161,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         #region	/                 --- Partitioned ICache.GetKeys ---           /
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected ArrayList Clustered_GetKeys(ArrayList dests, string group, string subGroup)
         {
@@ -168,6 +169,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.GetKeys, new object[] { group, subGroup }, true);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
@@ -204,7 +206,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected HashVector Clustered_GetData(string group, string subGroup, OperationContext operationContext)
         {
@@ -212,6 +214,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.GetData, new object[] { group, subGroup, operationContext }, true);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToServers(func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
@@ -267,6 +270,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.GetTag, new object[] { tags, comparisonType, operationContext }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
@@ -317,6 +321,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.GetKeysByTag, new object[] { tags, comparisonType, operationContext }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false, Cluster.Timeout * 10);
                 if (results == null)
                 {
@@ -361,7 +366,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Retrieve the list of keys fron the cache for the given group or sub group.
+        /// Retrieve the list of keys from the cache for the given group or sub group.
         /// </summary>
         protected Hashtable Clustered_GetData(ArrayList dests, string group, string subGroup, OperationContext operationContext)
         {
@@ -369,6 +374,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.GetData, new object[] { group, subGroup, operationContext }, true);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
@@ -422,7 +428,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// </summary>
         /// <param name="key"></param>
         /// <returns>Result of the operation</returns>
-        /// <remarks>On the other ndoe handleGetGroupInfo is called</remarks>
+        /// <remarks>On the other node handleGetGroupInfo is called</remarks>
         public ClusteredOperationResult Clustered_GetGroupInfo(object key, OperationContext operationContext)
         {
             return Clustered_GetGroupInfo(Cluster.Servers, key, true, operationContext);
@@ -430,11 +436,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
         /// <summary>
         /// Gets the data group info the items. Node containing items will return a table
-        /// of Data grop information.
+        /// of Data group information.
         /// </summary>
         /// <param name="keys"></param>
         /// <returns></returns>
-        /// /// <remarks>On the other ndoe handleGetGroupInfo is called</remarks>
+        /// /// <remarks>On the other node handleGetGroupInfo is called</remarks>
         public ICollection Clustered_GetGroupInfoBulk(object[] keys, OperationContext operationContext)
         {
             return Clustered_GetGroupInfoBulk(Cluster.Servers, keys, true, operationContext);
@@ -468,7 +474,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         #region	/                 --- Partitioned ICache.Add ---           /
 
         /// <summary>
-        /// Add the object to specfied node in the cluster. 
+        /// Add the object to specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -492,7 +498,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     return retVal;
                 }
                 if (result is CacheAddResult)
-                    retVal = (CacheAddResult)result; 
+                    retVal = (CacheAddResult)result;
                 else if (result is System.Exception)
                     throw (Exception)result;
             }
@@ -502,7 +508,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             }
             catch (Runtime.Exceptions.TimeoutException te)
             {
-                 
+
                 throw;
             }
             catch (CacheException e)
@@ -517,7 +523,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Add the ExpirationHint to a specfied node in the cluster. 
+        /// Add the ExpirationHint to a specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -535,7 +541,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     return retVal;
                 }
-                retVal = (bool)result; 
+                retVal = (bool)result;
             }
             catch (StateTransferException e)
             {
@@ -553,7 +559,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         }
 
         /// <summary>
-        /// Add the ExpirationHint to a specfied node in the cluster. 
+        /// Add the ExpirationHint to a specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -573,7 +579,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     return retVal;
                 }
-                retVal = (bool)result; 
+                retVal = (bool)result;
             }
             catch (StateTransferException e)
             {
@@ -592,7 +598,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         /// <summary>
-        /// Add the object to specfied node in the cluster. 
+        /// Add the object to specified node in the cluster. 
         /// </summary>
         /// <param name="key">key of the entry.</param>
         /// <returns>cache entry.</returns>
@@ -607,16 +613,17 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.Add, new object[] { keys, cacheEntries, taskId, operationContext });
+                func.Cancellable = true;
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST);
                 if (result == null)
                 {
                     return retVal;
                 }
-                retVal = (Hashtable)result; 
+                retVal = (Hashtable)result;
             }
             catch (Runtime.Exceptions.TimeoutException te)
             {
-                 
+
                 throw;
             }
             catch (Runtime.Exceptions.SuspectedException se)
@@ -647,7 +654,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// strongly affiliated groups can be loadbalanced to any of the existing node. In such a
         /// situation if a new node joins and it has strong affinity with the groups whose data 
         /// was previously distributed evenly, then a data integrity conflict arises. To avoid such
-        /// conflicts each joining node first varifes that no other node on the cluster has data
+        /// conflicts each joining node first verifies that no other node on the cluster has data
         /// of his groups. If it is so, then he has to leave the cluster.</remarks>
         public bool VerifyDataIntegrity()
         {
@@ -716,6 +723,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.Search, new object[] { queryText, values, operationContext }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
 
                 if (results == null)
@@ -758,6 +766,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.SearchEntries, new object[] { queryText, values, operationContext }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
                 if (results == null)
                 {
@@ -823,7 +832,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 }
 
                 retVal = (CacheInsResultWithEntry)((OperationResponse)result).SerializablePayload;
-                if (retVal.Entry != null && ((OperationResponse)result).UserPayload!=null)
+                if (retVal.Entry != null && ((OperationResponse)result).UserPayload != null)
                     retVal.Entry.Value = ((OperationResponse)result).UserPayload;
             }
             catch (Runtime.Exceptions.SuspectedException se)
@@ -862,6 +871,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.Insert, new object[] { keys, cacheEntries, taskId, operationContext });
+                func.Cancellable = true;
                 object result = Cluster.SendMessage(dest, func, GroupRequest.GET_FIRST, false);
                 if (result == null)
                 {
@@ -913,7 +923,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (result != null)
                 {
                     retVal = ((OperationResponse)result).SerializablePayload as CacheEntry;
-                    if (retVal != null && ((OperationResponse)result).UserPayload!=null)
+                    if (retVal != null && ((OperationResponse)result).UserPayload != null)
                         retVal.Value = ((OperationResponse)result).UserPayload;
                 }
             }
@@ -954,6 +964,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.Remove, new object[] { keys, ir, notify, cbEntry, taskId, providerName, operationContext }, false);
+                func.Cancellable = true;
                 RspList results = Cluster.Multicast(dests, func, GetFirstResponse, false);
 
                 if (results == null)
@@ -961,7 +972,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     return removedEntries;
                 }
 
-                 
+
                 if (results.SuspectedMembers.Count == dests.Count)
                 {
                     //All the members of this group has gone down. 
@@ -980,13 +991,17 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 IEnumerator ia = rspList.GetEnumerator();
                 while (ia.MoveNext())
                 {
+
+                    if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                     Rsp rsp = (Rsp)ia.Current;
                     Hashtable removed = (Hashtable)rsp.Value;
 
                     IDictionaryEnumerator ide = removed.GetEnumerator();
                     while (ide.MoveNext())
                     {
-                        if(!removedEntries.ContainsKey(ide.Key))
+                        if (!removedEntries.ContainsKey(ide.Key))
                             removedEntries.Add(ide.Key, ide.Value);
                     }
                 }
@@ -1016,6 +1031,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.RemoveGroup, new object[] { group, subGroup, notify, operationContext }, false);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToServers(func, GroupRequest.GET_ALL, false);
 
                 if (results == null)
@@ -1063,6 +1079,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.RemoveByTag, new object[] { tags, comparisonType, notify, operationContext }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
 
                 if (results == null)
@@ -1116,7 +1133,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     return retVal;
                 }
-                retVal = (Hashtable)result; 
+                retVal = (Hashtable)result;
             }
             catch (Runtime.Exceptions.SuspectedException se)
             {
@@ -1209,10 +1226,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             protected override object FetchObject(object key, OperationContext operationContext)
             {
                 PartitionedServerCache ps = _cache as PartitionedServerCache;
-                
+
                 if (_isLocalEnumerator)
                     return ps.Local_Get(key, operationContext);
-                
+
                 return ps.Clustered_Get(_address, key, operationContext);
             }
         }
@@ -1328,7 +1345,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                     rsp = (Rsp)validRsps[i];
                     enums[index++] = new LazyPartitionedKeysetEnumerator(this,
                         rsp.Value as object[],
-                        rsp.Sender as Address, 
+                        rsp.Sender as Address,
                         false);
                 }
                 retVal = new AggregateEnumerator(enums);
@@ -1369,6 +1386,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.RegisterCQ, new object[] { query, clientId, clientUniqueId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
                 ClusterHelper.ValidateResponses(results, null, Name);
             }
@@ -1389,6 +1407,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.SearchCQ, new object[] { query, clientId, clientUniqueId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
 
                 if (results == null)
@@ -1429,6 +1448,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             try
             {
                 Function func = new Function((int)OpCodes.SearchEntriesCQ, new object[] { query, clientId, clientUniqueId, notifyAdd, notifyUpdate, notifyRemove, operationContext, datafilters }, excludeSelf);
+                func.Cancellable = true;
                 RspList results = Cluster.BroadcastToMultiple(dests, func, GroupRequest.GET_ALL, false);
 
                 if (results == null)

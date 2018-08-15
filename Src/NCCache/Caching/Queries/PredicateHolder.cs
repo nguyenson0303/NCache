@@ -30,7 +30,7 @@ namespace Alachisoft.NCache.Caching.Queries
         private string _queryId;
         private IDictionary _attributeValues;
 
-        // this member is not serialzable.
+        // this member is not serializable.
         [NonSerialized]
         private Predicate _predicate;
 

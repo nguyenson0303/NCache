@@ -122,7 +122,9 @@ namespace Alachisoft.NCache.Automation.Util
                 string logo = @"Alachisoft (R) NCache Utility " + TOOLNAME + ". Version NCache Open Source 4.9" +  @"
 Copyright (C) Alachisoft 2018. All rights reserved.";
 
-                outputProvider.WriteLine(logo+"\n");
+                outputProvider.WriteLine(logo);
+                outputProvider.WriteLine(Environment.NewLine);
+
             }
         }
 

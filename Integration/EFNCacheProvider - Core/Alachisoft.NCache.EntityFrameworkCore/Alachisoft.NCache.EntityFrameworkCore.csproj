@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>4.9.0.0</Version>
+    <Version>4.9.1.0</Version>
     <Authors>Alachisoft</Authors>
     <Company>Alachisoft</Company>
     <Product>NCacheEFCoreCachingPorvider</Product>
@@ -59,12 +59,12 @@
 
   <!--UnConditional nuget packages-->
   <ItemGroup>
-    <PackageReference Include="Alachisoft.NCache.OpenSource.SDK" Version="4.9.0" />
+    <PackageReference Include="Alachisoft.NCache.OpenSource.SDK" Version="4.9.1" />
     <PackageReference Include="protobuf-net" Version="2.2.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.4.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.4.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.5.0" />
     <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
   </ItemGroup>
 
@@ -83,6 +83,7 @@
     </EmbeddedResource>
   </ItemGroup>
 
+ 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="xcopy /Y &quot;$(TargetPath)&quot; &quot;$(SolutionDir)..\build\MSEntityFramework\Core\&quot;  2&gt;nul 1&gt;nul&#xD;&#xA;EXIT 0" />
   </Target>

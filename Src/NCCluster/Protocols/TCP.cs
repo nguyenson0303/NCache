@@ -39,7 +39,7 @@ namespace Alachisoft.NGroups.Protocols
     /// </summary>
     /// <author>  Bela Ban
     /// </author>
-    class TCP : Protocol, Receiver, ConnectionListener
+    class TCP : Protocol, ConnectionTable.Receiver, ConnectionTable.ConnectionListener
     {
         override public System.String Name
         {
@@ -252,6 +252,21 @@ namespace Alachisoft.NGroups.Protocols
             this.isStarting = false;
         }
 
+        public void HandleFailedNodes(object failedNodes)
+        {
+            if (failedNodes is ArrayList)
+            {
+                ArrayList nodes = (ArrayList)failedNodes;
+                if (nodes.Count > 0)
+                {
+                    NCacheLog.CriticalInfo("TCP.HandleFailedNodes()", " can not establish connection with all the nodes ");
+
+                    passUp(new Event(Event.CONNECTION_FAILURE, nodes, Priority.High));
+                }
+            }
+        }
+
+
         public override void receiveUpEvent(Event evt)
         {
             int type = evt.Type;
@@ -304,13 +319,14 @@ namespace Alachisoft.NGroups.Protocols
                         }
                     }
                     //To fix issue of cyclic dependency during double clustered operations
-                    else if (evt.Priority == Priority.Critical)
+                    else if(evt.Priority==Priority.Critical)
                     {
                         if (Stack != null && Stack.NCacheLog != null && Stack.NCacheLog.IsDebugEnabled)
                         {
                             Stack.NCacheLog.Debug("Protocol.receiveUpEvent()", "Event with critical priority received...");
                         }
-                        EventThreadPool.Instance.EnqueueEvent(new ClusterEvent(evt, this));
+                        System.Threading.ThreadPool.QueueUserWorkItem(new WaitCallback(ThreadPoolPassup), evt);
+
                         return;
                     }
 
@@ -737,7 +753,7 @@ namespace Alachisoft.NGroups.Protocols
             Message msg;
             System.Object dest_addr;
             bool reEstablishCon = false;
-
+            
             stats = new TimeStats(1);
             if (evt.Type != Event.MSG && evt.Type != Event.MSG_URGENT)
             {
@@ -786,7 +802,6 @@ namespace Alachisoft.NGroups.Protocols
                                 if (asyncThreads != null)
                                 {
                                     TCPAsyncMulticast asyncMcast = new TCPAsyncMulticast(this, msg, reEstablishCon);
-
                                     Thread asyncThread = new Thread(new ThreadStart(asyncMcast.Process));
                                     asyncThreads.Add(asyncThread);
                                     asyncThread.Start();
@@ -810,7 +825,6 @@ namespace Alachisoft.NGroups.Protocols
                             if (asyncThreads != null)
                             {
                                 TCPAsnycUnicast asyncUcast = new TCPAsnycUnicast(this, msg, reEstablishCon);
-
                                 Thread asyncThread = new Thread(new ThreadStart(asyncUcast.Process));
                                 asyncThreads.Add(asyncThread);
                                 asyncThread.Start();
@@ -874,7 +888,7 @@ namespace Alachisoft.NGroups.Protocols
             if (totalhdr != null)
             {
             }
-
+            
 
 
             if (!asyncPassup)
@@ -1351,13 +1365,7 @@ namespace Alachisoft.NGroups.Protocols
                         {
 
                             address = tmpvec[i] as Address;
-                            //Goes false only when isStarting is true along with the ip matches
-                            //Dont want to exclude membership of the physical node replica since membership is changing and to avoid thread synchronization to go haywire 
-                            if (address != null && !(isStarting && address.IpAddress.Equals(local_addr.IpAddress)))
-                            {
-                                temp_mbrs.Add(tmpvec[i]);
-                            }
-
+                           temp_mbrs.Add(tmpvec[i]);
                             members.Add(tmpvec[i]);
                             nodeJoiningList.Add(tmpvec[i]);
                         }
@@ -1389,13 +1397,7 @@ namespace Alachisoft.NGroups.Protocols
                     ArrayList failedNodes = ct.synchronzeMembership(temp_mbrs, false);
 
                     passUp(evt);
-                    if (failedNodes.Count > 0)
-                    {
-                        if (Stack.NCacheLog.IsInfoEnabled) Stack.NCacheLog.Info("TCP.HandleDownEvent()", " can not establish connection with all the nodes ");
-
-                        passUp(new Event(Event.CONNECTION_FAILURE, failedNodes, Priority.High));
-                    }
-
+                   
                     break;
                 case Event.GET_LOCAL_ADDRESS:  // return local address -> Event(SET_LOCAL_ADDRESS, local)
                     passUp(new Event(Event.SET_LOCAL_ADDRESS, local_addr));

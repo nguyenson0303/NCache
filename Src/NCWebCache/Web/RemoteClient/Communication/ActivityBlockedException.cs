@@ -21,20 +21,7 @@ namespace Alachisoft.NCache.Web.Communication
     /// <summary>
     /// Thrown whenever an operation is blocked due to node down of server.
     /// </summary>
-    /// <example>The following example demonstrates how to use this exception in your code.
-    /// <code>
-    /// 
-    /// try
-    /// {
-    ///	    ...
-    /// }
-    /// catch(ActivityBlockedException ex)
-    /// {
-    ///     ...
-    /// }
-    /// 
-    /// </code>
-    /// </example>
+   
     [Serializable]
     internal class ActivityBlockedException : CacheException
     {

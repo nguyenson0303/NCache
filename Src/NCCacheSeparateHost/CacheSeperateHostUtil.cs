@@ -13,15 +13,9 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Alachisoft.NCache.Management;
-using System.Net.Sockets;
-using Alachisoft.NCache.Common.Logger;
 using System.Configuration;
 using System.Net;
-using System.Timers;
 using Alachisoft.NCache.SocketServer;
 using System.Threading;
 using Alachisoft.NCache.Common.Util;
@@ -31,23 +25,21 @@ using Alachisoft.NCache.Config.Dom;
 using Alachisoft.NCache.Common;
 using System.Diagnostics;
 using Alachisoft.NCache.Common.Net;
-using Alachisoft.NCache.Common.Stats;
-
 
 namespace Alachisoft.NCache.CacheHost
 {
     class CacheSeperateHostUtil
     {
-        private static Alachisoft.NCache.Management.CacheHost _nchost;
+        private static Management.CacheHost _nchost;
         private static SocketServer.SocketServer _socketServer;
         private static SocketServer.SocketServer _managementSocketServer;
-        private static String cacheName;
+        private static string cacheName;
         private static string _applicationName = "NCache";
         private static int managementPort = -1;
 
         public static int ErrorCode = 500;
 
-        public static Alachisoft.NCache.Management.CacheHost NChost { get { return _nchost; } }
+        public static Management.CacheHost NChost { get { return _nchost; } }
         public static SocketServer.SocketServer SocServer { get { return _socketServer; } }
         public static SocketServer.SocketServer ManagementSocketServer { get { return _managementSocketServer; } }
         public static String CacheName { get { return cacheName; } }
@@ -63,7 +55,7 @@ namespace Alachisoft.NCache.CacheHost
         public static bool populateValues(string[] args)
         {
             bool isValid = false;
-            String errorMessage = "";
+            string errorMessage = "";
             try
             {
                 if (args != null && args.Length > 0)
@@ -164,7 +156,7 @@ namespace Alachisoft.NCache.CacheHost
             IPAddress clientServerIp = null;
             try
             {
-                Alachisoft.NCache.Common.Util.AssemblyResolveEventHandler.CacheName = cacheName;
+                AssemblyResolveEventHandler.CacheName = cacheName;
                 AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
                 AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(Alachisoft.NCache.Common.Util.AssemblyResolveEventHandler.DeployAssemblyHandler);
                 int sendBuffer = SocketServer.SocketServer.DEFAULT_SOCK_BUFFER_SIZE;
@@ -241,12 +233,12 @@ namespace Alachisoft.NCache.CacheHost
 
 
                 _socketServer.CacheName = cacheName;
-                Alachisoft.NCache.SocketServer.CacheProvider.Provider = _nchost.HostServer;
+                CacheProvider.Provider = _nchost.HostServer;
                 _managementSocketServer = new SocketServer.SocketServer(managementPort, sendBuffer, receiveBuffer);
 
 
-                _managementSocketServer.Start(clusterIp, Alachisoft.NCache.Common.Logger.LoggerNames.CacheManagementSocketServer, "NManagement", CommandManagerType.NCacheHostManagement, ConnectionManagerType.Management);
-                _socketServer.Start(clientServerIp, Alachisoft.NCache.Common.Logger.LoggerNames.SocketServerLogs, "Cache Host", CommandManagerType.NCacheClient, ConnectionManagerType.HostClient);
+                _managementSocketServer.Start(clusterIp, Common.Logger.LoggerNames.CacheManagementSocketServer, "NManagement", CommandManagerType.NCacheHostManagement, ConnectionManagerType.Management);
+                _socketServer.Start(clientServerIp, Common.Logger.LoggerNames.SocketServerLogs, "Cache Host", CommandManagerType.NCacheClient, ConnectionManagerType.HostClient);
 
                 CacheServer.SocketServerPort = managementPort;
                 CacheServer.ConnectionManager = SocketServer.SocketServer.HostClientConnectionManager;

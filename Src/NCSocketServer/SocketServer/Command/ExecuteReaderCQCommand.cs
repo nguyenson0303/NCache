@@ -22,7 +22,7 @@ using Alachisoft.NCache.SocketServer.Command.ResponseBuilders;
 using Alachisoft.NCache.SocketServer.RuntimeLogging;
 using System.Diagnostics;
 using Alachisoft.NCache.Common.Monitoring;
-
+using Alachisoft.NCache.Caching;
 namespace Alachisoft.NCache.SocketServer.Command
 {
     class ExecuteReaderCQCommand : CommandBase
@@ -73,8 +73,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 QueryDataFilters datafilters = new QueryDataFilters(cmdInfo.addDF, cmdInfo.updateDF, cmdInfo.removeDF);
 
                 Alachisoft.NCache.Caching.OperationContext operationContext = new Caching.OperationContext(Alachisoft.NCache.Caching.OperationContextFieldName.OperationType, Alachisoft.NCache.Caching.OperationContextOperationType.CacheOperation);
-                operationContext.Add(Caching.OperationContextFieldName.ClientId, clientManager.ClientID);
-                operationContext.Add(Caching.OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
+                operationContext.Add(OperationContextFieldName.ClientId, clientManager.ClientID);
+                operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
 
                 resultSetList = cache.Cache.ExecuteReaderCQ(cmdInfo.Query, cmdInfo.Values, cmdInfo.getData, cmdInfo.chunkSize, cmdInfo.clientUniqueId, clientManager.ClientID, cmdInfo.notifyAdd, cmdInfo.notifyUpdate, cmdInfo.notifyRemove, operationContext, datafilters);
                 stopWatch.Stop(); 

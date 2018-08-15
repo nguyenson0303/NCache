@@ -241,7 +241,7 @@ namespace Alachisoft.NCache.Caching.Messaging
         /// </summary>
         /// <param name="messageId"></param>
         /// <param name="reason"></param>
-        /// <returns>Retruns message object</returns>
+        /// <returns>Returns message object</returns>
         public Message RemoveMessage(string messageId, MessageRemovedReason reason)
         {
             Message message = null;
@@ -259,7 +259,7 @@ namespace Alachisoft.NCache.Caching.Messaging
                         message.MessageMetaData.IsAssigned = true;
                         message.MessageMetaData.AssigmentTime = null;
                         message.MessageMetaData.MessgeFailureReason = MessgeFailureReason.Expired;
-                        //moved to unldeivered queue
+                        //moved to undelivered queue
                         _undeliveredMessages.Enqueue(message.MessageId, message);
                         removed = false;
                     }
@@ -591,7 +591,7 @@ namespace Alachisoft.NCache.Caching.Messaging
                 message.MessageMetaData.IsAssigned = false;
                 message.MessageMetaData.AssigmentTime = null;
 
-                //agains; enque for assignment
+                //again enqueue for assignment
                 switch (message.MessageMetaData.SubscriptionType)
                 {
                     case SubscriptionType.Subscriber:
@@ -720,7 +720,7 @@ namespace Alachisoft.NCache.Caching.Messaging
                         subscriptionInfo.ClientId = clientSubscription;
                         subscriptionInfo.Type = message.MessageMetaData.SubscriptionType;
 
-                        //we assume that if receptionlist is not empty then message is assigned to single client
+                        //we assume that if reception list is not empty then message is assigned to single client
                         if (message.MessageMetaData.RecepientList != null && message.MessageMetaData.RecepientList.Count > 0)
                         {
                             subscriptionInfo.SubscriptionId = message.MessageMetaData.RecepientList.First<string>();

@@ -54,7 +54,8 @@ namespace Alachisoft.NCache.Caching
         ClientDeleteLockAccessType,
         DontFireClearNotification,
         GroupInfo,
-        InternalOperation
+        InternalOperation,
+        ClientOperationTimeout
     }
 
 }

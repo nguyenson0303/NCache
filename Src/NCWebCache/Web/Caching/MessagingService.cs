@@ -61,5 +61,9 @@ namespace Alachisoft.NCache.Web.Caching
             {
             }
         }
+        internal void Dispose()
+        {
+            _pubSubManager.Dispose();
+        }
     }
 }

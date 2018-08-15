@@ -945,7 +945,8 @@ namespace Alachisoft.NCache.Caching
                     e.Value = cbEntry;
                 }
                 e._type = _type;
-            }
+ 		e._itemRemovedListener = _itemRemovedListener;
+                e._itemUpdateListener = _itemUpdateListener;            }
 
             return e;
 
@@ -991,7 +992,8 @@ namespace Alachisoft.NCache.Caching
                 e._providerName = this._providerName;                
                 e._type = this._type;
                 e._indexInfo = this._indexInfo;
-            }
+ 		e._itemRemovedListener = _itemRemovedListener;
+                e._itemUpdateListener = _itemUpdateListener;            }
             return e;
         }
 
@@ -1038,7 +1040,8 @@ namespace Alachisoft.NCache.Caching
 
                             e._resyncProviderName = this._resyncProviderName;                            
                             e.Priority = Priority;
-                            return e;
+			    e._itemRemovedListener = _itemRemovedListener;
+                            e._itemUpdateListener = _itemUpdateListener;                            return e;
                         }
                     }
                     else
@@ -1062,7 +1065,8 @@ namespace Alachisoft.NCache.Caching
                             
                             e._resyncProviderName = this._resyncProviderName;                            
                             e.Priority = Priority;
-                            return e;
+			    e._itemRemovedListener = _itemRemovedListener;
+                            e._itemUpdateListener = _itemUpdateListener;                            return e;
                         }
                         else
                         {
@@ -1079,7 +1083,8 @@ namespace Alachisoft.NCache.Caching
                             
                             e._resyncProviderName = this._resyncProviderName;                            
                             e.Priority = Priority;
-                            return e;
+			    e._itemRemovedListener = _itemRemovedListener;
+                            e._itemUpdateListener = _itemUpdateListener;                            return e;
                         }
                     }
                 }
@@ -1216,7 +1221,8 @@ namespace Alachisoft.NCache.Caching
 				_priorityValue = (CacheItemPriority)reader.ReadInt32();
                 ProviderName = reader.ReadObject() as string;            
                 _type = reader.ReadObject() as string;
-            }
+		_itemUpdateListener = reader.ReadObject() as ArrayList;
+                _itemRemovedListener = reader.ReadObject() as ArrayList;            }
         }
 
         void ICompactSerializable.Serialize(CompactWriter writer)
@@ -1243,7 +1249,8 @@ namespace Alachisoft.NCache.Caching
                 writer.WriteObject(ProviderName);
 
                 writer.WriteObject(this._type);
-            }
+ 	        writer.WriteObject(_itemUpdateListener);
+                writer.WriteObject(_itemRemovedListener);            }
         }
 
         #endregion

@@ -57,7 +57,10 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion("4.9.0")]
 
-[assembly: AssemblyFileVersionAttribute("4.9.0.0")]
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyName("")]
+
+[assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 
 [assembly: AssemblyDescriptionAttribute("NCache Server")]
 

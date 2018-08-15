@@ -18,8 +18,8 @@ using Alachisoft.NCache.Common.Net;
 namespace Alachisoft.NCache.Caching.Topologies.Clustered
 {
     /// <summary>
-    /// Mirror Management Interface exposes the mirror management functionaly to the cluster services layer. 
-    /// The Mirror Manager returns the map of cluster with respect to the joining opr leaving of new node. 
+    /// Mirror Management Interface exposes the mirror management functionally to the cluster services layer. 
+    /// The Mirror Manager returns the map of cluster with respect to the joining or leaving of new node. 
     /// </summary>
     interface IMirrorManagementMember
     {

@@ -36,7 +36,7 @@ using Alachisoft.NCache.Common.DataStructures.Clustered;
 namespace Alachisoft.NCache.Caching.DatasourceProviders
 {
 	/// <summary>
-	/// Manager class for read-trhough and write-through operations
+	/// Manager class for read-through and write-through operations
 	/// </summary>
 
 	internal class DatasourceMgr: IDisposable
@@ -78,14 +78,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         
         public DSAsyncUpdatesProcessor _dsUpdateProcessor;
 		/// <summary> The external datasource reader </summary>
-		private Hashtable				_queue;
-        public Hashtable Queue
-        {
-            get
-            {
-                return _queue;
-            }
-        }
+		internal Hashtable				_queue;
+
         private string _defaultReadThruProvider;
 
         private string _defaultWriteThruProvider;
@@ -123,6 +117,14 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         public string CacheName
         {
             get { return _cacheName; }
+        }
+
+        public Hashtable Queue
+        {
+            get
+            {
+                return _queue;
+            }
         }
 
         internal CacheBase CacheImpl
@@ -498,8 +500,8 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
                         throw new OperationFailedException("Error occurred while synchronization with data source; " + ex.Message);
                     }
                 }
-                //}
-                ////verify group/subgroup and tags
+
+                //verify group/subgroup and tags
                 
                 if (!item.Value.GetType().IsSerializable && !_type.IsAssignableFrom(item.Value.GetType())) throw new OperationFailedException("Read through provider returned an object that is not serializable.");
 
@@ -845,7 +847,12 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             if (_writerProivder == null) return;
             WriteThruProviderMgr writeThruManager = GetProvider(operation.ProviderName);
             if (writeThruManager != null)
+            {
+                if (operation != null && operation.Context == null)
+                    operation.Context = _context;
+
                 writeThruManager.WriteBehind(operation);
+            }
         }
 
         internal void WriteBehind(ArrayList operations)
@@ -854,7 +861,12 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
             DSWriteBehindOperation operation = operations[0] as DSWriteBehindOperation;
             WriteThruProviderMgr writeThruManager = (operation != null) ? GetProvider(operation.ProviderName) : null;//bulk write thru call have same provider
             if (writeThruManager != null)
+            {
+                if (operation != null && operation.Context == null)
+                    operation.Context = _context;
+
                 writeThruManager.WriteBehind(operations);
+            }
         }
         public void SetState(string taskId, string providerName, OpCode opCode, WriteBehindAsyncProcessor.TaskState state)
         {
@@ -903,7 +915,7 @@ namespace Alachisoft.NCache.Caching.DatasourceProviders
         }
 
         /// <summary>
-        /// Deqeueu a task mathcing taskId
+        /// Dequeue a task matching taskId
         /// </summary>
         /// <param name="taskId">taskId</param>
         public void DequeueWriteBehindTask(string[] taskId, string providerName)

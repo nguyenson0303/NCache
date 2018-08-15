@@ -87,6 +87,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 operationContext.Add(OperationContextFieldName.RaiseCQNotification, true);
                 operationContext.Add(OperationContextFieldName.ClientLastViewId, cmdInfo.ClientLastViewId);
                 operationContext.Add(OperationContextFieldName.RemoveQueryOperation, false);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
 
                 nCache.Cache.DeleteQuery(cmdInfo.Query, cmdInfo.Values, operationContext);
 
@@ -100,6 +102,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.deleteQueryResponse = deleteQueryResponse;
 
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

@@ -33,7 +33,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         int _bucketsToSacrifice;
         int _percentWeightToSacrifice; //weight to sacrifice in percent. (w.r.t the same node data).        
         int _percentWeightOfCluster; //%age weight of cluster, THIS node is keeping .This helps in calculating this node's share
-        int _cushionFactor; //Cushion +- to be considered as Algorithm is Aprroximate rather Exact.
+        int _cushionFactor; //Cushion +- to be considered as Algorithm is Approximate rather Exact.
         DistributionData _distData; //provide information about buckets and other calculations.        
         public static int WeightBalanceThresholdPercent = 10; //Percent weight threshold before balancing weight        
         private long _maxCacheSize = 1073741824; //Default One GB = 1024 * 1024 * 1024 (Byte * KB * MB = GB) User provided in if specified at UI.        

@@ -689,7 +689,7 @@ namespace Alachisoft.NCache.Caching.Queries
             return namedTagKey;
         }
 
-        #region ISizable Impelementation
+        #region ISizable Implementation
 
         public long IndexInMemorySize
         {

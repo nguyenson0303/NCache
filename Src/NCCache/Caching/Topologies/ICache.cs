@@ -137,5 +137,8 @@ namespace Alachisoft.NCache.Caching.Topologies
         /// </summary>
         Array Keys { get; }
 
-	}
+        void LogBackingSource();
+
+
+    }
 }

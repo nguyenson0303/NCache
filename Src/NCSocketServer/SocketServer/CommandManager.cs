@@ -74,6 +74,7 @@ namespace Alachisoft.NCache.SocketServer
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Common.DataStructures.EnumerationPointer), 161);
 
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Common.DataStructures.EnumerationDataChunk), 162);
+            if (ServiceConfiguration.EnableRequestCancellation) RequestMonitor.Instance.Initialize();
         }
 
         public object Deserialize(Stream buffer)
@@ -532,7 +533,7 @@ namespace Alachisoft.NCache.SocketServer
                     incommingCmd = new TouchCommand();
                     break;
 
-              
+
 
                 #region PUB_SUB
                 case Common.Protobuf.Command.Type.GET_TOPIC:
@@ -575,6 +576,14 @@ namespace Alachisoft.NCache.SocketServer
 
             try
             {
+                if (incommingCmd != null)
+                {
+                    incommingCmd.RequestTimeout = clientManager.RequestTimeout;
+
+                    if (IsMonitoringCommand(command) && ServiceConfiguration.EnableRequestCancellation)
+                        RequestMonitor.Instance.RegisterClientrequestsInLedger(clientManager.ClientID, ((NCache)clientManager.CmdExecuter).Cache.NCacheLog, command.requestID, incommingCmd);
+
+                }
                 if (isUnsafeCommand && clientManager.SupportAcknowledgement)
                 {
                     if (clientDisposed)
@@ -584,6 +593,10 @@ namespace Alachisoft.NCache.SocketServer
                             acknowledgementId);
                 }
                 incommingCmd.ExecuteCommand(clientManager, command);
+                if (command.type == Alachisoft.NCache.Common.Protobuf.Command.Type.INIT && ServiceConfiguration.EnableRequestCancellation)
+                {
+                    RequestMonitor.Instance.RegisterClientLedger(clientManager.ClientID, ((NCache)clientManager.CmdExecuter).Cache.NCacheLog);
+                }
             }
             catch (Exception ex)
             {
@@ -593,6 +606,14 @@ namespace Alachisoft.NCache.SocketServer
                 throw;
             }
 
+            finally
+            {
+                if (IsMonitoringCommand(command) && ServiceConfiguration.EnableRequestCancellation)
+                {
+                    incommingCmd.Dispose();
+                    RequestMonitor.Instance.UnRegisterClientRequests(clientManager.ClientID, command.requestID);
+                }
+            }
             if (SocketServer.Logger.IsDetailedLogsEnabled) SocketServer.Logger.NCacheLog.Info("ConnectionManager.ReceiveCallback", clientManager.ToString() + " after executing COMMAND : " + command.type.ToString() + " RequestId :" + command.requestID);
 
             if (SocketServer.IsServerCounterEnabled) _perfStatsCollector.MsecPerCacheOperationEndSample();
@@ -841,17 +862,32 @@ namespace Alachisoft.NCache.SocketServer
             return bookie.GetRequestStatus(clientId, requestId, commandId);
         }
 
-        private const string EVAL_LIMIT_MESSAGE = "You've hit the maximum requests for cache '{0}' that can be made to a cache server under pre-evaluation. Please request a trial license key at sales@alachisoft.com to remove this limitation.";
-
-        static string CACHE_NAME = "";
-
-        /// <summary>This method throttles and increments the total requests if the License is in Evaluation mode. </summary>
-        /// <param name="exception">Sets an exception if the number of performed requests are greater than the limit.</param>
-        /// <returns>True indicating to continue execution, else stop...</returns>
-        private bool CheckContinuationAndThrottle(ClientManager clientManager, out Exception exception)
+        private bool IsMonitoringCommand(Alachisoft.NCache.Common.Protobuf.Command command)
         {
-            exception = null;
-            return true;
+            switch (command.type)
+            {
+                case Common.Protobuf.Command.Type.INIT:
+                case Common.Protobuf.Command.Type.GET_RUNNING_SERVERS:
+                case Common.Protobuf.Command.Type.GET_HASHMAP:
+                case Common.Protobuf.Command.Type.REGISTER_NOTIF:
+                case Common.Protobuf.Command.Type.GET_TYPEINFO_MAP:
+                case Common.Protobuf.Command.Type.GET_EXPIRATION:
+                case Common.Protobuf.Command.Type.GET_THRESHOLD_SIZE:
+                case Common.Protobuf.Command.Type.GET_OPTIMAL_SERVER:
+                    return false;
+                default:
+                    return true;
+            }
         }
+
+
+
+        public void Dispose()
+        {
+            if (RequestMonitor.Instance != null && ServiceConfiguration.EnableRequestCancellation)
+                RequestMonitor.Instance.Dispose();
+
+        }
+
     }
 }

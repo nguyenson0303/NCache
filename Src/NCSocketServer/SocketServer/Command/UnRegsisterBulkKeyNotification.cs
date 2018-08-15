@@ -55,6 +55,9 @@ namespace Alachisoft.NCache.SocketServer.Command
             try
             {
                 NCache nCache = clientManager.CmdExecuter as NCache;
+                OperationContext operationContext = new OperationContext(OperationContextFieldName.OperationType, OperationContextOperationType.CacheOperation);
+                operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
                 nCache.Cache.UnregisterKeyNotificationCallback(cmdInfo.Keys
                     , new CallbackInfo(clientManager.ClientID, cmdInfo.UpdateCallbackId, EventDataFilter.None) // DataFilter not required while unregistration
                     , new CallbackInfo(clientManager.ClientID, cmdInfo.RemoveCallbackId, EventDataFilter.None) // DataFilter not required while unregistration
@@ -66,6 +69,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.requestId = command.requestID;
                 response.commandID = command.commandID;
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

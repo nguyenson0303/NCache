@@ -18,6 +18,7 @@ using Alachisoft.NCache.Common.DataStructures;
 using Alachisoft.NCache.Common;
 using Alachisoft.NCache.Common.Queries;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
+using System.Threading;
 
 namespace Alachisoft.NCache.Caching.Queries
 {
@@ -84,7 +85,8 @@ namespace Alachisoft.NCache.Caching.Queries
             return new RedBlackEnumerator();
         }
 
-        public void GetData(object key, ComparisonType comparisonType, IQueryResult result, CollectionOperation mergeType)
+        public void GetData(object key, ComparisonType comparisonType, IQueryResult result, CollectionOperation mergeType, CancellationToken token)
+        
         {
             RedBlack<T>.COMPARE compare = RedBlack<T>.COMPARE.EQ;
 
@@ -125,7 +127,7 @@ namespace Alachisoft.NCache.Caching.Queries
                         break;
                 }
                 if (key is T)
-                    _rbTree.GetData((T) key, compare, result, mergeType);
+                    _rbTree.GetData((T) key, compare, result, mergeType,token);
                 else throw new InvalidCastException("Object must be of type " + typeof (T).Name);
             }
         }

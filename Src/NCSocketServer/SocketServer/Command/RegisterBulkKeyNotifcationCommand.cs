@@ -96,6 +96,8 @@ namespace Alachisoft.NCache.SocketServer.Command
 
                 OperationContext context = new OperationContext(OperationContextFieldName.OperationType, OperationContextOperationType.CacheOperation);
                 context.Add(OperationContextFieldName.ClientId, !string.IsNullOrEmpty(cmdInfo.SurrogateClientID) ? cmdInfo.SurrogateClientID : clientManager.ClientID);
+                context.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                context.CancellationToken = CancellationToken;
 
                 nCache.Cache.RegisterKeyNotificationCallback(cmdInfo.Keys,
                     cbUpdate, cbRemove, context);
@@ -109,6 +111,12 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.requestId = command.registerBulkKeyNotifCommand.requestId;
                 response.commandID = command.commandID;
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
+            }
+            catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
             }
             catch (Exception exc)
             {

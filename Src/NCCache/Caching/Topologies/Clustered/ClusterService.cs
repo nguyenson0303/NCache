@@ -34,7 +34,8 @@ using Alachisoft.NCache.Caching.Topologies.History;
 #endif
 using Alachisoft.NCache.Common.DataStructures.Clustered;
 using OpCodes = Alachisoft.NCache.Caching.Topologies.Clustered.ClusterCacheBase.OpCodes;
-
+using Alachisoft.NCache.Common.Util;
+using System.Threading;
 
 namespace Alachisoft.NCache.Caching.Topologies.Clustered
 {
@@ -446,6 +447,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
 
         public Latch ViewInstallationLatch = new Latch(ViewStatus.NONE);
+	private long _requestId;        
         /// <summary>
         /// returns true if the node is operating in coordinator mode. 
         /// </summary>
@@ -1586,15 +1588,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         /// <returns></returns>
         public object handleFunction(Address src, Function func)
         {
-            ThrowExceptionIfNonFunctional();
-
             return _participant.HandleClusterMessage(src, func);
         }
 
         public object handleFunction(Address src, Function func, out Address destination, out Message replicationMsg)
         {
-            ThrowExceptionIfNonFunctional();
-
             return _participant.HandleClusterMessage(src, func, out destination, out replicationMsg);
         }
 
@@ -1602,13 +1600,37 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
         {
             lock (_mutex) _reasonOfNonFunctionality = reason;
         }
+     
 
-        private void ThrowExceptionIfNonFunctional()
+        private long BeginMonitoringRequest(Address src,Function func)
         {
-            
+            long requestId = -1;
+            if (ServiceConfiguration.EnableRequestCancellation)
+            {
+               
+                if (func.Cancellable)
+                {
+                    func.StartExecution();
+                    func.InitializeCanellationToken();
+                    requestId = Interlocked.Increment(ref _requestId);
+
+                    RequestMonitor.Instance.RegisterClientrequestsInLedger(src.ToString(), _context.NCacheLog, requestId, func);
+                }
+               
+            }
+            return requestId;
         }
 
-        /// <summary>
+        private void EndMonitoringRequest(Address src,long requestId)
+        {
+            if (ServiceConfiguration.EnableRequestCancellation)
+            {
+                if (requestId != -1)
+                {
+                    RequestMonitor.Instance.UnRegisterClientRequests(src.ToString(), requestId);
+                }
+            }
+        }        /// <summary>
         ///	Called by the message dispactcher when a message request is received.
         /// </summary>
         /// <param name="msg">message request.</param>
@@ -1619,6 +1641,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 return null;
             }
+            long requestId = -1;            
             try
             {
                 bool isLocalReq = LocalAddress.CompareTo(req.Src) == 0;
@@ -1651,6 +1674,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 if (body is Function)
                 {
                     Function func = (Function)body;
+                    requestId = BeginMonitoringRequest(req.Src, func);
                     func.UserPayload = req.Payload;
                     if (isLocalReq && func.ExcludeSelf)
                     {
@@ -1728,7 +1752,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 return e;
             }
-
+	    finally
+            {
+                EndMonitoringRequest(req.Src, requestId);
+            }
             return null;
         }
 
@@ -1739,7 +1766,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
 
             if (req.Length == 0 && req.BufferLength == 0)
                 return null;
-
+            long requestId =-1;
             try
             {
                 bool isLocalReq = LocalAddress.CompareTo(req.Src) == 0;
@@ -1774,7 +1801,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
                 {
                     Function func = (Function)body;
                     func.UserPayload = req.Payload;
-                    if (isLocalReq && func.ExcludeSelf)
+		    requestId = BeginMonitoringRequest(req.Src, func);                    if (isLocalReq && func.ExcludeSelf)
                     {
                         if (req.HandledAysnc && req.RequestId > 0)
                             SendResponse(req.Src, null, req.RequestId);
@@ -1851,7 +1878,10 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             {
                 return e;
             }
-
+ 	    finally
+            {
+                EndMonitoringRequest(req.Src, requestId);
+            }
             return null;
         }
 

@@ -721,7 +721,7 @@ namespace Alachisoft.NCache.Caching.Statistics
                         _pcMsecPerDSUpdateBase = new PerformanceCounter(PC_CATEGORY, "Average us/datasource update base", _instanceName, false);
                         _usMsecPerDSUp = new UsageStats();
                         _pcDSFailedOpsPerSec = new PerformanceCounter(PC_CATEGORY, "Datasource failed operations/sec", _instanceName, false);
-                        _pcWBCurrenBatchOpCount = new PerformanceCounter(PC_CATEGORY, "Current batch operations count", _instanceName, false);
+                        _pcWBCurrenBatchOpCount = new PerformanceCounter(PC_CATEGORY, "Write-behind batch count", _instanceName, false);
                         
                     }
 
@@ -1377,10 +1377,8 @@ namespace Alachisoft.NCache.Caching.Statistics
                 lock (_pcMsecPerUpdAvg)
                 {
                     _usMsecPerUpd.EndSample();
-                  //  TimeSpan ts = new TimeSpan(_usMsecPerUpd.Current);
                     _pcMsecPerUpdAvg.IncrementBy(_usMsecPerUpd.Current * 1000000);//ts.Milliseconds);
                     _pcMsecPerUpdBase.Increment();
-                    //_pcMsecPerUpdAvg.NextValue();
                 }
             }
 		}
@@ -1405,8 +1403,7 @@ namespace Alachisoft.NCache.Caching.Statistics
                 lock (_pcMsecPerDelAvg)
                 {
                     _usMsecPerDel.EndSample();
-                 //   TimeSpan ts = new TimeSpan(_usMsecPerUpd.Current);
-                    _pcMsecPerDelAvg.IncrementBy(_usMsecPerDel.Current * 1000000); //ts.Milliseconds);
+                    _pcMsecPerDelAvg.IncrementBy(_usMsecPerDel.Current * 1000000); 
                     _pcMsecPerDelBase.Increment();
                 }
             }
@@ -1436,8 +1433,7 @@ namespace Alachisoft.NCache.Caching.Statistics
                 lock (_pcMsecPerDSWriteAvg)
                 {
                     _usMsecPerDSWrite.EndSample();
-                    //   TimeSpan ts = new TimeSpan(_usMsecPerUpd.Current);
-                    _pcMsecPerDSWriteAvg.IncrementBy(_usMsecPerDSWrite.Current * 1000000); //ts.Milliseconds);
+                    _pcMsecPerDSWriteAvg.IncrementBy(_usMsecPerDSWrite.Current * 1000000); 
                     _pcMsecPerDSWriteBase.IncrementBy(bulkCount);
                 }
             }

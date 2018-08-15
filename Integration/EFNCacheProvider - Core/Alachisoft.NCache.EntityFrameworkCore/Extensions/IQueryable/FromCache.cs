@@ -5,20 +5,22 @@
 // More projects: http://www.zzzprojects.com/
 // Copyright © ZZZ Projects Inc. 2014 - 2016. All rights reserved.
 
-using Alachisoft.NCache.EntityFrameworkCore.NCache;
-using Alachisoft.NCache.EntityFrameworkCore.NCLinq;
-using Alachisoft.NCache.Runtime.Caching;
-using Alachisoft.NCache.Runtime.Dependencies;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
-using Microsoft.EntityFrameworkCore.Query;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Logging;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
+using Alachisoft.NCache.Runtime.Dependencies;
+using System.Data.Common;
+using System.Data;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Data.SqlClient;
+using Alachisoft.NCache.EntityFrameworkCore.NCache;
+using Alachisoft.NCache.EntityFrameworkCore.NCLinq;
+using Microsoft.Extensions.Logging;
+using Alachisoft.NCache.Runtime.Caching;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using System.Diagnostics;
+using System;
 
 #if EF5 || EF6
 using System;
@@ -26,6 +28,8 @@ using System.Data.Entity;
 using System.Runtime.Caching;
 
 #elif EFCORE
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 #endif
 
 namespace Alachisoft.NCache.EntityFrameworkCore
@@ -234,23 +238,23 @@ namespace Alachisoft.NCache.EntityFrameworkCore
             }
 
             bool cacheHit = false;
-            Hashtable cacheResult = null;
+            IDictionary cacheResult = null;
 
+            queryStoreKey = QueryCacheManager.GetQueryCacheKey(query, optionsCloned.QueryIdentifier);
             if (optionsCloned.StoreAs == StoreAs.Collection || optionsCloned.QueryIdentifier == null)
             {
-                queryStoreKey = QueryCacheManager.GetQueryCacheKey(query, optionsCloned.QueryIdentifier);
                 if (optionsCloned.StoreAs == StoreAs.Collection)
                     cacheKey = queryStoreKey;
                 if (optionsCloned.QueryIdentifier == null)
-                    optionsCloned.QueryIdentifier = new Tag(queryStoreKey);
-                else
-                    optionsCloned.QueryIdentifier = new Tag(query.ElementType.FullName + ";" + optionsCloned.QueryIdentifier);
+                    optionsCloned.QueryIdentifier = queryStoreKey;
             }
 
             // Check in cache
             if (cachingMethod != CachingMethod.LoadIntoCache)
             {
-                cacheHit = QueryCacheManager.Cache.GetByTags(optionsCloned.QueryIdentifier, out cacheResult);
+
+                cacheHit = QueryCacheManager.Cache.GetByKey(queryStoreKey, out cacheResult);
+
             }
 
             // If not found in cache go for db
@@ -307,18 +311,19 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         }
 #endif
         #region Helper Methods
-        private static CacheDependency GetDependency(DependencyType targetDatabase, string commandText, string connectionString)
+        public static CacheDependency GetDependency(DependencyType targetDatabase, string commandText, string connectionString)
         {
             DbCommand dbCommand;
             switch (targetDatabase)
             {
                 case DependencyType.SqlServer:
                     dbCommand = new SqlCommand(commandText, new SqlConnection(connectionString));
-                    return CreateSqlDepenedency(connectionString, dbCommand);
+                    return CreateSqlDepenedency(connectionString, dbCommand);//new SqlCacheDependency(connectionString, command);
 
                 case DependencyType.Oracle:
+                    // TODO : [Hamza Rehman] Needs to be verified.
                     dbCommand = new SqlCommand(commandText, new SqlConnection(connectionString));
-                    return CreateOracleDepenedency(connectionString, dbCommand);
+                    return CreateOracleDepenedency(connectionString, dbCommand);//new OracleCacheDependency(connectionString, command);
                 default:
                     return null;
             }

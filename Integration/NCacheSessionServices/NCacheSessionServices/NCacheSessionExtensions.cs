@@ -33,7 +33,7 @@ namespace Alachisoft.NCache.Web.SessionState
         /// <param name="services"></param>
         /// <param name="configSection">The configuration section that contains the configuration</param>
         /// <returns></returns>
-        public static IServiceCollection SetNCacheSessionConfiguration(this IServiceCollection services,
+        public static IServiceCollection AddNCacheSession(this IServiceCollection services,
             IConfigurationSection configSection)
         {
             if (services == null)
@@ -46,53 +46,16 @@ namespace Alachisoft.NCache.Web.SessionState
                 throw new ArgumentNullException(nameof(configSection));
             }
 
-            return services.AddOptions().Configure<NCacheSessionConfiguration>(configSection);
-            
-        }
-
-        /// <summary>
-        /// Initializes NCache Session Storage Services configuration from a Json configuration file.
-        /// </summary>
-        /// <param name="services"></param>
-        /// <param name="configVirtualPath">The virtual path to the Json configuration file</param>
-        /// <returns></returns>
-        public static IServiceCollection SetNCacheSessionConfiguration(this IServiceCollection services,
-            string configVirtualPath)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-            if (string.IsNullOrEmpty(configVirtualPath))
-            {
-                throw new ArgumentNullException(nameof(configVirtualPath));
-            }
-
-            return
-                services.AddOptions()
-                    .Configure<NCacheSessionConfiguration>(
-                        new ConfigurationBuilder().AddJsonFile(configVirtualPath, false, true).Build());
-
-        }
-
-        /// <summary>
-        /// Initializes NCache Session Storage Services
-        /// </summary>
-        /// <returns></returns>
-        public static IServiceCollection AddNCacheSession(this IServiceCollection services)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
+            services.AddOptions().Configure<NCacheSessionConfiguration>(configSection);
             return services.AddService();
 
+
         }
+
+
 
         private static IServiceCollection AddService(this IServiceCollection services)
         {
-            services.AddDataProtection();
             return
                 services.AddSingleton<ISessionKeyGenerator, SessionKeyGenerator>()
                     .AddSingleton<ISessionKeyManager, SessionKeyManager>()
@@ -138,16 +101,26 @@ namespace Alachisoft.NCache.Web.SessionState
 
 
         /// <summary>
-        /// Adds the NCache Cache as the standard distibuted cache to be used by sessions
+        /// Adds the NCache Cache whose name is specified in the configuration as the standard distibuted cache to be used by sessions
         /// </summary>
+        /// <param name="services"></param>
+        /// <param name="configure"></param>
         /// <returns></returns>
-        public static IServiceCollection AddNCacheDistributedCache(this IServiceCollection services)
+        public static IServiceCollection AddNCacheDistributedCache(this IServiceCollection services,
+            Action<NCacheConfiguration> configure)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
+
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+            
+            services.Configure(configure);
             return services.AddSingleton<IDistributedCache, NCacheDistributedCache>();
         }
 
@@ -155,23 +128,23 @@ namespace Alachisoft.NCache.Web.SessionState
         /// Adds the NCache Cache whose name is specified in the configuration as the standard distibuted cache to be used by sessions
         /// </summary>
         /// <param name="services"></param>
-        /// <param name="configure"></param>
+        /// <param name="configSection">The virtual path to the Json configuration file</param>
         /// <returns></returns>
         public static IServiceCollection AddNCacheDistributedCache(this IServiceCollection services,
-            Action<NCacheSessionConfiguration> configure)
+          IConfigurationSection configSection)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (configure == null)
+            if (configSection == null)
             {
-                throw new ArgumentNullException(nameof(configure));
+                throw new ArgumentNullException(nameof(configSection));
             }
 
-            services.Configure(configure);
-            return services.AddSingleton<NCacheDistributedCache>();
+            services.AddOptions().Configure<NCacheConfiguration>(configSection);
+            return services.AddSingleton<IDistributedCache, NCacheDistributedCache>();
         }
 
         /// <summary>

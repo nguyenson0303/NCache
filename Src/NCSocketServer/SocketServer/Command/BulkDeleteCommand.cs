@@ -97,7 +97,8 @@ namespace Alachisoft.NCache.SocketServer.Command
                 if (!string.IsNullOrEmpty(cmdInfo.IntendedRecipient))
                     operationContext.Add(OperationContextFieldName.IntendedRecipient, cmdInfo.IntendedRecipient);
                 operationContext.Add(OperationContextFieldName.ClientId, clientManager.ClientID);
-
+		operationContext.Add(OperationContextFieldName.ClientOperationTimeout, clientManager.RequestTimeout);
+                operationContext.CancellationToken = CancellationToken;
                 nCache.Cache.Delete(cmdInfo.Keys, cmdInfo.FlagMap, cbEnrty, cmdInfo.ProviderName, operationContext);
                 stopWatch.Stop();
                
@@ -111,7 +112,13 @@ namespace Alachisoft.NCache.SocketServer.Command
                 response.bulkDeleteResponse = bulkDeleteResponse;
                 _serializedResponsePackets.Add(Alachisoft.NCache.Common.Util.ResponseHelper.SerializeResponse(response));
             }
-            catch (Exception exc)
+	    catch (OperationCanceledException ex)
+            {
+                exception = ex.ToString();
+                Dispose();
+
+            }            
+	    catch (Exception exc)
             {
                 _removeBulkResult = OperationResult.Failure;
                 exception = exc.ToString();

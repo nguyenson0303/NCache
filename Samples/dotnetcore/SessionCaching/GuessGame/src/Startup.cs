@@ -40,13 +40,12 @@ namespace Alachisoft.Samples.GuessGameCore
         {
             // Add framework services.
             services.AddMvc();
-            
-            //To test NCache Distributed Cache, uncomment these and comment the two lines below these
-            //services.AddNCacheDistributedCache();
+
+            //To test Sesssions with NCache Distributed Cache, uncomment these and comment the two lines below these
+            //services.AddNCacheDistributedCache(Configuration.GetSection("NCacheSettings"));
             //services.AddSession();
             
-            services.SetNCacheSessionConfiguration(Configuration.GetSection("NCacheSettings"));
-            services.AddNCacheSession();
+            services.AddNCacheSession(Configuration.GetSection("NCacheSettings"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

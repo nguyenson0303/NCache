@@ -198,6 +198,7 @@
     <Compile Include="Web\Caching\InprocCacheEssentials\InprocCacheAsyncEventsListener.cs" />
     <Compile Include="Web\Caching\InprocCacheEssentials\InprocCacheEventsListener.cs" />
     <Compile Include="Web\Caching\ItemCallbacksWrapper.cs" />
+    <Compile Include="Web\Caching\LogLevel.cs" />
     <Compile Include="Web\Caching\MessagingService.cs" />
     <Compile Include="Synchronization\SyncCache.cs" />
     <Compile Include="Util\AddressUtil.cs" />

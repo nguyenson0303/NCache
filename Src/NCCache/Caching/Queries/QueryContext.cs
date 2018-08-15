@@ -18,6 +18,7 @@ using Alachisoft.NCache.Common.DataStructures;
 using Alachisoft.NCache.Common.Queries;
 using Alachisoft.NCache.Caching.Queries.Filters;
 using Alachisoft.NCache.Common.Queries.Filters;
+using System.Threading;
 
 namespace Alachisoft.NCache.Caching.Queries
 {
@@ -34,6 +35,9 @@ namespace Alachisoft.NCache.Caching.Queries
         private IKeyFilter _keyFilter;
         private IKeyFilter _compoundFilter;
         
+
+        [NonSerialized]
+        private CancellationToken _cacnelationToken; 
         public QueryContext(Topologies.Local.LocalCacheBase cache)
         {
             _cache = cache;
@@ -120,6 +124,12 @@ namespace Alachisoft.NCache.Caching.Queries
             object obj = entry.DeflattedValue(CacheContext);
 
             return obj;
+        }
+
+	   public CancellationToken CancellationToken
+        {
+            get { return _cacnelationToken; }
+            set { _cacnelationToken = value; }
         }
     }
 }

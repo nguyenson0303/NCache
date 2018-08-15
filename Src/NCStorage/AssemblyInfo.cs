@@ -56,37 +56,10 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion("4.9.0")]
 
-//
-// Since we need to support two runtimes which are not fully backward compatible we have
-// to use side-by-side assemblies and that mandates a new version policy.
-//
-// From now on our version will obey the following structure.
-//		Major.Minor.RuntimePatch.Private
-//
-// Major
-//		Major version number of product, for example 1
-// Minor
-//		Minor version number of product, for example 5
-// RuntimePatch
-//		This is a number of the format RXX, where R is the runtime compaibility number
-//		and XX is a two digit patch number. Currently two values for R are defined.
-//		
-//		R = 1 (.NET 1.0 and 1.1)
-//		R = 2 (.NET 2.0)
-//		
-//		Everytime microsoft ships a .NET version that is not backward compatible to older
-//		versions we'll have to redefine R.
-// Private
-//		Defines the private or developer build numbers. Not to be used for production.
-//
-//#if VS2005
-//[assembly: AssemblyVersion("1.5.200.0")]
-//[assembly: AssemblyDescription(".NET 2.0 supported")]
-//#else
-//[assembly: AssemblyVersion("1.5.100.0")]
-//[assembly: AssemblyDescription(".NET 1.0 and 1.1 supported")]
-//#endif
 
-[assembly: AssemblyFileVersionAttribute("4.9.0.0")]
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyName("")]
+
+[assembly: AssemblyFileVersionAttribute("4.9.1.0")]
 [assembly: AssemblyDescriptionAttribute("Storage Classes")]
 [assembly: AssemblyInformationalVersion("4.9.0")]

@@ -184,7 +184,7 @@ namespace Alachisoft.NCache.Caching.Statistics
 		}
 
         /// <summary>
-        /// Gets/Sets teh data affinity of the cluster.
+        /// Gets/Sets the data affinity of the cluster.
         /// </summary>
         public ArrayList ClusterDataAffinity
         {

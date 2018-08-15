@@ -14,6 +14,8 @@
 
 using System;
 using System.Collections;
+using System.Threading;
+using Alachisoft.NCache.Caching.DataReader;
 using Alachisoft.NCache.Common.DataReader;
 using Alachisoft.NCache.Common.Queries;
 using Alachisoft.NCache.Util;
@@ -53,6 +55,7 @@ using Alachisoft.NCache.Storage;
 using Alachisoft.NCache.MapReduce;
 
 using Alachisoft.NCache.Caching.CacheSynchronization;
+using Alachisoft.NCache.Common.Resources;
 
 namespace Alachisoft.NCache.Caching.Topologies.Local
 {
@@ -1408,7 +1411,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             {
                 _context.PerfStatsColl.MsecPerQueryExecutionTimeBeginSample();
                
-                QueryContext queryContext = PrepareSearch(query, values, true);               
+                QueryContext queryContext = PrepareSearch(query, values, true, operationContext.CancellationToken);               
                 switch (queryContext.ResultSet.Type)
                 {
                     case QueryType.AggregateFunction:
@@ -1462,7 +1465,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                 if (currentQueryReduction.Tokens[0].ToString().ToLower().Equals("delete")) throw new Parser.ParserException("Only select query is supported.");
 
-                QueryContext queryContext = SearchInternal(currentQueryReduction.Tag as Predicate, MiscUtil.DeepClone(query.AttributeValues));
+                QueryContext queryContext = SearchInternal(currentQueryReduction.Tag as Predicate, MiscUtil.DeepClone(query.AttributeValues), operationContext.CancellationToken);
 
                 ClusteredArrayList result = queryContext.InternalQueryResult.GetArrayList();
 
@@ -1516,7 +1519,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             QueryResultSet resultSet = new QueryResultSet();
             _context.PerfStatsColl.MsecPerQueryExecutionTimeBeginSample();
 
-            resultSet.SearchKeysResult = _activeQueryAnalyzer.Search(queryId);
+            resultSet.SearchKeysResult = _activeQueryAnalyzer.Search(queryId, operationContext.CancellationToken);
 
             _context.PerfStatsColl.MsecPerQueryExecutionTimeEndSample();
 
@@ -1546,7 +1549,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             {
                
                 _context.PerfStatsColl.MsecPerQueryExecutionTimeBeginSample();
-                QueryContext queryContext = PrepareSearch(query, values, true);
+                QueryContext queryContext = PrepareSearch(query, values, true, operationContext.CancellationToken);
                 switch (queryContext.ResultSet.Type)
                 {
                     case QueryType.AggregateFunction:
@@ -1574,6 +1577,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                             while (ide.MoveNext())
                             {
+				if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                                 CacheEntry entry = ide.Value as CacheEntry;
                                 if (entry != null)
                                 {
@@ -1645,7 +1650,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                 if (currentQueryReduction.Tokens[0].ToString().ToLower().Equals("delete")) throw new Parser.ParserException("Only select query is supported.");
                 
-                QueryContext queryContext = SearchInternal(currentQueryReduction.Tag as Predicate, MiscUtil.DeepClone(query.AttributeValues));
+                QueryContext queryContext = SearchInternal(currentQueryReduction.Tag as Predicate, MiscUtil.DeepClone(query.AttributeValues), operationContext.CancellationToken);
                 ClusteredArrayList resultList = queryContext.InternalQueryResult.GetArrayList();
                 switch (queryContext.ResultSet.Type)
                 {
@@ -1667,6 +1672,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                             while (ide.MoveNext())
                             {
+				if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                                 CacheEntry entry = ide.Value as CacheEntry;
                                 if (entry != null)
                                 {
@@ -1728,7 +1735,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             
             _context.PerfStatsColl.MsecPerQueryExecutionTimeBeginSample();
 
-            ClusteredArrayList keys = _activeQueryAnalyzer.Search(queryId);
+            ClusteredArrayList keys = _activeQueryAnalyzer.Search(queryId,operationContext.CancellationToken);
 
             IDictionary tmp = GetEntries(keys.ToArray(), operationContext);
             IDictionaryEnumerator ide = tmp.GetEnumerator();
@@ -1737,6 +1744,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             while (ide.MoveNext())
             {
+		if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                         throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 CacheEntry entry = ide.Value as CacheEntry;
                 if (entry != null)
                 {
@@ -1775,7 +1784,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             return resultSet;
         }
 
-        private QueryContext PrepareSearch(string query, IDictionary values, bool searchExecution, Boolean includeFilters = false)
+        private QueryContext PrepareSearch(string query, IDictionary values, bool searchExecution, CancellationToken token , Boolean includeFilters = false)
         {
             Reduction currentQueryReduction = null;
 
@@ -1791,7 +1800,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
                 if (currentQueryReduction.Tokens[0].ToString().ToLower().Equals("delete")) throw new Parser.ParserException("Only select query is supported.");
 
-                return SearchInternal(currentQueryReduction.Tag as Predicate, values,includeFilters);
+                return SearchInternal(currentQueryReduction.Tag as Predicate, values, token,includeFilters);
             }
             catch (Parser.ParserException pe)
             {
@@ -1876,7 +1885,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             _context.PerfStatsColl.MsecPerQueryExecutionTimeBeginSample();
 
-            IList keys = _activeQueryAnalyzer.Search(queryId);
+            IList keys = _activeQueryAnalyzer.Search(queryId,operationContext.CancellationToken);
 
 
             resultSet.ReaderResult = new ReaderResultSet();
@@ -1937,6 +1946,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             while (ide.MoveNext())
             {
+		if (operationContext.CancellationToken != null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 CacheEntry entry = ide.Value as CacheEntry;
                 if (entry != null)
                 {
@@ -1984,7 +1995,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
                 Reduction currentQueryReduction = null;
                 _context.PerfStatsColl.MsecPerQueryExecutionTimeBeginSample();
                 currentQueryReduction = GetPreparedReduction(query.CommandText);
-                QueryContext queryContext = ExecuteReaderCQInternal(currentQueryReduction.Tag as Predicate, MiscUtil.DeepClone(query.AttributeValues));
+                QueryContext queryContext = ExecuteReaderCQInternal(currentQueryReduction.Tag as Predicate, MiscUtil.DeepClone(query.AttributeValues), operationContext.CancellationToken);
                 ClusteredArrayList resultList = queryContext.InternalQueryResult.GetArrayList();
                 ReaderResultSet result;
                 switch (queryContext.ResultSet.Type)
@@ -2122,7 +2133,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
         private ReaderResultSet ExecuteReaderInternal(string query, IDictionary values, OperationContext operationContext)
         {
-            QueryContext queryContext = PrepareSearch(query, values, false,true);
+            QueryContext queryContext = PrepareSearch(query, values, false,operationContext.CancellationToken,true);
             ReaderResultSet result = null;
             switch (queryContext.ResultSet.Type)
             {
@@ -2208,12 +2219,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
 
 
-        internal virtual QueryContext ExecuteReaderCQInternal(Predicate pred, IDictionary values)
+        internal virtual QueryContext ExecuteReaderCQInternal(Predicate pred, IDictionary values,CancellationToken token)
         {
             QueryContext queryContext = new QueryContext(this);
             queryContext.AttributeValues = values;
             queryContext.CacheContext = _context.CacheRoot.Name;
-
+            queryContext.CancellationToken = token;
             try
             {
                 pred.Execute(queryContext, null);
@@ -2261,7 +2272,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             try
             {
                 _context.PerfStatsColl.MsecPerQueryExecutionTimeBeginSample();
-                QueryContext queryContext = PrepareDeleteQuery(query, values);
+                QueryContext queryContext = PrepareDeleteQuery(query, values,operationContext.CancellationToken);
                 keysToBeRemoved = queryContext.InternalQueryResult.GetArrayList();
                 result = Remove(keysToBeRemoved.ToArray(), ir, notify, isUserOperation, operationContext);
 
@@ -2300,7 +2311,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             }
         }
 
-        private QueryContext PrepareDeleteQuery(string query, IDictionary values)
+        private QueryContext PrepareDeleteQuery(string query, IDictionary values, CancellationToken token)
         {
             Reduction currentQueryReduction = null;
 
@@ -2311,7 +2322,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
                 if (currentQueryReduction.Tokens[0].ToString().ToLower() != "delete")
                     throw new Parser.ParserException("ExecuteNonQuery only supports delete query");
 
-                return DeleteQueryInternal(currentQueryReduction.Tag as Predicate, values);
+                return DeleteQueryInternal(currentQueryReduction.Tag as Predicate, values, token);
             }
             catch (Parser.ParserException pe)
             {
@@ -2499,6 +2510,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             CacheEntry e = null;
             for (int i = 0; i < keys.Length; i++)
             {
+		if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 KeyLocker.GetReaderLock(keys[i]);
                 try
                 {
@@ -2554,6 +2567,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             while (ieKeys.MoveNext())
             {
+		if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
                 String key = ieKeys.Current as string;
                 KeyLocker.GetReaderLock(key);
                 try
@@ -2596,7 +2611,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
                             entries[key] = e;
                     }
                 }
-                catch (Exception ex)
+ 		catch (OperationCanceledException ex)
+                {
+                    throw;
+                }                
+		catch (Exception ex)
                 {
                     entries[key] = ex;
                 }
@@ -2629,7 +2648,12 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             for (int i = 0; i < keys.Length; i++)
             {
-                try
+		if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
+                }           
+		try
                 {
                     KeyLocker.GetWriterLock(keys[i]);
 
@@ -2712,7 +2736,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             for (int i = 0; i < keys.Length; i++)
             {
-                KeyLocker.GetWriterLock(keys[i]);
+		if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+                }
+		KeyLocker.GetWriterLock(keys[i]);
                 try
                 {
                     operationContext.RemoveValueByField(OperationContextFieldName.EventContext);
@@ -2803,6 +2831,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
 
             for (int i = 0; i < keys.Count; i++)
             {
+		if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                    throw new OperationCanceledException(ExceptionsResource.OperationFailed);
+
                 KeyLocker.GetWriterLock(keys[i]);
                 try
                 {
@@ -2969,7 +3000,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
         }
 
 
-        internal virtual QueryContext SearchInternal(Predicate pred, IDictionary values,Boolean includeFilters=false)
+        internal virtual QueryContext SearchInternal(Predicate pred, IDictionary values, CancellationToken token,Boolean includeFilters=false)
         {
             return null;
         }
@@ -2979,7 +3010,7 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             return null;
         }
 
-        internal virtual QueryContext DeleteQueryInternal(Predicate pred, IDictionary values)
+        internal virtual QueryContext DeleteQueryInternal(Predicate pred, IDictionary values, CancellationToken token)
         {
             return null;
         }
@@ -3003,7 +3034,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             {
                 foreach (string key in keys)
                 {
-                    KeyLocker.GetWriterLock(key);
+	            if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                       throw new OperationCanceledException(ExceptionsResource.OperationFailed);                    KeyLocker.GetWriterLock(key);
                     try
                     {
                         RegisterKeyNotification(key, updateCallback, removeCallback, operationContext);
@@ -3068,7 +3100,8 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
             {
                 foreach (string key in keys)
                 {
-                    KeyLocker.GetWriterLock(key);
+		    if (operationContext.CancellationToken !=null && operationContext.CancellationToken.IsCancellationRequested)
+                        throw new OperationCanceledException(ExceptionsResource.OperationFailed);                    KeyLocker.GetWriterLock(key);
                     try
                     {
                         UnregisterKeyNotification(key, updateCallback, removeCallback, operationContext);
@@ -3452,6 +3485,9 @@ namespace Alachisoft.NCache.Caching.Topologies.Local
         {
         }
 
-       
+        public override void LogBackingSource()
+        {
+            _context.DsMgr._writeBehindAsyncProcess.GetCacheLogs();
+        }
     }
 }

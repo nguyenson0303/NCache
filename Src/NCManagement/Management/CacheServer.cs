@@ -16,17 +16,15 @@ using System.IO;
 using System.Collections;
 using System.Text;
 using System.Threading;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Diagnostics;
 using System.Configuration;
-using Microsoft.Win32;
 using System.Timers;
 using System.Collections.Generic;
-using System.Timers;
-using System.Runtime.InteropServices;
+
 using Alachisoft.NCache.Common.Threading;
 using Alachisoft.NCache.Common.Stats;
+
+
 using Alachisoft.NCache.Caching;
 using Alachisoft.NCache.Common;
 using Alachisoft.NCache.Common.RPCFramework;
@@ -49,15 +47,12 @@ using Alachisoft.NCache.Common.Util;
 using Alachisoft.NCache.Serialization;
 using Alachisoft.NCache.Management.Management;
 using Alachisoft.NCache.Common.Enum;
-using Runtime = Alachisoft.NCache.Runtime;
 using Alachisoft.NCache.ServiceControl;
-using Alachisoft.NCache.Management.ClientConfiguration.Dom;
 using System;
-using Alachisoft.NCache.Caching.CacheLoader;
 using Alachisoft.NCache.Common.Monitoring.APILogging;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using Alachisoft.NCache.Common.Communication.Exceptions;
+using System.Net.NetworkInformation;
 
 namespace Alachisoft.NCache.Management
 {
@@ -109,7 +104,7 @@ namespace Alachisoft.NCache.Management
         private static bool waitForDebugger = false;
 
         private static System.Timers.Timer _evalWarningTask;
-      
+
         private TimeScheduler _portPoolScheduler;
 
         private static IConnectionManager _connectionManager;
@@ -139,7 +134,7 @@ namespace Alachisoft.NCache.Management
                 Alachisoft.NCache.Util.MiscUtil.RegisterCompactTypes();
                 RegisterCompactTypes();
 
-              
+
                 try
                 {
                     ReflectedWebAPI webAPi = new ReflectedWebAPI();
@@ -171,12 +166,12 @@ namespace Alachisoft.NCache.Management
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Common.RPCFramework.TargetMethodParameter), 165);
 
 
-#region [Register Cache Server Assemblies]
+            #region [Register Cache Server Assemblies]
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Common.ProductVersion), 302);
             CompactFormatterServices.RegisterCompactType(typeof(CacheServerConfig), 177);
             CompactFormatterServices.RegisterCompactType(typeof(Log), 178);
             CompactFormatterServices.RegisterCompactType(typeof(PerfCounters), 179);
-          
+
             CompactFormatterServices.RegisterCompactType(typeof(QueryIndex), 181);
             CompactFormatterServices.RegisterCompactType(typeof(Class), 182);
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Config.Dom.Type), 184);
@@ -185,7 +180,7 @@ namespace Alachisoft.NCache.Management
             CompactFormatterServices.RegisterCompactType(typeof(Writethru), 189);
             CompactFormatterServices.RegisterCompactType(typeof(Provider), 190);
             CompactFormatterServices.RegisterCompactType(typeof(Notifications), 192);
-         
+
             CompactFormatterServices.RegisterCompactType(typeof(Cleanup), 194);
             CompactFormatterServices.RegisterCompactType(typeof(Config.Dom.Storage), 195);
             CompactFormatterServices.RegisterCompactType(typeof(EvictionPolicy), 196);
@@ -211,7 +206,7 @@ namespace Alachisoft.NCache.Management
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Management.ClientConfiguration.Dom.NodeConfiguration), 215);
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Management.ClientConfiguration.Dom.CacheConfiguration), 216);
 
-            
+
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Management.ClientConfiguration.Dom.CacheServer), 219);
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Management.CacheInfo), 220);
             CompactFormatterServices.RegisterCompactType(typeof(Alachisoft.NCache.Management.Management.BindedIpMap), 237);
@@ -241,9 +236,9 @@ namespace Alachisoft.NCache.Management
             CompactFormatterServices.RegisterCompactType(typeof(AbsoluteExpiration), 279);
             CompactFormatterServices.RegisterCompactType(typeof(SlidingExpiration), 280);
             CompactFormatterServices.RegisterCompactType(typeof(SynchronizationStrategy), 378);
-#endregion
+            #endregion
 
-#region [Register Monitor Server Assemblies]
+            #region [Register Monitor Server Assemblies]
 
             CompactFormatterServices.RegisterCompactType(typeof(CacheNodeStatistics), 221);
             CompactFormatterServices.RegisterCompactType(typeof(ServerNode), 222);
@@ -284,7 +279,7 @@ namespace Alachisoft.NCache.Management
         {
 
         }
-        
+
         /// <summary>
         /// Finalizer for this object.
         /// </summary>
@@ -303,7 +298,7 @@ namespace Alachisoft.NCache.Management
             // This lease never expires
             return null;
         }
-    
+
 
         /// <param name="name">Name of the file (assembly)</param>
         /// <param name="buffer"></param>
@@ -314,7 +309,7 @@ namespace Alachisoft.NCache.Management
 
             if (AppUtil.InstallDir != null)
             {
-                System.IO.Directory.CreateDirectory(AppUtil.DeployedAssemblyDir);              
+                System.IO.Directory.CreateDirectory(AppUtil.DeployedAssemblyDir);
 
                 string folderLevel2 = System.IO.Path.Combine(AppUtil.DeployedAssemblyDir, cacheName);
                 System.IO.Directory.CreateDirectory(folderLevel2.Trim());
@@ -328,7 +323,7 @@ namespace Alachisoft.NCache.Management
 
 
 
-#region	/                 --- IDisposable ---           /
+        #region	/                 --- IDisposable ---           /
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or 
@@ -355,7 +350,7 @@ namespace Alachisoft.NCache.Management
 
                     }
                 }
-               
+
                 if (this._portPoolScheduler != null)
                 {
                     lock (this._portPoolScheduler)
@@ -372,7 +367,7 @@ namespace Alachisoft.NCache.Management
             }
             if (disposing) GC.SuppressFinalize(this);
 
-            for (IDictionaryEnumerator idenum = s_caches.GetEnumerator(); idenum.MoveNext(); )
+            for (IDictionaryEnumerator idenum = s_caches.GetEnumerator(); idenum.MoveNext();)
             {
                 CacheInfo cacheInfo = (CacheInfo)idenum.Value;
                 if (cacheInfo != null)
@@ -405,8 +400,8 @@ namespace Alachisoft.NCache.Management
             Dispose(true);
         }
 
-     
-#endregion
+
+        #endregion
 
         /// <summary>
         /// Clear cache
@@ -420,7 +415,7 @@ namespace Alachisoft.NCache.Management
             ClearCacheContent(cacheId);
         }
 
-       
+
         /// <summary>
         /// finds and returns a cache object, that was previously created.
         /// </summary>
@@ -438,7 +433,7 @@ namespace Alachisoft.NCache.Management
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                     return cacheServer.GetCache(cacheId);
                 else
@@ -451,9 +446,9 @@ namespace Alachisoft.NCache.Management
             return null;
         }
 
-      
-      
-      
+
+
+
 
         /// <summary>
         /// Returns a list of running caches
@@ -497,7 +492,7 @@ namespace Alachisoft.NCache.Management
             return runningCache;
         }
 
-       
+
 
         [TargetMethod(ManagementUtil.MethodName.GetCacheInstance, 1)]
         public Alachisoft.NCache.Caching.Cache GetCacheInstance(string cacheId)
@@ -521,13 +516,13 @@ namespace Alachisoft.NCache.Management
                     throw new ArgumentNullException("cacheId");
                 }
             }
-            
+
             return returnCache;
         }
 
 
-      
-       
+
+
         /// <summary>
         /// Gets the cache instance ignoring the backup/replica id. For e.g. if we have two instances
         /// of the same cache por_test (master node id) and por_test_bk_node_node1
@@ -543,7 +538,7 @@ namespace Alachisoft.NCache.Management
         public Alachisoft.NCache.Caching.Cache GetCacheInstanceIgnoreReplica(string cacheId)
         {
 
-            
+
             if (cacheId == null) throw new Exception("Cache ID can not be null");
             cacheId = cacheId.ToLower();
             bool isLockAcquired = false;
@@ -574,7 +569,7 @@ namespace Alachisoft.NCache.Management
         {
             return Renderer;
         }
-        
+
 
         /// <summary>
         /// A collection of the cache infos registered with the server.
@@ -656,7 +651,7 @@ namespace Alachisoft.NCache.Management
             return localhost;
         }
 
-      
+
 
 
         /// <summary>
@@ -668,7 +663,7 @@ namespace Alachisoft.NCache.Management
             set { _renderer = value; }
         }
 
-      
+
 
         /// <summary>
         /// Adds Server Node
@@ -682,7 +677,7 @@ namespace Alachisoft.NCache.Management
         /// <param name="hotApply"></param>
         /// <returns></returns>
 
-       
+
 
         [TargetMethod(ManagementUtil.MethodName.GetNodeInfo, 1)]
         public NodeInfoMap GetNodeInfo()
@@ -713,17 +708,17 @@ namespace Alachisoft.NCache.Management
             }
         }
 
-      
 
-    
-              
+
+
+
         [TargetMethod(ManagementUtil.MethodName.GetClientConfiguration, 1)]
         public ClientConfiguration.Dom.ClientConfiguration GetClientConfiguration(string cacheId)
         {
             return ClientConfigManager.GetClientConfiguration(cacheId.ToLower());
         }
 
-     
+
 
         [TargetMethod(ManagementUtil.MethodName.GetBindIP, 1)]
         public string GetBindIP()
@@ -745,7 +740,7 @@ namespace Alachisoft.NCache.Management
             return ClientConfigManager.GetConfigurationId();
         }
 
-      
+
 
         /// <summary>
         /// Enable logging for specified subsystem
@@ -765,9 +760,9 @@ namespace Alachisoft.NCache.Management
                 AppUtil.LogEvent(RuntimeContext.CurrentContextName, exc.ToString(), EventLogEntryType.Error, EventCategories.Error, EventID.GeneralError);
                 throw;
             }
-        }  
-    
-       
+        }
+
+
 
         /// <summary>
         /// Disbale logging
@@ -800,7 +795,7 @@ namespace Alachisoft.NCache.Management
             else
                 bindIP = System.Environment.MachineName.ToLower();
             _clusterIp = bindIP;
-            ClientConfigManager.BindIP = bindIP;         
+            ClientConfigManager.BindIP = bindIP;
             try
             {
                 ClientConfigManager.LoadConfiguration();
@@ -812,7 +807,7 @@ namespace Alachisoft.NCache.Management
         }
 
 
-      
+
         private bool RemoveDeployedAssemblies(string cacheId)
         {
             string path = AppUtil.InstallDir;
@@ -831,7 +826,7 @@ namespace Alachisoft.NCache.Management
             return true;
         }
 
-       
+
 
 
         private Dictionary<int, ClientConfiguration.Dom.CacheServer> UpdateServerPriorityList(Dictionary<int, ClientConfiguration.Dom.CacheServer> dictionary)
@@ -874,7 +869,7 @@ namespace Alachisoft.NCache.Management
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                     cacheServer.StartCachePhase2(cacheId);
             }
@@ -901,7 +896,7 @@ namespace Alachisoft.NCache.Management
             }
         }
 
-     
+
 
         [TargetMethod(ManagementUtil.MethodName.StartCache, 6)]
         public virtual void StartCache(string cacheId,
@@ -935,17 +930,17 @@ namespace Alachisoft.NCache.Management
             CacheClearedCallback cacheCleared,
             CustomRemoveCallback customRemove,
             CustomUpdateCallback customUpdate,
-          
+
             bool twoPhaseInitialization)
         {
             if (cacheId == null) throw new ArgumentNullException("cacheId");
 
-           
+
             CacheInfo cacheInfo = null;
             Process process = null;
 
             _rwLock.AcquireWriterLock(Timeout.Infinite);
-            try 
+            try
             {
                 if (s_caches.Contains(cacheId.ToLower()))
                 {
@@ -994,7 +989,7 @@ namespace Alachisoft.NCache.Management
                     }
                     else
                         throw new Alachisoft.NCache.Runtime.Exceptions.ManagementException("Specified cacheId is already running");
-                } 
+                }
                 catch (Exception e)
                 {
                     string[] excessive = { "Please refer to Windows Event Logs for details" };
@@ -1040,7 +1035,7 @@ namespace Alachisoft.NCache.Management
                 CacheInfo cacheInfo = GetCacheInfo(cacheId.ToLower());
                 ICacheServer cacheServer = null;
                 bool isCacheStopped = false;
-              
+
                 if (cacheInfo != null)
                 {
                     if (!IsRunning(cacheInfo.CacheName)) return;
@@ -1093,7 +1088,7 @@ namespace Alachisoft.NCache.Management
                                             cacheInfo.Service = null;
                                         }
                                     }
-                                }                                
+                                }
                             }
                         }
                     }
@@ -1140,12 +1135,12 @@ namespace Alachisoft.NCache.Management
         [TargetMethod(ManagementUtil.MethodName.StopAllCaches, 1)]
         public void StopAllCaches()
         {
-            for (IDictionaryEnumerator idenum = s_caches.GetEnumerator(); idenum.MoveNext(); )
+            for (IDictionaryEnumerator idenum = s_caches.GetEnumerator(); idenum.MoveNext();)
             {
                 CacheInfo cacheInfo = (CacheInfo)idenum.Current;
                 if (cacheInfo != null)
                 {
-                    StopCache(cacheInfo.CacheName,  null);
+                    StopCache(cacheInfo.CacheName, null);
                 }
             }
         }
@@ -1159,7 +1154,7 @@ namespace Alachisoft.NCache.Management
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                 {
                     return cacheServer.GetProcessID(cacheId);
@@ -1179,7 +1174,7 @@ namespace Alachisoft.NCache.Management
             {
                 if (IsRunning(cache))
                 {
-                    ICacheServer cacheServer = GetCacheServer(cacheInfo.CacheName,false);
+                    ICacheServer cacheServer = GetCacheServer(cacheInfo.CacheName, false);
                     if (cacheServer != null)
                     {
                         cacheServer.StopCacheInstance(cache, cacheInfo, reason);
@@ -1205,7 +1200,7 @@ namespace Alachisoft.NCache.Management
 
                 foreach (CacheServerConfig config in configs)
                 {
-                    string props = GetProps(config);                
+                    string props = GetProps(config);
                     string cacheId = config.Name.ToLower();
 
                     if (!s_caches.Contains(cacheId))
@@ -1644,7 +1639,7 @@ namespace Alachisoft.NCache.Management
             return isAllowed;
         }
 
-     
+
 
         /// <summary>
         /// Starts monitoring the client activity.
@@ -1719,13 +1714,13 @@ namespace Alachisoft.NCache.Management
             }
         }
 
-#region IMonitorServer Members
+        #region IMonitorServer Members
         [TargetMethod(ManagementUtil.MethodName.GetCacheStatistics, 1)]
         public virtual CacheNodeStatistics[] GetCacheStatistics(string cacheId)
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                 {
                     return cacheServer.GetCacheStatistics(cacheId);
@@ -1782,7 +1777,7 @@ namespace Alachisoft.NCache.Management
         [TargetMethod(ManagementUtil.MethodName.GetCacheClients, 1)]
         public virtual List<Alachisoft.NCache.Common.Monitoring.ClientNode> GetCacheClients(string cacheId)
         {
-            ICacheServer cacheServer = GetCacheServer(cacheId,false);
+            ICacheServer cacheServer = GetCacheServer(cacheId, false);
 
 
 
@@ -1796,7 +1791,7 @@ namespace Alachisoft.NCache.Management
         public virtual List<Alachisoft.NCache.Common.Monitoring.ClientProcessStats> GetClientProcessStats(string cacheId)
         {
             List<Alachisoft.NCache.Common.Monitoring.ClientProcessStats> clients = new List<Alachisoft.NCache.Common.Monitoring.ClientProcessStats>();
-            ICacheServer cacheServer = GetCacheServer(cacheId,false);
+            ICacheServer cacheServer = GetCacheServer(cacheId, false);
             if (cacheServer != null)
                 clients = cacheServer.GetClientProcessStats(cacheId);
             return clients;
@@ -1851,7 +1846,7 @@ namespace Alachisoft.NCache.Management
                                         break;
 
 
-                                  
+
                                 }
                             }
                         }
@@ -1880,7 +1875,7 @@ namespace Alachisoft.NCache.Management
 
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                 {
                     return cacheServer.GetStatistics(cacheId);
@@ -1893,7 +1888,7 @@ namespace Alachisoft.NCache.Management
             return null;
         }
 
-#endregion
+        #endregion
         [TargetMethod(ManagementUtil.MethodName.GetClusterIP, 1)]
         public string GetClusterIP()
         {
@@ -1911,7 +1906,7 @@ namespace Alachisoft.NCache.Management
         {
             LocalCacheIP = ip;
         }
-       
+
         [TargetMethod(ManagementUtil.MethodName.GetAssembly, 1)]
         public byte[] GetAssembly(string cacheName, string fileName)
         {
@@ -1943,7 +1938,7 @@ namespace Alachisoft.NCache.Management
             return asmData;
         }
 
-       
+
 
         [TargetMethod(ManagementUtil.MethodName.CacheProps, 1)]
         IDictionary ICacheServer.CacheProps()
@@ -1956,15 +1951,15 @@ namespace Alachisoft.NCache.Management
         {
             return _socketServerPort;
         }
-       
-   
+
+
 
         [TargetMethod(ManagementUtil.MethodName.ClearCacheContent)]
         public virtual void ClearCacheContent(string cacheId)
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                 {
                     cacheServer.ClearCacheContent(cacheId);
@@ -1989,12 +1984,12 @@ namespace Alachisoft.NCache.Management
                 {
                     try
                     {
-                        ICacheServer cacheServer = GetCacheServer(cacheId,true);
+                        ICacheServer cacheServer = GetCacheServer(cacheId, true);
                         if (cacheServer != null)
                         {
                             cacheServer.StartCache(cacheId, null);
                             break;
-                        }                       
+                        }
                     }
                     catch (Runtime.Exceptions.TimeoutException ex)
                     {
@@ -2008,7 +2003,7 @@ namespace Alachisoft.NCache.Management
                     catch (ChannelException ex)
                     {
                         AppUtil.LogEvent("Channel exception occured : " + ex.ToString() + " process retry number: " + i.ToString(), EventLogEntryType.Error);
-                        Thread.Sleep(2000);                      
+                        Thread.Sleep(2000);
                     }
                     catch (Exception ex)
                     {
@@ -2032,7 +2027,7 @@ namespace Alachisoft.NCache.Management
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                     cacheServer.StopCacheOnCacheHost(cacheId);
             }
@@ -2048,7 +2043,7 @@ namespace Alachisoft.NCache.Management
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                 {
                     return cacheServer.IsRunning(cacheId);
@@ -2066,7 +2061,7 @@ namespace Alachisoft.NCache.Management
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                 {
                     return cacheServer.GetStatistics(cacheId);
@@ -2079,7 +2074,7 @@ namespace Alachisoft.NCache.Management
             return null;
         }
 
-      
+
 
         /// <summary>
         /// Gets the status of NCache on this node.
@@ -2095,10 +2090,10 @@ namespace Alachisoft.NCache.Management
                 if (cacheInfo != null)
                 {
                     status.Status = CacheStatus.Registered;
-                    
+
                     try
                     {
-                        ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                        ICacheServer cacheServer = GetCacheServer(cacheId, false);
                         if (cacheServer != null)
                             status = cacheServer.GetCacheStatus(cacheId, partitionId);
                     }
@@ -2123,7 +2118,7 @@ namespace Alachisoft.NCache.Management
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                     return cacheServer.GetCacheCount(cacheId);
             }
@@ -2171,8 +2166,8 @@ namespace Alachisoft.NCache.Management
             return Alachisoft.NCache.Common.ServerPlatform.isDotNet;
         }
 
-       
-   
+
+
         /// <summary>
         /// Gets the list of servers which are up and are part of a clustered cache.
         /// </summary>
@@ -2197,14 +2192,14 @@ namespace Alachisoft.NCache.Management
                     if (IsRunning(cacheInfo.CacheName) && cacheInfo.CacheProps.CacheType == "clustered-cache")
                     {
                         ClusterCacheStatistics stats = GetStatistics(cacheInfo.CacheName) as ClusterCacheStatistics;
-                        
+
                         if (stats != null)
                         {
                             foreach (NodeInfo node in stats.Nodes)
                             {
                                 ServerNode serverNode = new ServerNode();
                                 serverNode.Address = node.Address;
-             
+
                                 serverNode.InProcInstance = node.IsInproc;
                                 if (node.RendererAddress != null)
                                     serverNode.ClientPort = node.RendererAddress.Port;
@@ -2397,14 +2392,14 @@ namespace Alachisoft.NCache.Management
             }
         }
 
-     
+
 
         [TargetMethod(ManagementUtil.MethodName.TransferConnection)]
         public virtual void TransferConnection(System.Net.Sockets.SocketInformation socketInfo, string cacheId, byte[] transferCommand)
         {
             try
             {
-                ICacheServer cacheServer = GetCacheServer(cacheId,false);
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
                 if (cacheServer != null)
                     cacheServer.TransferConnection(socketInfo, cacheId, transferCommand);
             }
@@ -2586,7 +2581,7 @@ namespace Alachisoft.NCache.Management
             catch (Exception) { }
         }
 
-       
+
 
         internal void ResetManagementInfo(CacheInfo info)
         {
@@ -2595,10 +2590,10 @@ namespace Alachisoft.NCache.Management
                 if (info != null)
                 {
                     info.ManagementPort = 0;
-                    if( info.Service!= null)
+                    if (info.Service != null)
                     {
-                       info.Service.Dispose();
-                       info.Service = null;
+                        info.Service.Dispose();
+                        info.Service = null;
                     }
                     if (info.CacheServer != null)
                     {
@@ -2625,7 +2620,7 @@ namespace Alachisoft.NCache.Management
             return topicStats;
         }
 
-        [TargetMethod(ManagementUtil.MethodName.GetConfigurationVersion, 1)] 
+        [TargetMethod(ManagementUtil.MethodName.GetConfigurationVersion, 1)]
         public ConfigurationVersion GetConfigurationVersion(string cacheId)
         {
             ConfigurationVersion configValues = new ConfigurationVersion();
@@ -2847,15 +2842,34 @@ namespace Alachisoft.NCache.Management
                         cacheInfo.ManagementPort = ((CacheHostInfo)enm.Value).ManagementPort;
                         s_caches[enm.Key.ToString().ToLower()] = cacheInfo;
                         _cachePortsConfigManger.AssignRunningPorts(enm.Key.ToString().ToLower(), cacheInfo.ManagementPort);
-                        GetCacheServer(enm.Key.ToString(),true);
+                        GetCacheServer(enm.Key.ToString(), true);
                     }
-                }               
+                }
             }
             catch
             {
 
             }
         }
+
+        [TargetMethod(ManagementUtil.MethodName.LogBackingSourceStatus)]
+        public virtual void LogBackingSourceStatus(string cacheId)
+        {
+            try
+            {
+                ICacheServer cacheServer = GetCacheServer(cacheId, false);
+                if (cacheServer == null) throw new Runtime.Exceptions.ManagementException("Specified cacheId: " + cacheId + " is not registered.");
+
+                if (!(cacheServer.IsRunning(cacheId))) throw new Runtime.Exceptions.ManagementException("Specified cacheId: " + cacheId + " is not started.");
+
+                cacheServer.LogBackingSourceStatus(cacheId);
+
+            }
+            catch (Exception ex)
+            {
+                DisposeOnException(cacheId, ex);
+            }
+        }
     }
-}    
+}
 
