@@ -1,4 +1,21 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿// Copyright (c) 2018 Alachisoft
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//    http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Alachisoft.NCache.EntityFrameworkCore.NCache;
+using Alachisoft.NCache.Runtime.Caching;
+using Alachisoft.NCache.Web.Caching;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using Alachisoft.NCache.Web.Caching;
 using Alachisoft.NCache.Runtime.Caching;
@@ -8,7 +25,7 @@ using System.Collections.Generic;
 
 namespace Alachisoft.NCache.EntityFrameworkCore
 {
-    internal class NCacheWrapper /*: Cache*///, IMemoryCache
+    internal class NCacheWrapper
     {
         Alachisoft.NCache.Web.Caching.Cache _nCache;
         private DefaultKeyGenerator _defaultKeyGen;
@@ -36,7 +53,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
                 Microsoft.Extensions.Logging.LogLevel.Trace
             );
             var cacheEntry = new CacheEntry(key, _nCache);
-            //_cache.Add(key.ToString(), cacheEntry);
+
             return cacheEntry;
         }
 
@@ -119,7 +136,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
                     if(keys==null)
                     {
                         CacheEntry entry = listKeys as CacheEntry;
-                        //to do:: Get Values from Cache against keys
+                       
                         resultSet.Add(key, listKeys);
                     }
                     else
@@ -127,13 +144,6 @@ namespace Alachisoft.NCache.EntityFrameworkCore
                         resultSet = _nCache.GetBulk(keys);
                     }
 
-                    /*                int index = 0;
-                                    foreach(var itm in items)
-                                    {
-                                        resultSet.Add(keys[index], itm);
-                                        index++;
-                                    }
-                    */
                 }
             }
             catch(Exception e)

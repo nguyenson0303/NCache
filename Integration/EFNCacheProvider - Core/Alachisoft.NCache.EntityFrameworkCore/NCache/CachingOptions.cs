@@ -1,4 +1,18 @@
-﻿using Alachisoft.NCache.Runtime.Caching;
+﻿// Copyright (c) 2018 Alachisoft
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//    http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Alachisoft.NCache.Runtime.Caching;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 using System;
@@ -10,7 +24,7 @@ namespace Alachisoft.NCache.EntityFrameworkCore
     /// <summary>
     /// Provides the user to configure different options that can be set while caching a certain item/result set.
     /// </summary>
-    public class CachingOptions : ICloneable//: MemoryCacheEntryOptions
+    public class CachingOptions : ICloneable
     {
         private TimeSpan _SlidingExpTime;
         private DateTime _absoluteExpTime;
@@ -21,22 +35,6 @@ namespace Alachisoft.NCache.EntityFrameworkCore
         private bool _createDbDependency;
         private bool _isResyncExpiredItems;
         private string _resyncProviderName;
-
-
-        //private bool _createKeyDependency;
-        //private List<string> _queryCriteria;
-
-        /*
-        /// <summary>
-        /// Gets the <see cref="IChangeToken"/> instances which cause the cache entry to expire.
-        /// </summary>
-        //public IList<IChangeToken> ExpirationTokens { get; } = new List<IChangeToken>();
-
-        /// <summary>
-        /// Gets or sets the callbacks will be fired after the cache entry is evicted from the cache.
-        /// </summary>
-        //public IList<PostEvictionCallbackRegistration> PostEvictionCallbacks { get; } = new List<PostEvictionCallbackRegistration>();
-        */
 
         /// <summary>
         /// Returns the absolute time when the item will expire.
