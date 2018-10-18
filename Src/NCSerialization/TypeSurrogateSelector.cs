@@ -332,9 +332,10 @@ namespace Alachisoft.NCache.Serialization
             RegisterTypeSurrogate(new NullableArraySerializationSurrogate<UInt16>());
             RegisterTypeSurrogate(new NullableArraySerializationSurrogate<UInt32>());
             RegisterTypeSurrogate(new NullableArraySerializationSurrogate<UInt64>());
-
+#if NETCORE
             RegisterTypeSurrogate(new IListSerializationSurrogate(typeof(Common.DataStructures.Clustered.ClusteredArrayList)));
             RegisterTypeSurrogate(new IDictionarySerializationSurrogate(typeof(Common.DataStructures.Clustered.HashVector)));
+#endif
         }
 
         /// <summary>

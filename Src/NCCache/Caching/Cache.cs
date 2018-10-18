@@ -7229,11 +7229,25 @@ namespace Alachisoft.NCache.Caching
 #endif
 #else
                         if (i > (clientsToDisconnect - 1))
+                        {
+#if !NETCORE
                             subscriber.BeginInvoke(clusterAddress, serverAddress, false, null,
                                 new System.AsyncCallback(MemberJoinedAsyncCallbackHandler), subscriber);
+#elif NETCORE
+                            TaskFactory factory = new TaskFactory();
+                            System.Threading.Tasks.Task task = factory.StartNew(() => subscriber(clusterAddress, serverAddress, false, null));
+#endif
+                        }
                         else
+                        {
+#if !NETCORE
                             subscriber.BeginInvoke(clusterAddress, serverAddress, true, null,
                                 new System.AsyncCallback(MemberJoinedAsyncCallbackHandler), subscriber);
+#elif NETCORE
+                            TaskFactory factory = new TaskFactory();
+                            System.Threading.Tasks.Task task = factory.StartNew(() => subscriber(clusterAddress, serverAddress, true, null));
+#endif
+                        }
 #endif
                     }
                     catch (System.Net.Sockets.SocketException e)

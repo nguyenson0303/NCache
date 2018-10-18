@@ -233,7 +233,11 @@ namespace Alachisoft.NCache.Common.Threading
         {
             lock (this)
             {
+#if !NETCORE
                 threadField.Abort(stateInfo);
+#else
+                threadField.Interrupt();
+#endif
             }
         }
 

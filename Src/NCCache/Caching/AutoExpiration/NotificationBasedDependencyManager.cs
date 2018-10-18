@@ -620,7 +620,11 @@ namespace Alachisoft.NCache.Caching.AutoExpiration
                             try
                             {
                                 _dependencyChangeThread.Interrupt();
-                                _dependencyChangeThread.Abort();
+#if !NETCORE
+             _dependencyChangeThread.Abort();
+#elif NETCORE
+                                _dependencyChangeThread.Interrupt();
+#endif
                             }
                             catch (Exception) { }
                         }
@@ -630,7 +634,11 @@ namespace Alachisoft.NCache.Caching.AutoExpiration
                         try
                         {
                             _dependencyChangeThread.Interrupt();
-                            _dependencyChangeThread.Abort();
+#if !NETCORE
+            _dependencyChangeThread.Abort();
+#elif NETCORE
+                            _dependencyChangeThread.Interrupt();
+#endif
                         }
                         catch (Exception) { }
                     }

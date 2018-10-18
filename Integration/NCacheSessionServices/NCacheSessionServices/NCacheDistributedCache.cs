@@ -15,7 +15,6 @@
 using System;
 using System.Threading;
 using System.Configuration.Provider;
-using System.Diagnostics;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Threading.Tasks;
 using Alachisoft.NCache.Common;
@@ -24,6 +23,7 @@ using Alachisoft.NCache.Runtime;
 using Alachisoft.NCache.Web.Caching;
 using Alachisoft.NCache.Web.SessionState.Configuration;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace Alachisoft.NCache.Web.SessionState
 {
@@ -203,7 +203,7 @@ namespace Alachisoft.NCache.Web.SessionState
                 {
                     try
                     {
-                        AppUtil.LogEvent("NCacheDistributedCache", ex.ToString(), EventLogEntryType.Error, EventCategories.Error, EventID.GeneralError);
+                        AppUtil.LogEvent("NCacheDistributedCache", ex.ToString(),EventLogEntryType.Error, EventCategories.Error, EventID.GeneralError);
                     }
                     catch (Exception exc)
                     {

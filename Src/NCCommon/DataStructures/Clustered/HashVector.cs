@@ -199,7 +199,9 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
 
         private IEqualityComparer _keycomparer;
         private Object _syncRoot;
-
+#if NETCORE
+        private SerializationInfo _serializationInfo = null;
+#endif
         [Obsolete("Please use EqualityComparer property.")]
         protected IHashCodeProvider hcp
         {
@@ -475,7 +477,11 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
             //We can't do anything with the keys and values until the entire graph has been deserialized
             //and we have a reasonable estimate that GetHashCode is not going to fail.  For the time being,
             //we'll just cache this.  The graph is not valid until OnDeserialization has been called.
+#if !NETCORE
             HashHelpers.SerializationInfoTable.Add(this, info);
+#elif NETCORE
+            _serializationInfo = info;
+#endif
         }
 
         // ‘InitHash’ is basically an implementation of classic DoubleHashing (see http://en.wikipedia.org/wiki/Double_hashing)  
@@ -1424,7 +1430,11 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
             }
 
             SerializationInfo siInfo= null;
+#if !NETCORE
             HashHelpers.SerializationInfoTable.TryGetValue(this, out siInfo);
+#elif NETCORE
+            siInfo = _serializationInfo;
+#endif
 
             if (siInfo == null)
             {
@@ -1513,7 +1523,11 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
 
             version = siInfo.GetInt32(VersionName);
 
+#if !NETCORE
             HashHelpers.SerializationInfoTable.Remove(this);
+#elif NETCORE
+            _serializationInfo = null;
+#endif
         }
 
         // Implements an enumerator for a hashtable. The enumerator uses the
@@ -2120,6 +2134,9 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
         private VectorKeyCollection keys;
         private VectorValueCollection values;
         private Object _syncRoot;
+#if NETCORE
+        private SerializationInfo _serializationInfo = null;
+#endif
 
         // constants for serialization
         private const String VersionName = "Version";
@@ -2162,7 +2179,11 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
             //We can't do anything with the keys and values until the entire graph has been deserialized
             //and we have a resonable estimate that GetHashCode is not going to fail.  For the time being,
             //we'll just cache this.  The graph is not valid until OnDeserialization has been called.
+#if !NETCORE
             HashHelpers.SerializationInfoTable.Add(this, info);
+#elif NETCORE
+            _serializationInfo = info;
+#endif
         }
 
         public IEqualityComparer<TKey> Comparer
@@ -2471,7 +2492,11 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
         public virtual void OnDeserialization(Object sender)
         {
             SerializationInfo siInfo=null;
+#if !NETCORE
             HashHelpers.SerializationInfoTable.TryGetValue(this, out siInfo);
+#elif NETCORE
+            siInfo = _serializationInfo;
+#endif
 
             if (siInfo == null)
             {
@@ -2516,7 +2541,11 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
             }
 
             version = realVersion;
+#if !NETCORE
             HashHelpers.SerializationInfoTable.Remove(this);
+#elif NETCORE
+            _serializationInfo = null;
+#endif
         }
 
         private void Resize()

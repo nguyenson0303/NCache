@@ -111,6 +111,10 @@ namespace Alachisoft.NCache.ServiceControl
         /// </summary>
         protected virtual void Start(TimeSpan timeout,string service)
         {
+#if NETCORE
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                return;
+#endif
             try
             {
                 using (Common.Util.ServiceControl sc = new Common.Util.ServiceControl(_serverName, service))
@@ -134,6 +138,10 @@ namespace Alachisoft.NCache.ServiceControl
         /// <param name="service"></param>
         protected virtual void Stop(TimeSpan timeout,string service)
         {
+#if NETCORE
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                return;
+#endif
             try
             {
                 using (Common.Util.ServiceControl sc = new Common.Util.ServiceControl(_serverName, service))
@@ -157,6 +165,10 @@ namespace Alachisoft.NCache.ServiceControl
         /// <param name="service"></param>
         protected virtual void Restart(TimeSpan timeout, string service)
         {
+#if NETCORE
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                return;
+#endif
             try
             {
                 using (Common.Util.ServiceControl sc = new Common.Util.ServiceControl(_serverName, service))

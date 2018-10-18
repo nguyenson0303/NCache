@@ -178,7 +178,11 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             if (_worker != null)
             {
                 _parent.Context.NCacheLog.Flush();
+#if !NETCORE
                 _worker.Abort();
+# elif NETCORE
+                _worker.Interrupt();
+#endif
                 _worker = null;
             }
 

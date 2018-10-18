@@ -33,6 +33,6 @@ namespace Alachisoft.NCache.Common.Logger
         TayzGridManager,
         NCacheMonitor,
         APILogs,
-
+        eventlogs,
     }
 }

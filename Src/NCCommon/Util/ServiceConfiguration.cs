@@ -155,28 +155,23 @@ namespace Alachisoft.NCache.Common.Util
         public static void Load()
         {
             System.Configuration.Configuration config;
-#if !NETCORE && !NETCOREAPP2_0
+
             try
             {
-
                 string serviceEXE1 = Path.Combine(AppUtil.InstallDir, "bin");
                 string serviceEXE2 = Path.Combine(serviceEXE1, "service");
-                string serviceEXE3 = Path.Combine(serviceEXE2, "Alachisoft.NCache.Service.exe");
-                config = ConfigurationManager.OpenExeConfiguration(serviceEXE3);
-            }
-            catch (Exception ex) { return; }
+                string serviceEXE3 = "";
+#if NETCORE
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                    serviceEXE3 = Path.Combine(serviceEXE2, "Alachisoft.NCache.Service.dll");
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                    serviceEXE3 = Path.Combine(serviceEXE2, "Alachisoft.NCache.Daemon.dll");
 #else
-            try
-            {
-                string serviceEXE1 = Path.Combine(AppUtil.InstallDir, "bin");
-                string serviceEXE2 = Path.Combine(serviceEXE1, "service");
-                string serviceEXE3 = Path.Combine(serviceEXE2, "Alachisoft.NCache.Daemon.dll");
+                serviceEXE3=Path.Combine(serviceEXE2,"Alachisoft.NCache.Service.exe");
+#endif
                 config = ConfigurationManager.OpenExeConfiguration(serviceEXE3);
             }
             catch (Exception ex) { return; }
-
-#endif
-
 
             if (!isHotApply)
             {
@@ -1602,17 +1597,19 @@ namespace Alachisoft.NCache.Common.Util
             System.Configuration.Configuration config;
             try
             {
-#if !NETCORE && !NETCOREAPP2_0
-                string workingDir = Path.Combine(AppUtil.InstallDir, "bin");
-                string exeDir = Path.Combine(workingDir, "service");
-                string serviceExe = Path.Combine(exeDir, "Alachisoft.NCache.Service.exe");
-                config = ConfigurationManager.OpenExeConfiguration(serviceExe);
-#else
                 string serviceEXE1 = Path.Combine(AppUtil.InstallDir, "bin");
                 string serviceEXE2 = Path.Combine(serviceEXE1, "service");
-                string serviceEXE3 = Path.Combine(serviceEXE2, "Alachisoft.NCache.Daemon.dll");
-                config = ConfigurationManager.OpenExeConfiguration(serviceEXE3);
+                string serviceEXE3 = "";
+#if NETCORE
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                    serviceEXE3 = Path.Combine(serviceEXE2, "Alachisoft.NCache.Service.dll");
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                    serviceEXE3 = Path.Combine(serviceEXE2, "Alachisoft.NCache.Daemon.dll");
+#else
+                serviceEXE3=Path.Combine(serviceEXE2,"Alachisoft.NCache.Service.exe");
 #endif
+                config = ConfigurationManager.OpenExeConfiguration(serviceEXE3);
+
             }
             catch (Exception ex) { return; }
 

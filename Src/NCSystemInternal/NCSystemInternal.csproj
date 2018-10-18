@@ -22,9 +22,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DirectoryServices\Protocols\**" />
-    <EmbeddedResource Remove="DirectoryServices\Protocols\**" />
-    <None Remove="DirectoryServices\Protocols\**" />
+    <Compile Remove="Diagnostics\**" />
+    <Compile Remove="DirectoryServices\**" />
+    <Compile Remove="SecurityPermissions\**" />
+    <EmbeddedResource Remove="Diagnostics\**" />
+    <EmbeddedResource Remove="DirectoryServices\**" />
+    <EmbeddedResource Remove="SecurityPermissions\**" />
+    <None Remove="Diagnostics\**" />
+    <None Remove="DirectoryServices\**" />
+    <None Remove="SecurityPermissions\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="2.0.0" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

@@ -25,7 +25,7 @@ namespace Alachisoft.NCache.Common.Registry.NetCore.RegistryUtil
 {
     public class RegUtil
     {
-        private static string LicensePropertiesFile = "NCLicense.xml";
+        private static string LicensePropertiesFile = "ncinfo.xml";
         private static string ForProductInfo = "SOFTWARE\\Alachisoft\\NCache";
         private static string ForUserInfo = "SOFTWARE\\Alachisoft\\NCache\\UserInfo";
         private static bool loaded = false;

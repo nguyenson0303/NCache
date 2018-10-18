@@ -35,6 +35,9 @@ using Alachisoft.NCache.SocketServer.Util;
 using Alachisoft.NCache.SocketServer.RuntimeLogging;
 using System.Threading.Tasks;
 
+#if NETCORE
+using System.Runtime.InteropServices;
+#endif
 
 namespace Alachisoft.NCache.SocketServer
 {
@@ -131,6 +134,9 @@ namespace Alachisoft.NCache.SocketServer
         private AsyncCallback _receiveCallback;
 
         private static int _requestTimeout = 0;
+
+        private bool isListening = true;
+
         public ConnectionManager(PerfStatsCollector statsCollector)
         {
             _receiveCallback = new AsyncCallback(RecieveCallback);
@@ -425,6 +431,11 @@ namespace Alachisoft.NCache.SocketServer
                 catch (ObjectDisposedException)
                 {
                     objectDisposed = true;
+                }
+                catch (SocketException e )
+                {
+                    if (isListening)
+                        throw e;
                 }
             }
             if (objectDisposed) return;
@@ -1108,6 +1119,13 @@ namespace Alachisoft.NCache.SocketServer
         {
             if (_serverSocket != null)
             {
+                isListening = false;
+#if NETCORE
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    _serverSocket.Shutdown(SocketShutdown.Both);
+                }
+#endif
                 _serverSocket.Close();
                 _serverSocket = null;
             }

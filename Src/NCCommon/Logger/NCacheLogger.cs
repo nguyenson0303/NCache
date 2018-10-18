@@ -143,7 +143,7 @@ namespace Alachisoft.NCache.Common.Logger
 
                 string fileName = initialPath + LogExceptions + Path.DirectorySeparatorChar + _loggerName + "_" + DateTime.Now.Day.ToString() + "-" + DateTime.Now.Month + "-" + DateTime.Now.Year + "-" + DateTime.Now.Hour + "-" + DateTime.Now.Minute + "-" + DateTime.Now.Second +"_" +_nodeIP + ".txt"; ;
 
-                AddAppender(CreateBufferAppender(fileName, false));
+                AddAppender(CreateBufferAppender(fileName, false, false));
 
 
                 if (properties != null)
@@ -244,13 +244,14 @@ namespace Alachisoft.NCache.Common.Logger
             try
             {
 
+                filepath = Path.Combine(filepath, loggerNameEnum.ToString());
 
                 filepath = Path.Combine(filepath, loggerNameEnum.ToString());
                 if (!Directory.Exists(filepath)) Directory.CreateDirectory(filepath);
 
 
                 filepath = Path.Combine(filepath, filename);
-                AddAppender(CreateBufferAppender(filepath, false));
+                AddAppender(CreateBufferAppender(filepath, false, (loggerNameEnum == LoggerNames.eventlogs)));
 
 
             }
@@ -301,13 +302,56 @@ namespace Alachisoft.NCache.Common.Logger
             {
 
                 filePath = Path.Combine(filePath, filename);
-                AddAppender(CreateBufferAppender(filePath, true));
+                AddAppender(CreateBufferAppender(filePath, true, false));
             }
             catch (Exception)
             {
                 throw;
             }
 
+        }
+
+        public void InitializeEventsLogging()
+        {
+            string fileName;
+            string filePath;
+            _loggerName = LoggerNames.eventlogs.ToString();
+
+            if (log != null)
+                throw new Exception("Multiple Initialize calls for same logger");
+
+            MemoryStream logStream = new MemoryStream(log4netXML);
+            log4net.Config.XmlConfigurator.Configure(Log4net.LogRepository, logStream);
+
+            filePath = "";
+            fileName = LoggerNames.eventlogs.ToString() + ".txt";
+            
+            if (!DirectoryUtil.SearchGlobalDirectory("log-files", false, out filePath))
+            {
+                try
+                {
+                    DirectoryUtil.SearchLocalDirectory("log-files", true, out filePath);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Unable to initialize the log file", ex);
+                }
+            }
+
+            filePath = Path.Combine(filePath, LoggerNames.eventlogs.ToString());
+
+            if (!Directory.Exists(filePath))
+                Directory.CreateDirectory(filePath);
+
+            try
+            {
+                filePath = Path.Combine(filePath, fileName);
+                AddAppender(CreateBufferAppender(filePath, false, true));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public void SetLevel(string levelName)
@@ -480,7 +524,7 @@ namespace Alachisoft.NCache.Common.Logger
         /// <param name="cacheName">CacheName used to name the Buffer Appender</param>
         /// <param name="fileName">File name to log into</param>
         /// <returns>Returns the created Appender</returns>
-        private log4net.Appender.IAppender CreateBufferAppender(string fileName, bool apiLogs)
+        private log4net.Appender.IAppender CreateBufferAppender(string fileName, bool apiLogs, bool eventLogs)
         {
             log4net.Appender.BufferingForwardingAppender appender = new BufferingForwardingAppender();
             appender.Name = "BufferingForwardingAppender" + _loggerName;
@@ -499,7 +543,7 @@ namespace Alachisoft.NCache.Common.Logger
             appender.Threshold = log4net.Core.Level.All;
 
             //Adds the appender to which it will pass on all the logging levels upon filling up the buffer
-            appender.AddAppender(CreateRollingFileAppender(fileName, apiLogs));
+            appender.AddAppender(CreateRollingFileAppender(fileName, apiLogs, eventLogs));
 
 
             //necessary to apply the appender property changes
@@ -515,7 +559,7 @@ namespace Alachisoft.NCache.Common.Logger
         /// <param name="cacheName">Name of the file appender</param>
         /// <param name="fileName">Filename to which is to write logs</param>
         /// <returns>returns the created appender</returns>
-        private log4net.Appender.IAppender CreateRollingFileAppender(string fileName, bool apiLogs)
+        private log4net.Appender.IAppender CreateRollingFileAppender(string fileName, bool apiLogs, bool eventLogs)
         {
             log4net.Appender.RollingFileAppender appender = new log4net.Appender.RollingFileAppender();
             appender.Name = "RollingFileAppender" + _loggerName;
@@ -532,13 +576,13 @@ namespace Alachisoft.NCache.Common.Logger
             log4net.Layout.PatternLayout layout = new log4net.Layout.PatternLayout();
 
             //DateSpace == 23 || appdomain == 25 || Longest thread.Name == 34 || Leve max length == 5 || 
-            if (!apiLogs)
+            if (!apiLogs && !eventLogs)
             {
                 layout.ConversionPattern = "%-27date{ISO8601}" + "\t%-45.42appdomain" + "\t%-43logger" + "\t%-42thread" + "\t%-9level" + "\t%message" + "%newline";
 
                 layout.Header = "TIMESTAMP                  \tAPPDOMAIN                                    \tLOGGERNAME                                 \tTHREADNAME                                \tLEVEL    \tMESSAGE\r\n";
             }
-            else
+            else if (apiLogs)
             {
              
                 appender.Name = LoggerNames.APILogs.ToString().ToLower()+"_" + appender.Name;
@@ -546,7 +590,14 @@ namespace Alachisoft.NCache.Common.Logger
                 layout.Header = "TIMESTAMP                     \t\t    SERVER              CLIENTIP            ProcessID           				\tExecutionTime   \tMethod                                          														 											             \t\t\tParameters                                                                                                                                                                                                                                 Exception\r\n";
                
             }
-      
+
+            else if (eventLogs)
+            {
+                layout.ConversionPattern = "%message" + "%newline";
+                appender.LockingModel = new log4net.Appender.FileAppender.MinimalLock();
+                if (!File.Exists(fileName))
+                    layout.Header = "TIMESTAMP                                   SOURCE                  EVENTID                 LEVEL                   MESSAGE\r\n";
+            }
 
             layout.Footer = "END \n";
 
@@ -798,6 +849,14 @@ namespace Alachisoft.NCache.Common.Logger
             }
             Info(buffer.ToString());
 
+        }
+
+        public void EventLog(string time, string source, string eventid, string level, string message)
+        {
+            int space2 = 10;
+            StringBuilder buffer = new StringBuilder();
+            buffer.Append(time.PadRight(4 * space2) + "\t" + source.PadRight(2 * space2) + "\t" + eventid.PadRight(2 * space2) + "\t" + level.PadRight(2 * space2) + "\t" + message.PadRight(2 * space2));
+            Info(buffer.ToString());
         }
 
 

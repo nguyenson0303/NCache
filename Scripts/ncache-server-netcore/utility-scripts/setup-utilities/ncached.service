@@ -1,0 +1,15 @@
+[Unit]
+Description=NCache Daemon
+DefaultDependencies=no
+
+[Service]
+User=ncache
+Group=ncache
+Type=forking
+KillMode=process
+ExecStart=<DOTNETHOME> <INSTALLDIR>/bin/service/Alachisoft.NCache.Daemon.dll <INSTALLDIR>
+ExecStop=/bin/bash -c 'pkill -f dotnet.*Alachisoft.NCache.Daemon.dll'
+Restart=always
+
+[Install]
+WantedBy=default.target

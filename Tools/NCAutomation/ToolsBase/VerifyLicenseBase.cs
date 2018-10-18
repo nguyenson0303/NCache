@@ -20,6 +20,7 @@ using System;
 using System.Management.Automation;
 using System.IO;
 using System.Reflection;
+using Alachisoft.NCache.Common.Registry.NetCore.RegistryUtil;
 
 namespace Alachisoft.NCache.Automation.ToolsBase
 {
@@ -48,7 +49,7 @@ namespace Alachisoft.NCache.Automation.ToolsBase
                 PrintUserInfo(OutputProvider);
                 OutputProvider.WriteLine("\n");
 
-                OutputProvider.WriteLine("Edition Installed: NCache 4.9 OpenSource Edition.\n");
+                OutputProvider.WriteLine("Edition Installed: NCache 4.9 SP1 OpenSource Edition.\n");
                 OutputProvider.WriteLine("Licensed to use FREE of cost. Use As-is without support.\n");
             }
             catch (Exception ex)
@@ -61,12 +62,22 @@ namespace Alachisoft.NCache.Automation.ToolsBase
 
         private static void PrintUserInfo(IOutputConsole OutputProvider )
         {
-
+#if !NETCORE
             string USER_KEY = RegHelper.ROOT_KEY + @"\UserInfo";
             string firstName = (string)RegHelper.GetRegValue(USER_KEY, "firstname", 0);
             string lastName = (string)RegHelper.GetRegValue(USER_KEY, "lastname", 0);
             string company = (string)RegHelper.GetRegValue(USER_KEY, "company", 0);
             string email = (string)RegHelper.GetRegValue(USER_KEY, "email", 0);
+#elif NETCORE
+
+            RegUtil.LoadRegistry();
+
+            string firstName = RegUtil.LicenseProperties.UserInfo.FirstName;
+            string lastName = RegUtil.LicenseProperties.UserInfo.LastName;
+            string company = RegUtil.LicenseProperties.UserInfo.Company;
+            string email =  RegUtil.LicenseProperties.UserInfo.Email;
+
+#endif
 
             OutputProvider.WriteLine("This product is registered to \nUser\t:\t" + firstName + " " + lastName + "\nEmail\t:\t" + email + "\nCompany\t:\t" + company);
 

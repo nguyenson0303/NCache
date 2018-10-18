@@ -195,7 +195,11 @@ namespace Alachisoft.NCache.Automation.ToolsBase
                     {
                         if (forcefully)
                         {
+#if !NETCORE
                             thread.Abort();
+#elif NETCORE
+                            thread.Interrupt();
+#endif
                             _adapter.Finished = true;
                             return;
                         }

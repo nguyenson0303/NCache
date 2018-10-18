@@ -117,14 +117,16 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
 			5999471,
 			7199369
 		};
-
+#if !NETCORE
         private static ConditionalWeakTable<object, SerializationInfo> s_SerializationInfoTable; 
+#endif
         private static RandomNumberGenerator rng;
         private static byte[] data;
         private static int currentIndex = 1024;
         private static readonly object lockObj = new object();
         private const int bufferSize = 1024;
 
+#if !NETCORE
         internal static ConditionalWeakTable<object, SerializationInfo> SerializationInfoTable
 
         
@@ -139,6 +141,7 @@ namespace Alachisoft.NCache.Common.DataStructures.Clustered
                 return HashHelpers.s_SerializationInfoTable;
             }
         }
+#endif
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         public static bool IsPrime(int candidate)
         {

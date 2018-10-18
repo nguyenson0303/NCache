@@ -21,6 +21,9 @@ using Alachisoft.NCache.Common;
 using Alachisoft.NCache.Management;
 using Alachisoft.NCache.Config.Dom;
 using Alachisoft.NCache.Common.Util;
+#if NETCORE
+using System.Runtime.InteropServices;
+#endif
 
 namespace Alachisoft.NCache.SocketServer
 {
@@ -157,7 +160,14 @@ namespace Alachisoft.NCache.SocketServer
                     {
                         AppUtil.LogEvent(_cacheserver, "Failed to stop caches on this server", EventLogEntryType.Warning, EventCategories.Error, EventID.GeneralInformation);
                     }
-                    if (thread.IsAlive) thread.Abort();
+                    if (thread.IsAlive)
+                    {
+#if !NETCORE
+                        thread.Abort();
+#elif NETCORE
+                        thread.Interrupt();
+#endif
+                    }
                 }
                 catch (Exception)
                 {

@@ -229,9 +229,14 @@ using System.Threading;
 		{
 			lock(this)
 			{
-				threadField.Abort(stateInfo);
-			}
-		}
+#if !NETCORE
+            threadField.Abort(stateInfo);
+#elif NETCORE
+            threadField.Interrupt();
+#endif
+
+        }
+    }
 	      
 		/// <summary>
 		/// Suspends the thread, if the thread is already suspended it has no effect

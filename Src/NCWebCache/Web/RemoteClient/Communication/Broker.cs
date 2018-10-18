@@ -268,6 +268,7 @@ namespace Alachisoft.NCache.Web.Communication
 
         internal void StartServices(string cacheId, string server, int port)
         {
+            AppUtil.LogEvent("Broker","StartServices",System.Diagnostics.EventLogEntryType.Error,-1, EventID.ServiceStart);
             this._cacheId = cacheId;
 
             if (!string.IsNullOrEmpty(
@@ -319,6 +320,8 @@ namespace Alachisoft.NCache.Web.Communication
             //Check the type of license the application 
             try
             {
+                AppUtil.LogEvent("Broker", "Before Loading Configuration", System.Diagnostics.EventLogEntryType.Error, -1, EventID.ServiceStart);
+
                 _clientConfig.LoadConfiguration();
             }
             catch (Exception)
@@ -3947,7 +3950,9 @@ namespace Alachisoft.NCache.Web.Communication
                     {
                     }
 
-                    if (!(connected = connection.Connect(mainIp, mainPort)))
+                    if (connected = connection.Connect(mainIp, mainPort))
+                        connected = ConnectWithCacheHost(connection, IPAddress.Parse(mainIp), mainPort);
+                    else
                         if (_logger.IsErrorLogsEnabled)
                             _logger.NCacheLog.Error("Broker.ConnectRemoteServer",
                                 "Unable to restoring connection to [" + mainIp.ToString() + ":" + mainPort + "]");
@@ -3968,7 +3973,9 @@ namespace Alachisoft.NCache.Web.Communication
                     {
                     }
 
-                    if (!(connected = connection.Connect(mainIp, mainPort)))
+                    if(connected = connection.Connect(mainIp, mainPort))
+                        connected = ConnectWithCacheHost(connection, IPAddress.Parse(mainIp), mainPort);
+                    else
                         if (_logger.IsErrorLogsEnabled)
                             _logger.NCacheLog.Error("Broker.ConnectRemoteServer", "Unable to restoring connection to ["
                                                                                   + mainIp + ":" + mainPort + "]");
@@ -3981,7 +3988,13 @@ namespace Alachisoft.NCache.Web.Communication
         private bool ConnectWithCacheHost(Connection connection, IPAddress address, int port)
         {
             bool connectedWithHost = true;
+//#if NETCORE
+            // getting management port to transfer connection 
             int cachePort = GetCachePort(connection);
+
+
+            //.Net core does not support socket transfer from one process to other. In this case, client needs to directly connect to the cache host.
+            //However for .net framework, service will transfer connection to the cache host.
             if (cachePort != port)
             {
                 connection.Disconnect(false);

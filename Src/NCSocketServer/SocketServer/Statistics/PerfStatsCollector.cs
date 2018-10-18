@@ -288,6 +288,10 @@ namespace Alachisoft.NCache.SocketServer.Statistics
         /// </summary>
         public void InitializePerfCounters()
         {
+#if NETCORE
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                return;
+#endif
             try
             {
                 if (!UserHasAccessRights)

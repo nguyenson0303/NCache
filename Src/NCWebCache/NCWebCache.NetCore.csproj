@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\..\Resources\ncache.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>bin\Debug\netstandard2.0\</OutputPath>
+    <DocumentationFile>webcache.local.xml</DocumentationFile>
+    <DefineConstants>TRACE;DEBUG;COMMUNITY;VS2005;NET40;NETCORE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>bin\Release\netstandard2.0\</OutputPath>
+    <DocumentationFile></DocumentationFile>
+    <DefineConstants>TRACE;RELEASE;COMMUNITY;VS2005;NET40;NETCORE</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>Alachisoft.NCache.Web</AssemblyName>
+    <RootNamespace>Alachisoft.NCache.Web</RootNamespace>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Web\Management\**" />
+    <EmbeddedResource Remove="Web\Management\**" />
+    <None Remove="Web\Management\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Statistics\PerfInstaller.cs" />
+    <Compile Remove="Synchronization\BridgeCache.cs" />
+    <Compile Remove="Web\Caching\CacheEntry.cs" />
+    <Compile Remove="Web\Caching\MemberJoinedCallback.cs" />
+    <Compile Remove="Web\Caching\MemberLeftCallback.cs" />
+    <Compile Remove="Web\RemoteClient\Command\CloudUsageCommand.cs" />
+    <Compile Remove="Web\RemoteClient\Command\HybridBulkCommand.cs" />
+    <Compile Remove="Web\RemoteClient\GetExpiration.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Remove="NWebCache.FxCop" />
+    <None Remove="webcache.enterprise.xml" />
+    <None Remove="webcache.local.xml" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\NCManagement\NCManagement.NetCore.csproj" />
+  </ItemGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /Y &quot;$(TargetPath)&quot; &quot;$(SolutionDir)build\NetCore\Client\&quot;  2&gt;nul 1&gt;nul&#xD;&#xA;EXIT 0" />
+  </Target>
+  
+</Project>

@@ -300,6 +300,10 @@ namespace Alachisoft.NGroups.Stack
         /// </summary>
         public void InitializePerfCounters(bool enableDebuggingCounters)
         {
+#if NETCORE
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                return;
+#endif
             try
             {
                 if (!UserHasAccessRights)

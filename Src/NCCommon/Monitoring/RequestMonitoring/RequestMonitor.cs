@@ -115,8 +115,13 @@ namespace Alachisoft.NCache.Common.Monitoring
                 }
             }
             _clientDictionary.Clear();
-            if(_requestMonitor != null && _requestMonitor.IsAlive) _requestMonitor.Abort();
-        
+            if(_requestMonitor != null && _requestMonitor.IsAlive)
+#if !NETCORE
+                _requestMonitor.Abort();
+#elif NETCORE
+                _requestMonitor.Interrupt();
+#endif
+            _requestMonitor = null;
 
         }
 
@@ -145,13 +150,21 @@ namespace Alachisoft.NCache.Common.Monitoring
                             {
 
                             }
+                            catch (ThreadInterruptedException)
+                            {
+
+                            }
                         }
+                        Thread.Sleep(_threadSleepTime);
+                    }
+                    catch (ThreadInterruptedException)
+                    {
+
                     }
                     catch
                     {
 
                     }
-                    Thread.Sleep(_threadSleepTime);
                 }
             }
         }

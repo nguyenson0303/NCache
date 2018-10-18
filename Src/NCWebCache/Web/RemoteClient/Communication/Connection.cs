@@ -99,6 +99,7 @@ namespace Alachisoft.NCache.Web.Communication
         internal Connection(Broker container, OnCommandRecieved commandRecieved, OnServerLost serverLost, Logs logs,
             PerfStatsCollector perfStatsCollector, ResponseIntegrator rspIntegraotr, string bindIP, string cacheName)
         {
+            _connectionStatusLatch = new Latch(ConnectionStatus.Disconnected);
             Initialize(container, commandRecieved, serverLost, logs, perfStatsCollector, rspIntegraotr, bindIP,
                 cacheName);
         }
@@ -393,6 +394,7 @@ namespace Alachisoft.NCache.Web.Communication
             {
                 _hostPort = cachePort;
                 this.Port = oldPort;
+                this._serverAddress = new Address(ipAddress, oldPort);
                 return true;
             }
 
@@ -638,7 +640,6 @@ namespace Alachisoft.NCache.Web.Communication
             _intendedRecipientIPAddress = string.Empty;
             _port = 0;
             _connectionMutex = new object();
-            _connectionStatusLatch = new Latch(ConnectionStatus.Disconnected);
             s_receiveBufferSize = 2048000;
             _processID = System.Diagnostics.Process.GetCurrentProcess().Id;
             _primaryReceiveThread = null;
@@ -855,20 +856,18 @@ namespace Alachisoft.NCache.Web.Communication
 
         private void OnConnectionBroken(Exception e, ExType exType)
         {
-            switch (exType)
+            try
             {
-                case ExType.Socket:
-                case ExType.Connection:
-                    if (_forcedDisconnect)
-                    {
-                        if (_logger.IsErrorLogsEnabled)
-                            _logger.NCacheLog.Error("Connection.ReceivedThread",
-                                "Connection with server lost gracefully");
-                    }
-                    else if (_logger.IsErrorLogsEnabled)
-                        _logger.NCacheLog.Error("Connection.ReceivedThread",
-                            "An established connection with the server " + _serverAddress + " is lost. Error:" +
-                            e.ToString());
+                switch (exType)
+                {
+                    case ExType.Socket:
+                    case ExType.Connection:
+                        if (_forcedDisconnect)
+                        {
+                            if (_logger.IsErrorLogsEnabled) _logger.NCacheLog.Error("Connection.ReceivedThread", "Connection with server lost gracefully");
+                        }
+                        else
+                            if (_logger.IsErrorLogsEnabled) _logger.NCacheLog.Error("Connection.ReceivedThread", "An established connection with the server " + _serverAddress + " is lost. Error:" + e.ToString());
 
                     if (!_forcedDisconnect)
                         _connectionStatusLatch.SetStatusBit(ConnectionStatus.Disconnected, ConnectionStatus.Connected);
@@ -903,6 +902,11 @@ namespace Alachisoft.NCache.Web.Communication
                         _connectionStatusLatch.SetStatusBit(ConnectionStatus.Disconnected, ConnectionStatus.Connected);
                     _serverLost(_serverAddress, _forcedDisconnect);
                     break;
+            }
+            }
+            catch (Exception ex)
+            {
+                AppUtil.LogEvent($"Exception from OnConnectionBroken :{ex.ToString()} inner exception: {e.ToString()}", System.Diagnostics.EventLogEntryType.Error);
             }
         }
 

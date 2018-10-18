@@ -32,6 +32,9 @@ using Alachisoft.NCache.Common.Enum;
 using Alachisoft.NCache.Common.Util;
 using Alachisoft.NCache.Common.Logger;
 using Alachisoft.NCache.Common.DataStructures.Clustered;
+#if NETCORE
+using System.Runtime.InteropServices;
+#endif 
 
 namespace Alachisoft.NGroups.Blocks
 {
@@ -93,9 +96,10 @@ namespace Alachisoft.NGroups.Blocks
 
         private System.Collections.Hashtable dedicatedSenders = System.Collections.Hashtable.Synchronized(new System.Collections.Hashtable()); // keys: Addresses (peer address), values: Connection
         private ConnectionTable.Receiver receiver = null;
-        private System.Net.Sockets.TcpListener srv_sock1 = null;
+        // srv_sock1 & srv_sock2 was initially tcplistener
+        private System.Net.Sockets.Socket srv_sock1 = null;
 
-        private System.Net.Sockets.TcpListener srv_sock2 = null;
+        private System.Net.Sockets.Socket srv_sock2 = null;
 
 
         private System.Net.IPAddress bind_addr1 = null;
@@ -1072,13 +1076,13 @@ namespace Alachisoft.NGroups.Blocks
                 throw new ExtSocketException("Cluster can not be started on the given server port. The port might be already in use.");
             }
             if (bind_addr1 != null)
-                local_addr = new Address(bind_addr1, ((System.Net.IPEndPoint)srv_sock1.LocalEndpoint).Port);
+                local_addr = new Address(bind_addr1, ((System.Net.IPEndPoint)srv_sock1.LocalEndPoint).Port);
             else
-                local_addr = new Address(((IPEndPoint)srv_sock1.LocalEndpoint).Address, ((System.Net.IPEndPoint)srv_sock1.LocalEndpoint).Port);
+                local_addr = new Address(((IPEndPoint)srv_sock1.LocalEndPoint).Address, ((System.Net.IPEndPoint)srv_sock1.LocalEndPoint).Port);
 
             if (srv_sock2 != null)
             {
-                local_addr_s = new Address(bind_addr2, ((System.Net.IPEndPoint)srv_sock2.LocalEndpoint).Port);
+                local_addr_s = new Address(bind_addr2, ((System.Net.IPEndPoint)srv_sock2.LocalEndPoint).Port);
             }
 
 
@@ -1113,7 +1117,7 @@ namespace Alachisoft.NGroups.Blocks
             stopped = true;
             System.Collections.IEnumerator it = null;
             Connection conn;
-            System.Net.Sockets.TcpListener tmp;
+            System.Net.Sockets.Socket tmp;
             if (disconThread != null)
             {
                 //Flush: Buffer Appender can clear all Logs as reported by this thread
@@ -1132,7 +1136,13 @@ namespace Alachisoft.NGroups.Blocks
                 {
                     tmp = srv_sock1;
                     srv_sock1 = null;
-                    tmp.Stop();
+#if NETCORE
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        tmp.Shutdown(SocketShutdown.Both);
+                    }
+#endif
+                    tmp.Close();
                 }
                 catch (System.Exception)
                 {
@@ -1145,7 +1155,13 @@ namespace Alachisoft.NGroups.Blocks
                 {
                     tmp = srv_sock2;
                     srv_sock2 = null;
-                    tmp.Stop();
+#if NETCORE
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        tmp.Shutdown(SocketShutdown.Both);
+                    }
+#endif
+                    tmp.Close();
                 }
                 catch (System.Exception)
                 {
@@ -1337,6 +1353,12 @@ namespace Alachisoft.NGroups.Blocks
                             {
                                 NCacheLog.CriticalInfo("ConnectionTable.Disconnect", "going to disconnect with " + con.peer_addr);
                                 con.markedClose = true;
+#if NETCORE
+                                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                                {
+                                    con.sock.Shutdown(SocketShutdown.Both);
+                                }
+#endif
                                 con.sock.Close();
                             }
                         }
@@ -1509,18 +1531,18 @@ namespace Alachisoft.NGroups.Blocks
         public virtual void Run(Object arg)
         {
             Object[] objArr = arg as object[];
-            TcpListener listener = objArr[0] as TcpListener;
+            Socket socketListener = objArr[0] as Socket;
             bool isPrimaryListener = (bool)objArr[1];
 
             System.Net.Sockets.Socket client_sock;
             Connection conn = null;
             Address peer_addr = null;
 
-            while (listener != null)
+            while (socketListener != null)
             {
                 try
                 {
-                    client_sock = listener.AcceptSocket();
+                    client_sock = socketListener.Accept();
                     int cport = ((IPEndPoint)client_sock.RemoteEndPoint).Port;
 
                     if (NCacheLog.IsInfoEnabled) NCacheLog.Info("ConnectionTable.Run()", "CONNECTION ACCPETED Remote port = " + cport);
@@ -1732,9 +1754,9 @@ namespace Alachisoft.NGroups.Blocks
             return conns_NIC_1 != null ? conns_NIC_1.Contains(member) : false;
         }
         /// <summary>Finds first available port starting at start_port and returns server socket. Sets srv_port </summary>
-        protected internal virtual System.Net.Sockets.TcpListener createServerSocket(IPAddress bind_addr, int start_port)
+        protected internal virtual System.Net.Sockets.Socket createServerSocket(IPAddress bind_addr, int start_port)
         {
-            System.Net.Sockets.TcpListener ret = null;
+            System.Net.Sockets.Socket ret = null;
             //We will try to start on a two  ports
             //	while (true) 
             for (int i = 1; i <= port_range; i++) // W 
@@ -1744,16 +1766,20 @@ namespace Alachisoft.NGroups.Blocks
                 {
                     if (bind_addr == null)
                     {
-                        System.Net.Sockets.TcpListener temp_tcpListener;
-                        temp_tcpListener = new System.Net.Sockets.TcpListener(start_port);
-                        temp_tcpListener.Start();
+                        System.Net.Sockets.Socket temp_tcpListener;
+                        IPEndPoint temp_endpoint = new IPEndPoint(IPAddress.Any, start_port);
+                        temp_tcpListener = new System.Net.Sockets.Socket(temp_endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        temp_tcpListener.Bind(temp_endpoint);
+                        temp_tcpListener.Listen(start_port);
                         ret = temp_tcpListener;
                     }
                     else
                     {
-                        System.Net.Sockets.TcpListener temp_tcpListener2;
-                        temp_tcpListener2 = new System.Net.Sockets.TcpListener(new System.Net.IPEndPoint(bind_addr, start_port));
-                        temp_tcpListener2.Start();
+                        System.Net.Sockets.Socket temp_tcpListener2;
+                        IPEndPoint temp_endpoint = new System.Net.IPEndPoint(bind_addr, start_port);
+                        temp_tcpListener2 = new System.Net.Sockets.Socket(temp_endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        temp_tcpListener2.Bind(temp_endpoint);
+                        temp_tcpListener2.Listen(start_port);
                         ret = temp_tcpListener2;
                     }
                 }

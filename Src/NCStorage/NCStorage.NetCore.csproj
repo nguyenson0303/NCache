@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\..\Resources\ncache.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;DEBUG;COMMUNITY;VS2005;NETCORE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;RELEASE;COMMUNITY;VS2005;NETCORE</DefineConstants>
+  </PropertyGroup>
+  
+   <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>Alachisoft.NCache.Storage</AssemblyName>
+    <RootNamespace>Alachisoft.NCache.Storage</RootNamespace>
+  </PropertyGroup>
+  
+   <ItemGroup>
+     <Compile Remove="Dictionary\**" />
+     <EmbeddedResource Remove="Dictionary\**" />
+     <None Remove="Dictionary\**" />
+   </ItemGroup>
+  
+   <ItemGroup>
+     <Compile Remove="StorageProviders\Mmf\ViewRef.cs" />
+   </ItemGroup>
+  
+   <ItemGroup>
+     <ProjectReference Include="..\NCSerialization\NCSerialization.NetCore.csproj" />
+   </ItemGroup>
+  
+   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+     <Exec Command="xcopy /Y &quot;$(TargetPath)&quot; &quot;$(SolutionDir)build\NetCore\Client\&quot;  2&gt;nul 1&gt;nul&#xD;&#xA;EXIT 0" />
+   </Target>
+</Project>

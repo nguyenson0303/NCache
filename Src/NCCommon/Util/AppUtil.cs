@@ -17,6 +17,7 @@ using System.Diagnostics;
 using Alachisoft.NCache.Common.Interop;
 using Microsoft.Win32;
 using System.IO;
+using Alachisoft.NCache.Common.Logger;
 #if NETCORE
 using System.Runtime.InteropServices;
 #endif
@@ -32,14 +33,14 @@ namespace Alachisoft.NCache.Common
         static bool isRunningAsWow64 = false;
         static string installDir = null;
 
-        public readonly static string DeployedAssemblyDir = "deploy\\";
+        public readonly static string DeployedAssemblyDir = "deploy" + Path.DirectorySeparatorChar;
         public readonly static string serviceLogsPath = "log-files" + Path.DirectorySeparatorChar + "service.log";
 
         static int s_logLevel = 7;
         static string javaLibDir = null;
         static int _bucketSize;
         static string logDir = null;
-        
+        private static NCacheLogger _nCacheEventLogger = null;
 
         static AppUtil()
         {
@@ -309,24 +310,15 @@ namespace Alachisoft.NCache.Common
                     }
                     catch (Exception) { }
                 }
-                else
+                else // For Unix
                 {
-                    //To log events on Linux related to daemon only. 
-                    if (eventId == EventID.ServiceFailure || eventId == EventID.ServiceStart || eventId == EventID.ServiceStop)
+                    if (_nCacheEventLogger == null)
                     {
-                    try
-                    {
-                        using (StreamWriter streamWriter = new StreamWriter(GetInstallDir() + Path.DirectorySeparatorChar + serviceLogsPath, true))
-                        {
-                            string errorInformation = " Source: " + source + " == EventLogEntryType: " + type.ToString() + " == EventID: " + eventId + " == Message: " + msg;
-                            streamWriter.WriteLine(DateTime.Now.ToString() + " == " + errorInformation);
-                            streamWriter.WriteLine(" ");
-                        }
+                        _nCacheEventLogger = new NCacheLogger();
+                        _nCacheEventLogger.InitializeEventsLogging();
                     }
-                    catch (Exception) { }
-                    }
+                    _nCacheEventLogger.EventLog(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss, fff"), source, eventId.ToString(), type.ToString(), msg);
                 }
-
             }
             catch { }
         }

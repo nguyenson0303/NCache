@@ -22,9 +22,8 @@ using Alachisoft.NCache.Caching.AutoExpiration;
 using Alachisoft.NCache.Runtime.Exceptions;
 using Alachisoft.NCache.Runtime.Events;
 using System.Collections.Generic;
-#if !NETCORE
 using Alachisoft.NCache.Caching.Topologies.Clustered;
-#endif
+
 namespace Alachisoft.NCache.Caching.Util
 {
 	/// <summary>

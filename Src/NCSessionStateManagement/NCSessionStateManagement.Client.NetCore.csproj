@@ -32,9 +32,9 @@
    </ItemGroup>
   
    <ItemGroup>
-     <ProjectReference Include="..\NCCommon\NCCommon.Client.NetCore.csproj" />
-     <ProjectReference Include="..\NCRuntime\NCRuntime.Client.NetCore.csproj" />
-     <ProjectReference Include="..\NCWebCache\NCWebCache.Client.NetCore.csproj" />
+     <ProjectReference Include="..\NCCommon\NCCommon.NetCore.csproj" />
+     <ProjectReference Include="..\NCRuntime\NCRuntime.NetCore.csproj" />
+     <ProjectReference Include="..\NCWebCache\NCWebCache.NetCore.csproj" />
    </ItemGroup>
   
    <Target Name="PostBuild" AfterTargets="PostBuildEvent">

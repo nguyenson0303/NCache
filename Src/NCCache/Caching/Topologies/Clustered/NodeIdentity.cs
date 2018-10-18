@@ -102,7 +102,16 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             _groupname = reader.ReadObject() as string;
             _status = new BitSet(reader.ReadByte());
             _rendererPort = reader.ReadInt32();
-            _rendererAddress = reader.ReadObject() as IPAddress;
+            //TODO: NETCORE (IPAddress is not serializable)
+#if NETCORE
+            string ipAddress = reader.ReadObject() as String;
+            if (ipAddress == null)
+                _rendererAddress = null;
+            else
+                _rendererAddress = IPAddress.Parse(ipAddress);
+#elif !NETCORE
+            _rendererAddress =  reader.ReadObject() as IPAddress;
+#endif
 
         }
 
@@ -111,12 +120,17 @@ namespace Alachisoft.NCache.Caching.Topologies.Clustered
             writer.WriteObject(_groupname);
             writer.Write(_status.Data);
             writer.Write(_rendererPort);
-            writer.WriteObject(_rendererAddress);
+            //TODO: NETCORE (IPAddress is not serializable)
+#if NETCORE
+            writer.WriteObject(_rendererAddress == null ? null : _rendererAddress.ToString());
+#elif !NETCORE
+             writer.WriteObject(_rendererAddress);
+#endif
 
         }
 
         #endregion
 
-        
+
     }
 }

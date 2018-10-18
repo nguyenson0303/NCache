@@ -15,6 +15,9 @@ using System.Net;
 using System.Net.Sockets;
 using Alachisoft.NCache.Common.Net;
 using Alachisoft.NCache.Serialization.Formatters;
+#if NETCORE
+using System.Runtime.InteropServices;
+#endif
 
 namespace Alachisoft.NGroups.Protocols
 {
@@ -157,6 +160,12 @@ namespace Alachisoft.NGroups.Protocols
         internal void stop()
         {
             mcast_receiver = null;
+#if NETCORE
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                mcast_recv_sock.Shutdown(SocketShutdown.Both);
+            }
+#endif
             mcast_recv_sock.Close();
             mcast_recv_sock = null;
         }

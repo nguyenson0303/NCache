@@ -76,14 +76,22 @@ namespace Alachisoft.NCache.Caching.Messaging
 
         public void StopMessageProcessing()
         {
-            if(_assignmentThread != null && _assignmentThread.IsAlive)
+            if (_assignmentThread != null && _assignmentThread.IsAlive)
             {
-                _assignmentThread.Abort();
+#if !NETCORE
+            _assignmentThread.Abort();
+#elif NETCORE
+                _assignmentThread.Interrupt();
+#endif
             }
 
             if (_notificationThread != null && _notificationThread.IsAlive)
             {
-                _notificationThread.Abort();
+#if !NETCORE
+            _notificationThread.Abort();
+#elif NETCORE
+                _notificationThread.Interrupt();
+#endif
             }
 
         }

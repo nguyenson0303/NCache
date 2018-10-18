@@ -28,6 +28,9 @@ using System.Collections;
 using System.ServiceProcess;
 using System.IO;
 using System.Text.RegularExpressions;
+#if NETCORE
+using Alachisoft.NCache.Common.Registry.NetCore.LinuxUtil;
+#endif
 
 
 namespace Alachisoft.NCache.Common.Util
@@ -265,6 +268,44 @@ namespace Alachisoft.NCache.Common.Util
 #endif
 
             return null;
+        }
+
+        public static Hashtable DiscoverCachesViaPGrep()
+        {
+            runningcaches = new Hashtable();
+#if NETCORE
+            string result = "pgrep -af dotnet.*Alachisoft.NCache.CacheHost.dll".Bash();
+            foreach (string line in result.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None))
+            {
+                if (!String.IsNullOrEmpty(line))
+                {
+                    string[] tokens = Regex.Split(line, "\\s+");
+                    string cachename = "";
+                    int cacheport = 0;
+                    int pid = 0;
+                    if (int.TryParse(tokens[0], out pid))
+                    {
+                        for (int i = 0; i < 6; i++)
+                        {
+                            if (tokens[i] == "/i")
+                                cachename = tokens[i + 1];
+                            else if (tokens[i] == "/p")
+                                int.TryParse(tokens[i + 1], out cacheport);
+                        }
+
+                        CacheHostInfo info = new CacheHostInfo();
+                        info.ProcessId = pid;
+                        info.ManagementPort = cacheport;
+                        runningcaches.Add(cachename, info);
+                        if (runningcaches.Count == processes.Length)
+                            break;
+                    }
+
+                }
+            }
+#endif
+            return runningcaches;
+
         }
     }
 }

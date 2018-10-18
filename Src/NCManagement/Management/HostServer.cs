@@ -378,28 +378,36 @@ namespace Alachisoft.NCache.Management
 
         public override void StopCacheInstance(string cacheName, CacheInfo cacheInfo, CacheStopReason reason)
         {
-            LeasedCache cache = cacheInfo.Cache;
-            if (cache != null && cache.Name == cacheName)
+            AppUtil.LogEvent("StopCacheInstance", EventLogEntryType.Information);
+            try
             {
-                if (cache.IsRunning)
+                LeasedCache cache = cacheInfo.Cache;
+                if (cache != null && cache.Name == cacheName)
                 {
-                    if (reason.Equals(CacheStopReason.Expired))
-                        cache.NCacheLog.CriticalInfo("NCache license has expired on this machine. Stopping cache...");
-                    cache.Stop();
-                    if (cacheInfo != null)
-                        cacheInfo.SyncConfiguration();
+                    if (cache.IsRunning)
+                    {
+                        if (reason.Equals(CacheStopReason.Expired))
+                            cache.NCacheLog.CriticalInfo("NCache license has expired on this machine. Stopping cache...");
+                        cache.Stop();
+                        if (cacheInfo != null)
+                            cacheInfo.SyncConfiguration();
 
-                    //instrumentation Code
+                        //instrumentation Code
 #if COMMUNITY
 
-                    if (InstrumentCache.OnCacheStopped != null)
-                        InstrumentCache.OnCacheStopped(cache.Name);
+                        if (InstrumentCache.OnCacheStopped != null)
+                            InstrumentCache.OnCacheStopped(cache.Name);
 
 #endif
+                    }
                 }
+                else
+                    throw new Runtime.Exceptions.ManagementException("Specified cacheId is not registered");
             }
-            else
-                throw new Runtime.Exceptions.ManagementException("Specified cacheId is not registered");
+            catch (Exception e)
+            {
+                AppUtil.LogEvent(e.ToString(), EventLogEntryType.Error);
+            }
         }
 
         public void onCacheStopped()

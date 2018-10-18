@@ -1092,13 +1092,15 @@ namespace Alachisoft.NCache.Management
                             }
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
-                        throw new Exception("Specified cacheId is not registered.");
                         throw;
                     }
                 }
-
+                else
+                {
+                    throw new Exception("Specified cacheId is not registered.");
+                }
             }
             finally
             {
@@ -1444,8 +1446,18 @@ namespace Alachisoft.NCache.Management
                 {
                     throw new Exception("Missing installation folder information");
                 }
+                string binDirectory = path + Path.DirectorySeparatorChar + "bin";
+                string serviceDirectory = binDirectory + Path.DirectorySeparatorChar + "service";
 
-                return (path + @"bin\service\Alachisoft.NCache.Service.exe.config");
+#if NETCORE
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                    return (serviceDirectory + Path.DirectorySeparatorChar + "Alachisoft.NCache.Service.dll.config");
+                else
+                    return (serviceDirectory + Path.DirectorySeparatorChar + "Alachisoft.NCache.Daemon.dll.config");
+#else
+                return (serviceDirectory + Path.DirectorySeparatorChar + "Alachisoft.NCache.Service.exe.config");
+#endif
+
             }
         }
 
@@ -2802,11 +2814,55 @@ namespace Alachisoft.NCache.Management
 
         public void AssignServerstoRunningCaches()
         {
+            OSInfo currentOS = OSInfo.Windows;
+#if NETCORE
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+                currentOS = OSInfo.Unix;
+#endif
+            if (currentOS == OSInfo.Unix)
+            {
+                try
+                {
+                    Hashtable runningcaches = null;
+                    try
+                    {
+                        runningcaches = ManagementPortHandler.DiscoverCachesViaPGrep();
+                    }
+                    catch (Exception ex)
+                    {
+                        string msg = String.Format("CacheServer failed to load running caches information, Error {0}",
+                        ex.ToString());
+                        AppUtil.LogEvent(msg, EventLogEntryType.Warning);
+                    }
+
+                    IDictionaryEnumerator enm = runningcaches.GetEnumerator();
+                    while (enm.MoveNext())
+                    {
+                        if (s_caches.ContainsKey(enm.Key.ToString()))
+                        {
+                            CacheInfo cacheInfo = (CacheInfo)s_caches[enm.Key.ToString().ToLower()];
+                            cacheInfo.CacheProcessId = ((CacheHostInfo)enm.Value).ProcessId;
+                            cacheInfo.ManagementPort = ((CacheHostInfo)enm.Value).ManagementPort;
+                            s_caches[enm.Key.ToString().ToLower()] = cacheInfo;
+                            _cachePortsConfigManger.AssignRunningPorts(enm.Key.ToString().ToLower(), cacheInfo.ManagementPort);
+                            GetCacheServer(enm.Key.ToString(), true);
+                        }
+                    }
+                }
+                catch
+                {
+
+                }
+                return;
+            }
+
+
             try
             {
                 Hashtable runningcaches = null;
                 try
                 {
+
                     runningcaches = ManagementPortHandler.DiscoverCachesViaWMI();
 
                     if (runningcaches.Count < 1)
