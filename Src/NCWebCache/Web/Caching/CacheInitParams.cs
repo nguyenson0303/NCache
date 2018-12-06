@@ -428,7 +428,7 @@ namespace Alachisoft.NCache.Web.Caching
                 _cloneParam.LoadBalance = this.LoadBalance;
                 _cloneParam.Mode = this.Mode;
                 _cloneParam.Port = this.Port;
-                _cloneParam.RetryConnectionDelay = this.RetryConnectionDelay;
+                _cloneParam._retryConnectionDelay = this._retryConnectionDelay;
                 _cloneParam.RetryInterval = this.RetryInterval;
                 _cloneParam.Server = this.Server;
                 _cloneParam.BindIP = this.BindIP;
