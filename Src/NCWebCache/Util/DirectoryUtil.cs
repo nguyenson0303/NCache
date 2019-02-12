@@ -193,9 +193,15 @@ namespace Alachisoft.NCache.Web
             String path = null;
             bool found = false;
 #if !NETCORE
-            if (HttpContext.Current != null)
+            if (HttpRuntime.AppDomainAppId != null || HttpContext.Current != null)
             {
-                string approot = HttpContext.Current.Server.MapPath(@"~\");
+                string approot = null;
+
+                if (HttpContext.Current == null)
+                    approot = HttpRuntime.AppDomainAppPath;
+                else
+                    approot = HttpContext.Current.Server.MapPath(@"~\");
+
                 if (approot != null)
                 {
                     path = approot + fileName;
