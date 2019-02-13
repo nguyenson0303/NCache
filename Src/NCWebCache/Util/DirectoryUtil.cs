@@ -210,17 +210,23 @@ namespace Alachisoft.NCache.Web
                         path = Path.Combine(approot + @"\", @"bin\config\" + fileName);
                         if (!File.Exists(path))
                         {
-                            string configDir =
-                                System.Configuration.ConfigurationSettings.AppSettings.Get("NCache.ConfigDir");
-                            if (configDir != null)
+                            path = Path.Combine(approot + @"\", @"bin\" + fileName);
+                            if (!File.Exists(path))
                             {
-                                path = Path.Combine(configDir + @"/", fileName);
-                                path = HttpContext.Current.Server.MapPath(@path);
-                                if (File.Exists(path))
+                                string configDir =
+                                System.Configuration.ConfigurationSettings.AppSettings.Get("NCache.ConfigDir");
+                                if (configDir != null)
                                 {
-                                    found = true;
+                                    path = Path.Combine(configDir + @"/", fileName);
+                                    path = HttpContext.Current.Server.MapPath(@path);
+                                    if (File.Exists(path))
+                                    {
+                                        found = true;
+                                    }
                                 }
                             }
+                            else
+                                found = true;
                         }
                         else
                             found = true;
